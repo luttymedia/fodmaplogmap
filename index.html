@@ -341,7 +341,7 @@
                     <div id="gemini-modal-error" class="text-error bg-red-50 p-3 rounded-lg hidden text-sm"></div> 
                 </div>
                  <div class="p-3 bg-slate-50 border-t border-slate-200 text-center text-xs text-slate-500 rounded-b-xl"> 
-                    Disclaimer: AI-generated content is for informational purposes only...
+                    Disclaimer: AI-generated responses are for informational purposes only.
                 </div>
             </div>
         </div>
@@ -687,11 +687,87 @@
                 } catch (err) { console.error("API failed:", err); return null; }
             };
             document.getElementById('summarize-journey-btn').addEventListener('click', async () => {
-                if (logEntries.length === 0) { showToast("Need logs.", true); return; } openGemini('✨ Summary'); const logTxt = logEntries.map(e => `Date:${e.date},Grp:${e.group},Food:${e.food},Dose:${e.dose},Sym:${e.symptom==='Other'?e.otherSymptom:e.symptom},Sev:${e.severity}/5`).join('; '); const prompt = `FODMAP helper (no medical advice). Analyze log based on profile: ${buildProfileContext()}. Summarize patterns gently. Log: ${logTxt}`;
-            const summary = await callGeminiAPI(prompt); geminiLoader.classList.add('hidden'); if (summary === null && !userProfile.apiKey) { geminiMdl.classList.add('hidden'); return; } if (summary) { geminiContent.textContent = summary; geminiContent.classList.remove('hidden'); } else { geminiError.textContent = 'Summary failed.'; geminiError.classList.remove('hidden'); }            });
+                if (logEntries.length === 0) { showToast("Need logs.", true); return; } 
+                openGemini('✨ Summary'); 
+                const logTxt = logEntries.map(e => `Date:${e.date},Grp:${e.group},Food:${e.food},Dose:${e.dose},Sym:${e.symptom==='Other'?e.otherSymptom:e.symptom},Sev:${e.severity}/5`).join('; '); 
+                
+                // 1. UPDATED PROMPT:
+                const prompt = `FODMAP helper (no medical advice). Analyze log based on profile: ${buildProfileContext()}. Log: ${logTxt}
+        
+                Provide a gentle, 3-part summary based *only* on the log entries and user profile.
+                Format *only* with **bold** headings, *italics* for emphasis, and newlines. Use bullet points (like - or *) for lists.
+                Do NOT use '###', '|', or tables. Omit the disclaimer.
+
+                Use this exact template:
+                **Overall Observation:** [A 1-2 sentence gentle observation about any potential patterns.]
+                **Potential Triggers:** [A bulleted list of foods/groups from the log that *consistently* show symptoms with a severity of 3-5. If none, say "No clear triggers noted yet."]
+                **Seemingly Well-Tolerated:** [A bulleted list of foods/groups from the log that *consistently* show "None" or low severity (1-2). If none, say "Keep logging to find your safe foods."]`
+
+                                const summary = await callGeminiAPI(prompt); 
+                                geminiLoader.classList.add('hidden'); 
+                                if (summary === null && !userProfile.apiKey) { geminiMdl.classList.add('hidden'); return; } 
+                                
+                                // 2. FIXED PARSER:
+                                if (summary) { 
+                                    // Add the same parser we use for the AI assistant
+                                    let html = summary
+                                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')   // Bold
+                                        .replace(/\*(.*?)\*/g, '<em>$1</em>')     // Italics
+                                        .replace(/(\n|^)[\-\*] (.*?)(?=\n|$)/g, '<br>• $2') // Bullets
+                                        .replace(/\n/g, '<br>'); // Newlines
+                                    geminiContent.innerHTML = html; // Use .innerHTML, not .textContent
+                                    geminiContent.classList.remove('hidden'); 
+                                } else { 
+                                    geminiError.textContent = 'Summary failed.'; 
+                                    geminiError.classList.remove('hidden'); 
+                                }
+                            });
             document.getElementById('plan-challenge-btn').addEventListener('click', async () => {
-                const sel = document.getElementById('log-fodmap-group'); const val = sel.value; if (!val) { showToast("Select group.", true); return; } const txt = sel.options[sel.selectedIndex].text; openGemini(`✨ ${txt} Plan`); const prompt = `FODMAP helper (no medical advice). Create 3-day reintro plan for '${txt}' considering profile: ${buildProfileContext()}. Suggest food/portion/day (**Day 1:**).`;
-                const plan = await callGeminiAPI(prompt); geminiLoader.classList.add('hidden'); if (plan === null && !userProfile.apiKey) { geminiMdl.classList.add('hidden'); return; } if (plan) { geminiContent.textContent = plan; geminiContent.classList.remove('hidden'); } else { geminiError.textContent = 'Plan failed.'; geminiError.classList.remove('hidden'); }            });
+                const sel = document.getElementById('log-fodmap-group'); 
+                const val = sel.value; // This gets the clean value, e.g., "Fructose"
+                if (!val) { showToast("Select group.", true); return; } 
+                
+                // 1. Use `val` for the modal title, not the full text
+                openGemini(`✨ ${val} Plan`); 
+
+                // 2. Use `val` in the prompt for a cleaner request
+                const prompt = `FODMAP helper (no medical advice). User profile: ${buildProfileContext()}.
+Create a 3-day reintroduction challenge plan for '${val}'.
+Give a couple of specific foods and an increasing portion for each day.
+Briefly explain *why* these foods are good choices (e.g., "contains only this FODMAP").
+Include a "Washout Day" instruction after Day 3.
+Format *only* with **bold** headings, *italics* for emphasis, and newlines. Use bullet points (- or *).
+Do NOT use '###', '|', or tables. Omit the disclaimer.
+
+Use this exact template:
+**Foods:** [Food Names]
+*Why this foods?:* [Brief explanation]
+
+**Challenge Plan:**
+- **Day 1:** [Portion]
+- **Day 2:** [Larger Portion]
+- **Day 3:** [Largest Portion]
+
+**After Day 3:** Wait 2-3 "washout" days and log any delayed symptoms before starting your next challenge.`;
+
+                const plan = await callGeminiAPI(prompt); 
+                geminiLoader.classList.add('hidden'); 
+                if (plan === null && !userProfile.apiKey) { geminiMdl.classList.add('hidden'); return; } 
+                
+                // 3. Use the full parser to render HTML
+                if (plan) { 
+                    let html = plan
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')   // Bold
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')     // Italics
+                        .replace(/(\n|^)[\-\*] (.*?)(?=\n|$)/g, '<br>• $2') // Bullets
+                        .replace(/\n/g, '<br>'); // This line is now correct
+                    geminiContent.innerHTML = html; // Use .innerHTML
+                    geminiContent.classList.remove('hidden'); 
+                } else { 
+                    geminiError.textContent = 'Plan failed.'; 
+                    geminiError.classList.remove('hidden'); 
+                }
+            });
 
             // Dynamically set nav top and body padding
             const calculatePadding = () => { 
