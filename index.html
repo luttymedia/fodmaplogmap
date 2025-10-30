@@ -80,6 +80,8 @@
         #add-log-entry-wrapper form { space-y: 0.75rem; }
         #profile-form { space-y: 1rem; }
     </style>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2d61a0">
 </head>
 <body class="bg-slate-50 text-slate-800">
 
@@ -610,6 +612,19 @@
                 }
             }
         });
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
     </script>
 </body>
 </html>

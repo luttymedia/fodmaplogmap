@@ -1,0 +1,13 @@
+{
+  "name": "FODMAP LOGMAP",
+  "short_name": "LogMap",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2d61a0",
+  "description": "Your FODMAP reintroduction companion.",
+  "icons": [
+    { "src": "icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "icon-512.png", "type": "image/png", "sizes": "512x512" }
+  ]
+}
