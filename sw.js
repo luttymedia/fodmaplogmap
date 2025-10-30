@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fodmap-logmap-v2'; // Note: I changed v1 to v2
+const CACHE_NAME = 'fodmap-logmap-v3';
 const FILES_TO_CACHE = [
   'index.html',
   'manifest.json',
@@ -7,29 +7,49 @@ const FILES_TO_CACHE = [
   '/' // Caches the root URL
 ];
 
-// Install event: Caches the app shell
+// Install event: Caches the app shell and takes control immediately
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
         return cache.addAll(FILES_TO_CACHE);
       })
+      .then(() => self.skipWaiting()) // <-- ADD THIS LINE: Forces the new SW to activate
   );
 });
 
-// Fetch event: Serves from cache, falls back to network
+// Fetch event: "Network First" strategy
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // If the request is in the cache, return it.
-        // Otherwise, fetch it from the network.
-        return response || fetch(event.request);
-      })
-  );
+  // Check if the request is for navigation (e.g., loading the page)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request) // 1. Try to get the file from the network first
+        .then((response) => {
+          // 2. If successful, cache the new version and return it
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, response.clone());
+            return response;
+          });
+        })
+        .catch(() => {
+          // 3. If the network fails (offline), get the file from the cache
+          return caches.match(event.request);
+        })
+    );
+  } else {
+    // For non-navigation requests (images, etc.), use a "cache-first" or "stale-while-revalidate"
+    // For simplicity, we will keep your original cache-first for other assets
+    event.respondWith(
+      caches.match(event.request)
+        .then((response) => {
+          return response || fetch(event.request);
+        })
+    );
+  }
 });
 
-// Activate event: Cleans up old caches
+
+// Activate event: Cleans up old caches and claims the page
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keyList) => {
@@ -38,6 +58,6 @@ self.addEventListener('activate', (event) => {
           return caches.delete(key);
         }
       }));
-    })
+    }).then(() => self.clients.claim()) // <-- ADD THIS: Makes the active SW control the page immediately
   );
 });
