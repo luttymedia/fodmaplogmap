@@ -294,7 +294,12 @@
                     <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center"><i class="fas fa-user-edit text-primary mr-2"></i>Personalize Your Profile</h2>
                     <p class="text-subtle mb-4 text-sm">Your selections here will customize the AI Assistant's advice to your specific needs.</p> 
 
-                    <form id="profile-form" class="space-y-4"> 
+                    <form id="profile-form" class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold text-secondary mb-1.5">API Key</h3> 
+                            <p class="text-xs text-subtle mb-1.5">Get your key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-primary underline">Google AI Studio</a>. This is saved only in your browser.</p>
+                            <input type="password" id="profile-api-key" placeholder="Enter your Google AI API Key" class="w-full p-2 border border-slate-300 rounded-lg"> 
+                        </div> 
                         <div>
                             <h3 class="font-semibold text-secondary mb-1.5">Health Conditions</h3> 
                             <div id="profile-diagnoses" class="flex flex-wrap gap-2"> 
@@ -436,8 +441,7 @@
             const navItems = document.querySelectorAll('.nav-item');
             const addEntryFab = document.getElementById('add-entry-fab');
             let logEntries = JSON.parse(localStorage.getItem('fodmapLogEntries')) || [];
-            let userProfile = JSON.parse(localStorage.getItem('fodmapUserProfile')) || { diagnoses: [], intolerances: [], allergiesOther: '', preferences: [] };
-            let currentFilter = 'All';
+            let userProfile = JSON.parse(localStorage.getItem('fodmapUserProfile')) || { diagnoses: [], intolerances: [], allergiesOther: '', preferences: [], apiKey: '' };            let currentFilter = 'All';
             let currentPageIndex = 0;
 
             function navigateTo(pageId) {
@@ -504,27 +508,80 @@
                 return hasInfo ? context : "User profile not specified.";
             };
 
-            const handleAIQuery = (prompt, imageData = null) => {
+            const getProfileForDisplay = () => {
+                let displayLines = [];
+                if (userProfile.diagnoses.length > 0) { displayLines.push(`<strong>Diagnoses:</strong> ${userProfile.diagnoses.join(', ')}`); }
+                const allIntolerances = [...userProfile.intolerances, userProfile.allergiesOther].filter(Boolean);
+                if (allIntolerances.length > 0) { displayLines.push(`<strong>Intolerances/Allergies:</strong> ${allIntolerances.join(', ')}`); }
+                if (userProfile.preferences.length > 0) { displayLines.push(`<strong>Preferences:</strong> ${userProfile.preferences.join(', ')}`); }
+                
+                if (displayLines.length === 0) return null;
+                return displayLines.join('<br>');
+            };
+
+            const handleAIQuery = (prompt, title, imageData = null) => {
                  aiResultsLoader.classList.remove('hidden'); aiResultsContainer.classList.add('hidden'); aiResultsContent.innerHTML = '';
                  callGeminiAPI(prompt, imageData)
                     .then(response => {
-                        if (response) { let html = response.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>'); aiResultsContent.innerHTML = html; aiResultsContainer.classList.remove('hidden'); } 
+                        if (response) { 
+                            const profileHTML = getProfileForDisplay();
+                            const disclaimer = `Disclaimer: I am a FODMAP expert analysis tool, not a medical professional. This information is for educational purposes regarding dietary management only and is not a substitute for personalized medical advice or treatment. Always consult with your doctor or a registered dietitian before making dietary changes.`;
+
+                            // 1. Process the AI response
+                            let aiContent = response
+                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')   // Bold
+                                .replace(/\*(.*?)\*/g, '<em>$1</em>')     // Italics
+                                .replace(/\n/g, '<br>'); // Newlines
+
+                            // 2. Build the full response with header and footer
+                            let html = `
+                                <div class="space-y-3">
+                                    <div>
+                                        <p><strong>Food:</strong> ${title}</p>
+                                        ${profileHTML ? `<p>${profileHTML}</p>` : ''}
+                                    </div>
+                                    
+                                    <hr class="border-slate-200">
+                                    
+                                    <div>${aiContent}</div>
+
+                                    <hr class="border-slate-200">
+                                    
+                                    <p class="text-xs text-subtle italic">${disclaimer}</p>
+                                </div>
+                            `;
+                            
+                            aiResultsContent.innerHTML = html; 
+                            aiResultsContainer.classList.remove('hidden'); 
+                        }                    
                         else { aiResultsContent.innerHTML = `<p class="text-error">Sorry, error.</p>`; aiResultsContainer.classList.remove('hidden'); }
                     }).finally(() => aiResultsLoader.classList.add('hidden'));
             };
 
             aiTextSearchBtn.addEventListener('click', () => {
                 const foodName = aiFoodSearchInput.value.trim(); if (!foodName) { showToast("Enter food.", true); return; }
-                const prompt = `FODMAP expert: Analyze '${foodName}'. ${buildProfileContext()} Provide: 1. Level. 2. Safe Portion. 3. Substitutes. Format clearly. Not medical advice.`;
-                handleAIQuery(prompt);
+                const prompt = `FODMAP expert: Analyze '${foodName}'. ${buildProfileContext()}
+                Provide a concise, 3-part answer. 
+                Use this exact template:
+                **FODMAP Level:** [Brief level & why. Use *italics* or emojis for emphasis, not full bold sentences.]
+                **Safe Portion:** [Brief portion size. Use *italics* or emojis for emphasis.]
+                **Substitutes:** [List 3-4 substitutes. Use *italics* or emojis for emphasis.]
+
+                Do NOT use tables, '###', '---', or '|'. Omit the disclaimer.`;
+                handleAIQuery(prompt, foodName);
             });
 
             const handleFileSelect = (event) => {
                 const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
                 reader.onload = (e) => {
                     const base64 = e.target.result.split(',')[1]; imagePreview.src = e.target.result; imagePreview.classList.remove('hidden'); uploadPromptText.textContent = file.name;
-                    const prompt = `FODMAP expert: Analyze ingredients in image. ${buildProfileContext()} List ingredients & status. Summarize safety & suggest substitutes. Not medical advice.`;
-                    handleAIQuery(prompt, base64);
+                    const prompt = `FODMAP expert: Analyze ingredients in this image. ${buildProfileContext()}
+                    List all ingredients found. 
+                    For any high-FODMAP ingredient, explain why in one short sentence. Use *italics* or emojis for emphasis.
+                    Provide an **Overall Summary:** (Safe or Not Safe).
+                    Format *only* with **bold** headings, *italics*, newlines, and emojis. 
+                    Do NOT use tables, '###', '---', or '|'. Omit the disclaimer.`;
+                    handleAIQuery(prompt, `Image (${file.name})`, base64);
                 }; reader.readAsDataURL(file); event.target.value = null; 
             };
             
@@ -600,10 +657,12 @@
                 document.getElementById('profile-intolerances').innerHTML = PROFILE_OPTIONS.intolerances.map(i => createCheckbox(`intol-${i}`, i, 'intolerances', userProfile.intolerances.includes(i))).join('');
                 document.getElementById('profile-preferences').innerHTML = PROFILE_OPTIONS.preferences.map(i => createCheckbox(`pref-${i}`, i, 'preferences', userProfile.preferences.includes(i))).join('');
                 document.getElementById('profile-allergies-other').value = userProfile.allergiesOther || '';
+                document.getElementById('profile-api-key').value = userProfile.apiKey || '';
             };
 
             profileForm.addEventListener('submit', (e) => {
                 e.preventDefault(); userProfile.diagnoses = Array.from(document.querySelectorAll('input[name=diagnoses]:checked')).map(el => el.value); userProfile.intolerances = Array.from(document.querySelectorAll('input[name=intolerances]:checked')).map(el => el.value); userProfile.preferences = Array.from(document.querySelectorAll('input[name=preferences]:checked')).map(el => el.value); userProfile.allergiesOther = document.getElementById('profile-allergies-other').value.trim();
+                userProfile.apiKey = document.getElementById('profile-api-key').value.trim();
                 localStorage.setItem('fodmapUserProfile', JSON.stringify(userProfile)); showToast("Profile Saved!");
             });
 
@@ -614,7 +673,13 @@
             const geminiMdl = document.getElementById('gemini-modal'); const geminiTitle = document.getElementById('gemini-modal-title'); const geminiContent = document.getElementById('gemini-modal-content'); const geminiLoader = document.getElementById('gemini-modal-loader'); const geminiError = document.getElementById('gemini-modal-error'); const geminiClose = document.getElementById('gemini-modal-close');
             const openGemini = (title) => { geminiTitle.textContent = title; geminiMdl.classList.remove('hidden'); geminiLoader.classList.remove('hidden'); geminiContent.classList.add('hidden'); geminiError.classList.add('hidden'); }; const closeGemini = () => geminiMdl.classList.add('hidden'); geminiClose.addEventListener('click', closeGemini);
             const callGeminiAPI = async (prompt, imgData = null, retries = 3, delay = 1000) => {
-                const key = ""; const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`; let parts = [{ text: prompt }]; if (imgData) parts.push({ inlineData: { mimeType: 'image/jpeg', data: imgData } }); const payload = { contents: [{ parts }] };
+                const key = userProfile.apiKey || ""; 
+                if (!key) {
+                    console.error("API Key is missing. Please add it in the Profile tab.");
+                    showToast("API Key is missing. Add it in your Profile.", true);
+                    return null; // Stop the API call
+                }
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`; let parts = [{ text: prompt }]; if (imgData) parts.push({ inlineData: { mimeType: 'image/jpeg', data: imgData } }); const payload = { contents: [{ parts }] };
                 try {
                     const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                     if (!res.ok) { if (res.status === 429 && retries > 0) { await new Promise(r => setTimeout(r, delay)); return callGeminiAPI(prompt, imgData, retries - 1, delay * 2); } throw new Error(`${res.statusText} (${res.status})`); }
@@ -623,12 +688,10 @@
             };
             document.getElementById('summarize-journey-btn').addEventListener('click', async () => {
                 if (logEntries.length === 0) { showToast("Need logs.", true); return; } openGemini('✨ Summary'); const logTxt = logEntries.map(e => `Date:${e.date},Grp:${e.group},Food:${e.food},Dose:${e.dose},Sym:${e.symptom==='Other'?e.otherSymptom:e.symptom},Sev:${e.severity}/5`).join('; '); const prompt = `FODMAP helper (no medical advice). Analyze log based on profile: ${buildProfileContext()}. Summarize patterns gently. Log: ${logTxt}`;
-                const summary = await callGeminiAPI(prompt); geminiLoader.classList.add('hidden'); if (summary) { geminiContent.textContent = summary; geminiContent.classList.remove('hidden'); } else { geminiError.textContent = 'Summary failed.'; geminiError.classList.remove('hidden'); }
-            });
+            const summary = await callGeminiAPI(prompt); geminiLoader.classList.add('hidden'); if (summary === null && !userProfile.apiKey) { geminiMdl.classList.add('hidden'); return; } if (summary) { geminiContent.textContent = summary; geminiContent.classList.remove('hidden'); } else { geminiError.textContent = 'Summary failed.'; geminiError.classList.remove('hidden'); }            });
             document.getElementById('plan-challenge-btn').addEventListener('click', async () => {
                 const sel = document.getElementById('log-fodmap-group'); const val = sel.value; if (!val) { showToast("Select group.", true); return; } const txt = sel.options[sel.selectedIndex].text; openGemini(`✨ ${txt} Plan`); const prompt = `FODMAP helper (no medical advice). Create 3-day reintro plan for '${txt}' considering profile: ${buildProfileContext()}. Suggest food/portion/day (**Day 1:**).`;
-                const plan = await callGeminiAPI(prompt); geminiLoader.classList.add('hidden'); if (plan) { geminiContent.textContent = plan; geminiContent.classList.remove('hidden'); } else { geminiError.textContent = 'Plan failed.'; geminiError.classList.remove('hidden'); }
-            });
+                const plan = await callGeminiAPI(prompt); geminiLoader.classList.add('hidden'); if (plan === null && !userProfile.apiKey) { geminiMdl.classList.add('hidden'); return; } if (plan) { geminiContent.textContent = plan; geminiContent.classList.remove('hidden'); } else { geminiError.textContent = 'Plan failed.'; geminiError.classList.remove('hidden'); }            });
 
             // Dynamically set nav top and body padding
             const calculatePadding = () => { 
