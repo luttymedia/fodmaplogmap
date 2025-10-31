@@ -87,13 +87,13 @@
         #info-modal-content ul { margin-top: 0.25rem; }
         #info-modal-content .fodmap-group-card { background-color: #f8fafc; border-left-width: 4px; padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.5rem; }
         .progress-item-body p {
-            font-size: 0.875rem; /* text-sm */
-            line-height: 1.25rem; /* text-sm */
+            font-size: 0.75rem; /* text-xs */
+            line-height: 1rem; /* text-xs */
             color: #475569; /* text-slate-600 */
             border-bottom-width: 1px; /* border-b */
             border-color: #e2e8f0; /* border-slate-200 */
-            padding-top: 0.375rem; /* py-1.5 */
-            padding-bottom: 0.375rem; /* py-1.5 */
+            padding-top: 0.25rem; /* py-1 */
+            padding-bottom: 0.25rem; /* py-1 */
          }
          .progress-item-body p:last-child {
             border-bottom-width: 0px; /* border-b-0 */
@@ -175,6 +175,136 @@
             background-color: var(--color-primary);
             color: white;
             border-color: var(--color-primary-dark);
+        }
+
+        /* Styles for Log Accordion */
+        .accordion-group {
+            background-color: #fff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+            border: 1px solid #e2e8f0; /* border-slate-200 */
+            overflow: hidden;
+            margin-bottom: 0.75rem; /* space-y-3 */
+        }
+        .accordion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem; /* CHANGED: Was p-4 */
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent; /* Disable tap flash on mobile */
+        }
+        .accordion-header h3 {
+            font-size: 1rem; /* CHANGED: Was text-lg */
+            font-weight: 600; /* font-semibold */
+            color: var(--color-secondary);
+        }
+        .accordion-header .accordion-icon {
+            transition: transform 0.3s ease-in-out;
+            font-size: 1rem;
+            color: var(--color-primary);
+        }
+        .accordion-group.expanded .accordion-icon {
+            transform: rotate(180deg);
+        }
+        .accordion-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+        .accordion-group.expanded .accordion-body {
+            max-height: 1000px; /* arbitrary large number */
+            border-top: 1px solid #e2e8f0;
+        }
+        .accordion-entry {
+            padding: 0.5rem 1rem; /* CHANGED: Was p-3 sm:p-4 */
+            border-bottom: 1px solid #f1f5f9; /* border-slate-100 */
+        }
+        .accordion-entry:last-child {
+            border-bottom: none;
+        }
+        .accordion-entry .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+        .accordion-entry .entry-header p {
+            font-size: 0.875rem; /* CHANGED: Added text-sm */
+            font-weight: 600; /* font-semibold */
+            color: var(--color-text-base);
+        }
+        .accordion-entry .entry-header span {
+            font-size: 0.75rem; /* text-xs */
+            color: var(--color-text-subtle);
+        }
+        .accordion-entry .entry-details {
+            font-size: 0.75rem; /* CHANGED: Was text-sm */
+            color: var(--color-text-muted);
+            line-height: 1.5;
+        }
+
+        /* Styles for Custom Symptom Tags */
+        .custom-symptom-tag {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e0e7ff; /* indigo-100 */
+            color: #3730a3; /* indigo-800 */
+            border-radius: 9999px; /* rounded-full */
+            padding: 0.25rem 0.75rem; /* py-1 px-3 */
+            font-size: 0.75rem; /* text-xs */
+            font-weight: 500; /* font-medium */
+            margin: 0.25rem; /* m-1 */
+        }
+        .custom-symptom-tag .remove-tag-btn {
+            margin-left: 0.5rem; /* ml-2 */
+            color: #4338ca; /* indigo-700 */
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: 0.875rem; /* text-sm */
+        }
+        .custom-symptom-tag .remove-tag-btn:hover {
+            color: var(--color-error);
+        }
+
+        /* Styles for API Key Accordion */
+        .api-key-accordion {
+            border: 1px solid #e2e8f0; /* border-slate-200 */
+            border-radius: 0.5rem; /* rounded-lg */
+            background-color: #f8fafc; /* bg-slate-50 */
+            overflow: hidden;
+        }
+        .api-key-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem; /* p-3 sm:p-4 */
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .api-key-header h3 {
+             margin-bottom: 0; /* Override existing margin */
+        }
+        .api-key-header .api-key-icon {
+            transition: transform 0.3s ease-in-out;
+            font-size: 0.875rem; /* text-sm */
+            color: var(--color-primary);
+        }
+        .api-key-accordion.expanded .api-key-icon {
+            transform: rotate(180deg);
+        }
+        .api-key-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+            padding: 0 1rem; /* ONLY horizontal padding when collapsed */
+        }
+        .api-key-accordion.expanded .api-key-body {
+            max-height: 500px; /* Adjust as needed */
+            padding-top: 0.25rem; /* Add vertical padding ONLY when expanded */
+            padding-bottom: 0.75rem; /* Add vertical padding ONLY when expanded */
         }
     </style>
     <link rel="manifest" href="manifest.json">
@@ -283,19 +413,23 @@
                             <input type="text" id="log-dose" placeholder="Dose" class="w-full p-2.5 border border-slate-300 rounded-lg" required> 
                         </div>
                         
-                        <select id="log-symptom" class="w-full p-2.5 border border-slate-300 rounded-lg" required> 
-                            <option value="" disabled selected>Select Symptom...</option>
-                            <option>None</option>
-                            <option>Bloating</option>
-                            <option>Gas</option>
-                            <option>Abdominal pain</option>
-                            <option>Diarrhea</option>
-                            <option>Constipation</option>
-                            <option>Fatigue</option>
-                            <option>Headache</option>
-                            <option value="Other">Other</option>
-                        </select>
-                        <input type="text" id="log-symptom-other" placeholder="Describe other symptom" class="w-full p-2.5 border border-slate-300 rounded-lg hidden"> 
+                        <div>
+                            <label class="block mb-1.5 text-sm font-medium text-secondary">Symptoms</label>
+                            <div id="symptom-tags-container" class="flex flex-wrap gap-2">
+                                <!-- Predefined symptom tags will be injected here by JS -->
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block mb-1.5 text-sm font-medium text-secondary">Add Custom Symptom</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="custom-symptom-input" placeholder="e.g., Nausea" class="w-full p-2.5 border border-slate-300 rounded-lg">
+                                <button type="button" id="add-custom-symptom-btn" class="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-dark transition-colors duration-300 shadow">Add</button>
+                            </div>
+                            <div id="custom-symptom-tags-container" class="flex flex-wrap mt-2">
+                                <!-- Custom symptom tags will be injected here -->
+                            </div>
+                        </div> 
 
                         <div id="severity-section" class="hidden pt-1"> 
                             <label class="block mb-1 text-sm font-medium text-secondary">Severity</label> 
@@ -312,15 +446,13 @@
                     </form>
                 </div>
                  <div class="space-y-3 max-w-3xl mx-auto"> 
-                    <div class="flex flex-col sm:flex-row justify-between sm:items-center px-2 space-y-2 sm:space-y-0">
-                        <div class="flex-shrink-0">
-                             <h2 class="text-xl sm:text-2xl font-semibold text-secondary">🧾 Reintroduction Log</h2>
-                             <p class="text-sm text-subtle">Tap an entry to see details.</p>
-                        </div>
-                         <select id="log-filter" class="w-full sm:w-auto p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary bg-white">
-                         </select>
+                    <div class="px-2">
+                        <h2 class="text-xl sm:text-2xl font-semibold text-secondary">🧾 Reintroduction Log</h2>
+                        <p class="text-sm text-subtle">Tap a group to see entries.</p>
                     </div>
-                    <div id="log-entries" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"> 
+                    <!-- This is the new container for the accordions -->
+                    <div id="log-accordion-container" class="space-y-3">
+                        <!-- Accordion groups will be injected here -->
                     </div>
                  </div>
             </section>
@@ -331,11 +463,18 @@
                     <p class="text-subtle mb-4 text-sm">Your selections here will customize the AI Assistant's advice to your specific needs.</p> 
 
                     <form id="profile-form" class="space-y-4">
-                        <div>
-                            <h3 class="font-semibold text-secondary mb-1.5">API Key</h3> 
-                            <p class="text-xs text-subtle mb-1.5">Get your key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-primary underline">Google AI Studio</a>. This is saved only in your browser.</p>
-                            <input type="password" id="profile-api-key" placeholder="Enter your Google AI API Key" class="w-full p-2 border border-slate-300 rounded-lg"> 
-                        </div> 
+                        <!-- API Key Accordion -->
+                        <div id="api-key-accordion-container" class="api-key-accordion">
+                            <div class="api-key-header">
+                                <h3 class="font-semibold text-secondary">API Key</h3>
+                                <i class="fas fa-chevron-down api-key-icon"></i>
+                            </div>
+                            <div class="api-key-body">
+                                <!-- Text is now FIRST, and has a bottom margin (mb-2) -->
+                                <p class="text-xs text-subtle mb-2">Get your key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-primary underline">Google AI Studio</a>. This is saved only in your browser.</p> 
+                                <input type="password" id="profile-api-key" placeholder="Enter your Google AI API Key" class="w-full p-2 border border-slate-300 rounded-lg"> 
+                            </div>
+                        </div>
                         <div>
                             <h3 class="font-semibold text-secondary mb-1.5">Health Conditions</h3> 
                             <div id="profile-diagnoses" class="flex flex-wrap gap-2"> 
@@ -461,7 +600,7 @@
         </div>
     </div>
     
-    <button id="add-entry-fab" class="hidden fixed bottom-4 right-4 bg-primary text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-xl hover:bg-primary-dark transition-transform hover:scale-110 z-50"> 
+    <button id="add-entry-fab" class="hidden fixed bottom-4 right-4 bg-accent text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-xl hover:bg-accent-dark transition-transform hover:scale-110 z-50"> 
         <i class="fas fa-plus"></i>
     </button>
 
@@ -469,9 +608,9 @@
         document.addEventListener('DOMContentLoaded', () => {
 
              const FODMAP_GROUP_DATA = [ { value: "Fructose", name: "Fructose", examples: "(e.g., Honey, Mango)" }, { value: "Lactose", name: "Lactose", examples: "(e.g., Milk, Yogurt)" }, { value: "Fructans (Grains)", name: "Fructans - Grains", examples: "(e.g., Wheat, Rye)" }, { value: "Fructans (Veg & Fruit)", name: "Fructans - Veg & Fruit", examples: "(e.g., Onion, Garlic)" }, { value: "GOS", name: "Galactans (GOS)", examples: "(e.g., Beans, Lentils)" }, { value: "Polyols (Sorbitol)", name: "Polyols - Sorbitol", examples: "(e.g., Avocado, Blackberry)" }, { value: "Polyols (Mannitol)", name: "Polyols - Mannitol", examples: "(e.g., Cauliflower, Mushroom)" } ];
-             const SEVERITY_LEVELS = { 1: '😄', 2: '🙂', 3: '😐', 4: '😣', 5: '😫' };
              const FODMAP_STYLES = { "Fructose": { color: "bg-yellow-100 text-yellow-800", icon: "🍎" }, "Lactose": { color: "bg-blue-100 text-blue-800", icon: "🥛" }, "Fructans (Grains)": { color: "bg-orange-100 text-orange-800", icon: "🍞" }, "Fructans (Veg & Fruit)": { color: "bg-purple-100 text-purple-800", icon: "🧅" }, "GOS": { color: "bg-teal-100 text-teal-800", icon: "🫘" }, "Polyols (Sorbitol)": { color: "bg-green-100 text-green-800", icon: "🥑" }, "Polyols (Mannitol)": { color: "bg-indigo-100 text-indigo-800", icon: "🍄" } };
              const PROFILE_OPTIONS = { diagnoses: ["IMO", "SIBO", "IBS-D", "IBS-C", "IBS-M"], intolerances: ["Sorbitol", "Mannitol", "Lactose", "Fructose", "Gluten"], preferences: ["Vegetarian", "Vegan", "Pescatarian"] };
+             const SYMPTOM_OPTIONS = ["Bloating", "Gas", "Abdominal pain", "Diarrhea", "Constipation", "Fatigue", "Headache"];
 
             const pages = document.querySelectorAll('.page');
             const navItems = document.querySelectorAll('.nav-item');
@@ -479,6 +618,7 @@
             let logEntries = JSON.parse(localStorage.getItem('fodmapLogEntries')) || [];
             let userProfile = JSON.parse(localStorage.getItem('fodmapUserProfile')) || { diagnoses: [], intolerances: [], allergiesOther: '', preferences: [], apiKey: '' };            let currentFilter = 'All';
             let currentPageIndex = 0;
+            let currentlyEditingId = null;
 
             function navigateTo(pageId) {
                 const targetPage = document.getElementById(pageId);
@@ -555,6 +695,58 @@
                 return displayLines.join('<br>');
             };
 
+            const populateFormForEdit = (entry) => {
+                document.getElementById('log-date').value = entry.date;
+                document.getElementById('log-fodmap-group').value = entry.group;
+                document.getElementById('log-food').value = entry.food;
+                document.getElementById('log-dose').value = entry.dose;
+                document.getElementById('log-notes').value = entry.notes;
+
+                // --- Populate Symptoms ---
+                // 1. Reset all fields first
+                document.querySelectorAll('input[name="symptoms"]').forEach(cb => cb.checked = false);
+                const customTagsContainer = document.getElementById('custom-symptom-tags-container');
+                customTagsContainer.innerHTML = '';
+                
+                const symptoms = entry.symptoms || ['None'];
+                let hasSymptoms = false;
+
+                symptoms.forEach(symptom => {
+                    if (symptom === 'None') {
+                        document.getElementById('symptom-None').checked = true;
+                    } else {
+                        const predefined = document.getElementById(`symptom-${symptom}`);
+                        if (predefined) {
+                            predefined.checked = true; // Check the box
+                        } else {
+                            // It's a custom tag
+                            const tag = document.createElement('div');
+                            tag.className = 'custom-symptom-tag';
+                            tag.textContent = symptom;
+                            tag.innerHTML += `<button type="button" class="remove-tag-btn">&times;</button>`;
+                            customTagsContainer.appendChild(tag);
+                        }
+                        hasSymptoms = true;
+                    }
+                });
+                
+                // --- Populate Severity ---
+                const sevSect = document.getElementById('severity-section');
+                if (hasSymptoms) {
+                    sevSect.classList.remove('hidden');
+                    document.getElementById('log-severity-value').value = entry.severity;
+                    document.querySelectorAll('#log-severity .severity-btn').forEach(btn => {
+                        btn.classList.toggle('selected', btn.dataset.value == entry.severity);
+                    });
+                } else {
+                    sevSect.classList.add('hidden');
+                }
+
+                // --- Update UI ---
+                document.getElementById('log-form').querySelector('button[type="submit"]').textContent = 'Save Changes';
+                document.getElementById('add-log-entry-wrapper').scrollIntoView({ behavior: 'smooth' });
+            };
+
             const handleAIQuery = (prompt, title, imageData = null) => {
                  aiResultsLoader.classList.remove('hidden'); aiResultsContainer.classList.add('hidden'); aiResultsContent.innerHTML = '';
                  callGeminiAPI(prompt, imageData)
@@ -629,17 +821,57 @@
             const summaryContainer = document.getElementById('progress-summary');
             const renderHomePage = () => {
                 summaryContainer.innerHTML = '';
+                let itemsAdded = 0; 
+
                 FODMAP_GROUP_DATA.forEach(groupData => {
-                    const entries = logEntries.filter(entry => entry.group === groupData.value); const count = entries.length;
-                    let statusText, icon, color;
-                    if (count === 0) { statusText = "Not Started"; icon = "fa-times-circle"; color = "text-subtle"; } 
-                    else if (count >= 3) { statusText = `Completed (${count})`; icon = "fa-check-circle"; color = "text-accent"; } 
-                    else { statusText = `In Progress (${count})`; icon = "fa-spinner fa-spin"; color = "text-warning"; }
-                    const style = FODMAP_STYLES[groupData.value] || { icon: '❓' };
-                    const item = document.createElement('div'); item.className = 'progress-item bg-slate-100 rounded-lg transition-colors duration-300'; item.dataset.group = groupData.value;
-                    item.innerHTML = `<div class="progress-item-header flex items-center justify-between p-3 cursor-pointer hover:bg-slate-200 rounded-lg"><div class="flex items-center gap-2"><i class="fas fa-chevron-right expand-icon text-slate-400 transition-transform duration-300 text-xs"></i><div><p class="font-semibold text-secondary text-sm"><span class="mr-1">${style.icon}</span>${groupData.name}</p><p class="text-xs text-subtle">${groupData.examples.slice(1, -1)}</p></div></div><div class="flex items-center gap-1.5 ${color}"><i class="fas ${icon} text-xs"></i><span class="text-xs font-medium">${statusText}</span></div></div><div class="progress-item-body border-t border-slate-200">${ entries.length > 0 ? entries.sort((a,b) => new Date(b.date) - new Date(a.date)).map(e => { const sym = e.symptom === 'Other' ? e.otherSymptom : e.symptom; const sevE = SEVERITY_LEVELS[e.severity] || ''; const sevT = e.symptom !== 'None' && e.symptom !== '' ? `${sevE} ${e.severity}/5` : 'No Symptoms'; return `<p><strong>${new Date(e.date).toLocaleDateString('en-CA')}:</strong> ${e.food} (${e.dose}) - <em>${sym} ${sevT}</em></p>`}).join('') : '<p class="text-subtle italic p-3 text-xs">No entries.</p>' }</div>`;
-                    summaryContainer.appendChild(item);
+                    const entries = logEntries.filter(entry => entry.group === groupData.value); 
+                    const count = entries.length;
+                    
+                    if (count > 0) {
+                        itemsAdded++; 
+                        let statusText, icon, color;
+                        
+                        if (count >= 3) { 
+                            statusText = `Completed (${count})`; 
+                            icon = "fa-check-circle"; 
+                            color = "text-accent"; 
+                        } else { 
+                            statusText = `In Progress (${count})`; 
+                            icon = "fa-spinner fa-spin"; 
+                            color = "text-warning"; 
+                        }
+                        const style = FODMAP_STYLES[groupData.value] || { icon: '❓' };
+                        const item = document.createElement('div'); 
+                        item.className = 'progress-item bg-slate-100 rounded-lg transition-colors duration-300'; 
+                        item.dataset.group = groupData.value;
+                        
+                        // --- UPDATED INNERHTML for symptoms array ---
+                        item.innerHTML = `<div class="progress-item-header flex items-center justify-between p-3 cursor-pointer hover:bg-slate-200 rounded-lg"><div class="flex items-center gap-2"><i class="fas fa-chevron-right expand-icon text-slate-400 transition-transform duration-300 text-xs"></i><div><p class="font-semibold text-secondary text-sm"><span class="mr-1">${style.icon}</span>${groupData.name}</p><p class="text-xs text-subtle">${groupData.examples.slice(1, -1)}</p></div></div><div class="flex items-center gap-1.5 ${color}"><i class="fas ${icon} text-xs"></i><span class="text-xs font-medium">${statusText}</span></div></div><div class="progress-item-body border-t border-slate-200">${ entries.length > 0 ? entries.sort((a,b) => new Date(a.date) - new Date(b.date)).map(e => { 
+                            // --- START: UPDATED LOGIC ---
+                            const symptoms = e.symptoms || ['None']; 
+                            const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
+                            let symptomDisplay;
+
+                            if (hasSymptoms) {
+                                symptomDisplay = `${symptoms.join(', ')} (${e.severity}/5)`; // Added parentheses
+                            } else {
+                                symptomDisplay = 'No symptoms'; // Lowercase 's'
+                            }
+                            
+                            // Format date as "Oct 31, 25"
+                            const formattedDate = new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+
+                            // Return the new format
+                            return `<p><strong>${formattedDate}:</strong> ${e.food}, ${e.dose} - <em>${symptomDisplay}</em></p>`
+                            // --- END: UPDATED LOGIC ---
+                        }).join('') : '<p class="text-subtle italic p-3 text-xs">No entries.</p>' }</div>`;
+                        summaryContainer.appendChild(item);
+                    }
                 });
+
+                if (itemsAdded === 0) {
+                    summaryContainer.innerHTML = `<p class="text-center text-subtle italic text-sm p-4">Your progress will show here once you add your first log entry!</p>`;
+                }
             };
             summaryContainer.addEventListener('click', (e) => {
                 const header = e.target.closest('.progress-item-header'); if (header) { const item = header.parentElement; const expanded = item.classList.contains('expanded'); summaryContainer.querySelectorAll('.progress-item').forEach(i => i.classList.remove('expanded')); if (!expanded) item.classList.add('expanded'); }
@@ -652,77 +884,292 @@
             const otherSymptomInput = document.getElementById('log-symptom-other');
 
             const setupLogForm = () => {
-                const groupSel = document.getElementById('log-fodmap-group'); if (groupSel.options.length <= 1) FODMAP_GROUP_DATA.forEach(g => groupSel.innerHTML += `<option value="${g.value}">${g.name} ${g.examples}</option>`);
+                const groupSel = document.getElementById('log-fodmap-group'); 
+                if (groupSel.options.length <= 1) FODMAP_GROUP_DATA.forEach(g => groupSel.innerHTML += `<option value="${g.value}">${g.name} ${g.examples}</option>`);
+                
+                // --- Severity Button Setup (Unchanged) ---
                 const sevCont = document.getElementById('log-severity'); 
                 const sevSect = document.getElementById('severity-section'); 
                 const sevInput = document.getElementById('log-severity-value');
                 sevCont.innerHTML = ''; // Clear container
-
-                // Create the 5 buttons
                 for (let i = 1; i <= 5; i++) {
                     const btn = document.createElement('button');
-                    btn.type = 'button'; // Prevent form submission
-                    btn.className = 'severity-btn';
-                    btn.textContent = i;
-                    btn.dataset.value = i;
-                    if (i === 1) {
-                        btn.classList.add('selected'); // Select '1' by default
-                    }
+                    btn.type = 'button'; btn.className = 'severity-btn';
+                    btn.textContent = i; btn.dataset.value = i;
+                    if (i === 1) { btn.classList.add('selected'); }
                     sevCont.appendChild(btn);
                 }
+                sevCont.addEventListener('click', (e) => {
+                    const clickedButton = e.target.closest('.severity-btn');
+                    if (clickedButton) {
+                        sevCont.querySelectorAll('.severity-btn').forEach(btn => btn.classList.remove('selected'));
+                        clickedButton.classList.add('selected');
+                        sevInput.value = clickedButton.dataset.value;
+                    }
+                });
 
-                // Add event listener to the group
-                    sevCont.addEventListener('click', (e) => {
-                        const clickedButton = e.target.closest('.severity-btn');
-                        if (clickedButton) {
-                            // Remove 'selected' from all buttons
-                            sevCont.querySelectorAll('.severity-btn').forEach(btn => btn.classList.remove('selected'));
-                            // Add 'selected' to the clicked button
-                            clickedButton.classList.add('selected');
-                            // Update the hidden input
-                            sevInput.value = clickedButton.dataset.value;
-                        }
-                    });
-                                    symptomSelector.addEventListener('change', () => { const val = symptomSelector.value; otherSymptomInput.classList.toggle('hidden', val !== 'Other'); sevSect.classList.toggle('hidden', val === '' || val === 'None'); });
+                // --- NEW: Symptom Tag Setup ---
+                const symptomTagsContainer = document.getElementById('symptom-tags-container');
+                symptomTagsContainer.innerHTML = ''; // Clear container
+
+                // Add a "None" tag first
+                symptomTagsContainer.innerHTML += `<div class=inline-block><input type=checkbox id="symptom-None" value="None" name="symptoms" class="profile-checkbox hidden"><label for="symptom-None" class="cursor-pointer border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted duration-200">None</label></div>`;
+
+                // Add predefined symptom tags
+                SYMPTOM_OPTIONS.forEach(symptom => {
+                    symptomTagsContainer.innerHTML += `<div class=inline-block><input type=checkbox id="symptom-${symptom}" value="${symptom}" name="symptoms" class="profile-checkbox hidden"><label for="symptom-${symptom}" class="cursor-pointer border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted duration-200">${symptom}</label></div>`;
+                });
+
+                const customSymptomInput = document.getElementById('custom-symptom-input');
+                const addCustomSymptomBtn = document.getElementById('add-custom-symptom-btn');
+                const customSymptomTagsContainer = document.getElementById('custom-symptom-tags-container');
+
+                const addCustomTag = () => {
+                    const symptom = customSymptomInput.value.trim();
+                    if (symptom) {
+                        const tag = document.createElement('div');
+                        tag.className = 'custom-symptom-tag';
+                        tag.textContent = symptom;
+                        tag.innerHTML += `<button type="button" class="remove-tag-btn">&times;</button>`;
+                        customSymptomTagsContainer.appendChild(tag);
+                        customSymptomInput.value = '';
+                        updateSeverityVisibility();
+                    }
                 };
-            
-            const populateFilter = () => { logFilter.innerHTML = `<option value=All>All Groups</option>`; FODMAP_GROUP_DATA.forEach(g => logFilter.innerHTML += `<option value="${g.value}">${g.name}</option>`); };
-            logFilter.addEventListener('change', (e) => { currentFilter = e.target.value; renderLogEntries(); });
 
-            const renderLogEntries = () => {
-                logEntriesContainer.innerHTML = ''; const filtered = logEntries.filter(e => currentFilter === 'All' || e.group === currentFilter);
-                if (filtered.length === 0) { logEntriesContainer.innerHTML = `<p class="text-subtle text-center py-6 bg-white rounded-lg shadow-sm col-span-full text-sm">No logs.</p>`; return; }
-                filtered.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach((entry) => {
-                    const idx = logEntries.findIndex(i => i.id === entry.id); const div = document.createElement('div'); div.className = 'log-item bg-white rounded-lg shadow-sm border border-slate-200 duration-300';
-                    const style = FODMAP_STYLES[entry.group] || { color: 'bg-slate-100', icon: '❓' }; const info = FODMAP_GROUP_DATA.find(g => g.value === entry.group); const name = info ? info.name : entry.group;
-                    const sym = entry.symptom === 'Other' ? entry.otherSymptom : entry.symptom; const sevE = SEVERITY_LEVELS[entry.severity] || ''; const sevT = entry.symptom !== 'None' && entry.symptom !== '' ? `${sevE} ${entry.severity}/5` : 'No Symptoms';
-                    div.innerHTML = `<div class="log-item-header p-3 cursor-pointer"><div class="flex justify-between items-start mb-1"><div class="flex items-center gap-2"><i class="fas fa-chevron-right expand-icon text-slate-400 duration-300 text-xs"></i><div><p class="font-bold text-secondary text-sm">${entry.food}</p><p class="text-xs text-subtle">${new Date(entry.date).toLocaleDateString('en-CA')}</p></div></div><span class="text-xs font-semibold px-1.5 py-0.5 rounded-full ${style.color}">${style.icon} ${name.split(' ')[0]}</span></div><div class="flex justify-end items-end"><span class="text-xs font-semibold text-right">${sym} ${sevT}</span></div></div><div class="log-item-body border-t border-slate-100"><div class="space-y-1.5 text-xs text-muted"><p><strong>Dose:</strong> ${entry.dose}</p>${entry.symptom === 'Other' ? `<p><strong>Detail:</strong> ${entry.otherSymptom}</p>` : ''}${entry.notes ? `<p><strong>Notes:</strong> ${entry.notes}</p>` : ''}<div class="pt-1.5 text-right"><button class="delete-entry-btn text-error hover:text-error-dark font-semibold py-0.5 px-1.5 rounded text-xs" data-index=${idx}><i class="fas fa-trash-alt mr-1"></i>Del</button></div></div></div>`;
-                    logEntriesContainer.appendChild(div);
+                addCustomSymptomBtn.addEventListener('click', addCustomTag);
+                customSymptomInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addCustomTag();
+                    }
+                });
+
+                customSymptomTagsContainer.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('remove-tag-btn')) {
+                        e.target.parentElement.remove();
+                        updateSeverityVisibility();
+                    }
+                });
+
+                const updateSeverityVisibility = () => {
+                    const hasPredefined = document.querySelectorAll('input[name="symptoms"]:checked').length > 0;
+                    const hasCustom = customSymptomTagsContainer.children.length > 0;
+                    const isNoneSelected = document.getElementById('symptom-None').checked;
+                    
+                    sevSect.classList.toggle('hidden', (!hasPredefined && !hasCustom) || isNoneSelected);
+                };
+
+                symptomTagsContainer.addEventListener('change', (e) => {
+                    const noneCheckbox = document.getElementById('symptom-None');
+                    // If "None" is checked, uncheck all others
+                    if (e.target.value === 'None' && e.target.checked) {
+                        document.querySelectorAll('input[name="symptoms"]:checked').forEach(cb => {
+                            if (cb.value !== 'None') cb.checked = false;
+                        });
+                        // Clear custom tags
+                        customSymptomTagsContainer.innerHTML = '';
+                    } 
+                    // If another tag is checked, uncheck "None"
+                    else if (e.target.value !== 'None' && e.target.checked) {
+                        noneCheckbox.checked = false;
+                    }
+                    updateSeverityVisibility();
                 });
             };
             
-            logEntriesContainer.addEventListener('click', (e) => {
-                const header = e.target.closest('.log-item-header'); if (header) { header.parentElement.classList.toggle('expanded'); return; }
-                const delBtn = e.target.closest('.delete-entry-btn'); if(delBtn) { logEntries.splice(parseInt(delBtn.dataset.index), 1); saveLogEntries(); showToast("Deleted."); }
+            const renderLogEntries = () => {
+                const accordionContainer = document.getElementById('log-accordion-container');
+                accordionContainer.innerHTML = '';
+                let groupsWithEntries = 0;
+
+                FODMAP_GROUP_DATA.forEach(groupData => {
+                    const entriesForGroup = logEntries
+                        .filter(entry => entry.group === groupData.value)
+                        .sort((a, b) => new Date(b.date) - new Date(a.date)); 
+
+                    if (entriesForGroup.length > 0) {
+                        groupsWithEntries++;
+                        const style = FODMAP_STYLES[groupData.value] || { icon: '❓' };
+                        
+                        const groupDiv = document.createElement('div');
+                        groupDiv.className = 'accordion-group';
+                        
+                        const header = document.createElement('div');
+                        header.className = 'accordion-header';
+                        header.innerHTML = `
+                            <h3>${style.icon} ${groupData.name} (${entriesForGroup.length})</h3>
+                            <i class="fas fa-chevron-down accordion-icon"></i>
+                        `;
+                        
+                        const body = document.createElement('div');
+                        body.className = 'accordion-body';
+                        
+                        entriesForGroup.forEach(entry => {
+                            let symptomText;
+                            let severityText = '';
+                            let noteText = ''; 
+
+                            // --- NEW LOGIC for symptoms array ---
+                            const symptoms = entry.symptoms || ['None']; // Fallback for old data
+                            const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
+
+                            if (hasSymptoms) {
+                                symptomText = `Symptoms: <strong>${symptoms.join(', ')}</strong>`;
+                                severityText = `<div>Severity: <strong>${entry.severity}/5</strong></div>`;
+                            } else {
+                                symptomText = 'Symptoms: <strong>None</strong>';
+                            }
+                            // --- END NEW LOGIC ---
+
+                            const trimmedNote = entry.notes ? entry.notes.trim() : '';
+                            if (trimmedNote !== '' && trimmedNote.toLowerCase() !== 'no notes') {
+                                noteText = `<div style="margin-top: 0.25rem;">Note: <em>${entry.notes.replace(/\n/g, '<br>')}</em></div>`;
+                            }
+
+                            const entryDiv = document.createElement('div');
+                            entryDiv.className = 'accordion-entry';
+                            
+                            entryDiv.innerHTML = `
+                                <div class="entry-header flex justify-between items-start">
+                                    <!-- Left Side: Food/Dose -->
+                                    <p class="font-semibold text-secondary text-sm">${entry.food}, ${entry.dose}</p>
+                                    
+                                    <!-- Right Side: Date -->
+                                    <span class="text-xs text-subtle flex-shrink-0 ml-2">${new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                </div>
+
+                                <!-- Flex container to align details and actions -->
+                                <!-- We removed all padding-top to kill the extra line -->
+                                <div class="flex justify-between items-end">
+                                    <!-- Details: Symptoms and Notes -->
+                                    <div class="entry-details">
+                                        <div>${symptomText}</div>
+                                        ${severityText}
+                                        ${noteText}
+                                    </div>
+
+                                    <!-- Actions: Edit and Delete Icons -->
+                                    <div class="entry-actions text-right flex-shrink-0 ml-2">
+                                        <button class="edit-entry-btn text-accent hover:text-accent-dark text-xs p-1 rounded" data-id="${entry.id}">
+                                            <i class="fas fa-pen-to-square"></i>
+                                        </button>
+                                        <button class="delete-entry-btn text-error hover:text-error-dark text-xs p-1 rounded" data-id="${entry.id}">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            body.appendChild(entryDiv);
+                        });
+
+                        groupDiv.appendChild(header);
+                        groupDiv.appendChild(body);
+                        accordionContainer.appendChild(groupDiv);
+                    }
+                });
+
+                if (groupsWithEntries === 0) {
+                    accordionContainer.innerHTML = `<p class="text-subtle text-center py-6 bg-white rounded-lg shadow-sm col-span-full text-sm">No log entries yet. Add one above!</p>`;
+                }
+            };
+
+            // Event listener for accordion (Expand, Edit, Delete)
+            document.getElementById('log-accordion-container').addEventListener('click', (e) => {
+                const header = e.target.closest('.accordion-header');
+                const deleteBtn = e.target.closest('.delete-entry-btn');
+                const editBtn = e.target.closest('.edit-entry-btn');
+
+                if (editBtn) {
+                    // --- HANDLE EDIT ---
+                    const entryId = parseInt(editBtn.dataset.id);
+                    const entryToEdit = logEntries.find(entry => entry.id === entryId);
+                    if (entryToEdit) {
+                        currentlyEditingId = entryId; // Set global edit state
+                        populateFormForEdit(entryToEdit);
+                    }
+                } else if (deleteBtn) {
+                    // --- HANDLE DELETE ---
+                    const entryId = parseInt(deleteBtn.dataset.id);
+                    logEntries = logEntries.filter(entry => entry.id !== entryId);
+                    saveLogEntries(); // Re-render and save
+                    showToast("Entry deleted.");
+                } else if (header) {
+                    // --- HANDLE EXPAND ---
+                    header.parentElement.classList.toggle('expanded');
+                }
             });
 
             const saveLogEntries = () => { localStorage.setItem('fodmapLogEntries', JSON.stringify(logEntries)); renderLogEntries(); renderHomePage(); };
 
             logForm.addEventListener('submit', (e) => {
-            e.preventDefault(); const sev = document.getElementById('log-severity-value'); const symVal = symptomSelector.value;
-                const entry = { id: Date.now(), date: document.getElementById('log-date').value, group: document.getElementById('log-fodmap-group').value, food: document.getElementById('log-food').value, dose: document.getElementById('log-dose').value, symptom: symVal, otherSymptom: symVal === 'Other' ? otherSymptomInput.value : '', severity: (symVal !== 'None' && symVal !== '') ? sev.value : '1', notes: document.getElementById('log-notes').value };
-                logEntries.push(entry); saveLogEntries(); logForm.reset(); document.getElementById('log-date').valueAsDate = new Date(); otherSymptomInput.classList.add('hidden'); document.getElementById('severity-section').classList.add('hidden'); 
+                e.preventDefault(); 
+                const sev = document.getElementById('log-severity-value');
+                
+                // Get predefined symptoms
+                let selectedSymptoms = Array.from(document.querySelectorAll('input[name="symptoms"]:checked')).map(el => el.value);
+                
+                // Get custom symptoms
+                const customSymptoms = Array.from(document.querySelectorAll('.custom-symptom-tag')).map(tag => tag.firstChild.textContent);
+                
+                // Combine lists
+                let allSymptoms = [...selectedSymptoms, ...customSymptoms];
+
+                // If "None" is selected or list is empty, just use "None"
+                if (allSymptoms.includes('None') || allSymptoms.length === 0) {
+                    allSymptoms = ['None'];
+                }
+
+                const entryData = { 
+                    date: document.getElementById('log-date').value, 
+                    group: document.getElementById('log-fodmap-group').value, 
+                    food: document.getElementById('log-food').value, 
+                    dose: document.getElementById('log-dose').value, 
+                    symptoms: allSymptoms, // Save the new array
+                    severity: allSymptoms.includes('None') ? '1' : sev.value, // Save severity, or 1 if "None"
+                    notes: document.getElementById('log-notes').value 
+                };
+
+                if (currentlyEditingId) {
+                    // --- UPDATE EXISTING ENTRY ---
+                    const index = logEntries.findIndex(entry => entry.id === currentlyEditingId);
+                    if (index !== -1) {
+                        logEntries[index] = { ...entryData, id: currentlyEditingId }; // Keep original ID
+                    }
+                    currentlyEditingId = null; // Reset edit state
+                    showToast("Entry updated!");
+                } else {
+                    // --- ADD NEW ENTRY ---
+                    const newEntry = { ...entryData, id: Date.now() };
+                    logEntries.push(newEntry); 
+                    showToast("Added!");
+                }
+
+                saveLogEntries(); 
+                logForm.reset(); 
+                
+                // --- Reset all form fields ---
+                document.getElementById('log-date').valueAsDate = new Date(); 
+                document.getElementById('custom-symptom-tags-container').innerHTML = '';
+                document.querySelectorAll('input[name="symptoms"]').forEach(cb => cb.checked = false);
+                document.getElementById('severity-section').classList.add('hidden'); 
+                document.getElementById('log-form').querySelector('button[type="submit"]').textContent = 'Add Entry'; // Reset button text
                 
                 // Reset severity button group
                 document.getElementById('log-severity-value').value = '1';
                 document.querySelectorAll('#log-severity .severity-btn').forEach(btn => {
                     btn.classList.toggle('selected', btn.dataset.value === '1');
                 });
-                
-                showToast("Added!");
             });
-
+            
             const profileForm = document.getElementById('profile-form');
+            // Add click listener for the new API Key accordion
+            profileForm.addEventListener('click', (e) => {
+                const header = e.target.closest('.api-key-header');
+                if (header) {
+                    header.parentElement.classList.toggle('expanded');
+                }
+            });
             const createCheckbox = (id, val, name, checked) => `<div class=inline-block><input type=checkbox id=${id} value="${val}" name=${name} class="profile-checkbox hidden" ${checked?'checked':''}><label for=${id} class="cursor-pointer border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted duration-200">${val}</label></div>`;
 
             const setupProfilePage = () => {
@@ -731,6 +1178,11 @@
                 document.getElementById('profile-preferences').innerHTML = PROFILE_OPTIONS.preferences.map(i => createCheckbox(`pref-${i}`, i, 'preferences', userProfile.preferences.includes(i))).join('');
                 document.getElementById('profile-allergies-other').value = userProfile.allergiesOther || '';
                 document.getElementById('profile-api-key').value = userProfile.apiKey || '';
+
+                // Smart-open the API key section if the key is missing
+                if (!userProfile.apiKey) {
+                    document.getElementById('api-key-accordion-container').classList.add('expanded');
+                }
             };
 
             profileForm.addEventListener('submit', (e) => {
@@ -853,7 +1305,7 @@ Use this exact template:
                     document.body.style.paddingTop = `${headerHeight + navHeight}px`; // Set body padding
                 } 
             };
-            navigateTo('home'); setupLogForm(); populateFilter(); renderLogEntries(); renderHomePage(); setupProfilePage(); document.getElementById('log-date').valueAsDate = new Date(); calculatePadding(); window.addEventListener('resize', calculatePadding);
+            navigateTo('home'); setupLogForm(); renderLogEntries(); renderHomePage(); setupProfilePage(); document.getElementById('log-date').valueAsDate = new Date(); calculatePadding(); window.addEventListener('resize', calculatePadding);
 
             // --- Swipe Navigation ---
             const mainContent = document.getElementById('content');
