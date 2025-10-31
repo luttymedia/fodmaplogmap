@@ -6,25 +6,40 @@
     <title>FODMAP LOGMAP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-          --color-primary: #2d61a0;
-          --color-primary-dark: #224978; /* Darker shade for hover */
-          --color-secondary: #283b6c;
-          --color-accent: #8bb744;
-          --color-accent-dark: #6a8e32; /* Darker shade for hover */
+          /* New Wellness Palette */
+          --color-pastel-blue: #A8C5E5;
+          --color-pastel-blue-dark: #8BAFD4; /* Hover */
+          --color-pastel-green: #C5E0A5;
+          --color-pastel-green-dark: #B0D684; /* Hover */
+          --color-text-on-pastel: #283b6c; /* Dark text for accessibility */
+          
+          /* Tints for selected tags */
+          --color-tag-bg: #f1f5f9; /* slate-100 */
+          --color-tag-bg-selected: #EAF0F7; /* Light blue tint */
+          --color-tag-text-selected: #2d61a0; /* Original primary blue for text */
+          
+          /* Old colors (now for text/specifics) */
+          --color-primary-text: #2d61a0; /* Original light blue */
+          --color-secondary-text: #283b6c; /* Original dark blue */
+          --color-accent-text: #8bb744; /* Original green */
+          
+          /* Semantic Colors (Unchanged) */
           --color-error: #dc2626;
           --color-error-dark: #b91c1c;
           --color-warning: #f59e0b;
           
-          --color-text-base: #283b6c; /* Replaces text-slate-800 */
-          --color-text-muted: #475569; /* Unchanged text-slate-600 */
-          --color-text-subtle: #64748b; /* Unchanged text-slate-500 */
+          /* Base Text Colors (Text on white) */
+          --color-text-base: #283b6c; 
+          --color-text-muted: #475569;
+          --color-text-subtle: #64748b;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 500;
             /* Fallback padding-top, JS will correct this */
             padding-top: 100px; 
             overscroll-behavior-x: none; /* Prevent browser back/forward swipe */
@@ -70,10 +85,17 @@
         .log-item.expanded .log-item-header .expand-icon, .progress-item.expanded .progress-item-header .expand-icon {
             transform: rotate(90deg);
         }
+        .profile-checkbox + label {
+            border-radius: 9999px;
+            background-color: var(--color-tag-bg);
+            border-color: var(--color-tag-bg);
+            font-weight: 600;
+        }
         .profile-checkbox:checked + label {
-            background-color: #eaf0f7; /* Lighter primary */
-            border-color: var(--color-primary); 
-            color: var(--color-primary-dark); 
+            background-color: var(--color-tag-bg-selected); 
+            border-color: var(--color-tag-text-selected); 
+            color: var(--color-tag-text-selected); 
+            border-radius: 9999px;
         }
         #side-menu-modal { transition: transform 0.3s ease-in-out; }
         #side-menu-modal.hidden { transform: translateX(-100%); }
@@ -105,29 +127,39 @@
         .log-item-header, .progress-item-header { padding: 0.75rem; }
 
         /* New Utility Classes */
-        .text-primary { color: var(--color-primary); }
-        .text-secondary { color: var(--color-secondary); }
-        .text-accent { color: var(--color-accent); }
+        .text-primary { color: var(--color-primary-text); }
+        .text-secondary { color: var(--color-secondary-text); }
+        .text-accent { color: var(--color-accent-text); }
         .text-error { color: var(--color-error); }
         .text-warning { color: var(--color-warning); }
         .text-muted { color: var(--color-text-muted); }
         .text-subtle { color: var(--color-text-subtle); }
 
-        .bg-primary { background-color: var(--color-primary); }
-        .hover\:bg-primary-dark:hover { background-color: var(--color-primary-dark); }
+        .bg-primary { 
+            background-color: var(--color-pastel-blue); 
+            color: var(--color-text-on-pastel);
+            font-weight: 700;
+        }
+        .hover\:bg-primary-dark:hover { 
+            background-color: var(--color-pastel-blue-dark); 
+            color: var(--color-text-on-pastel);
+        }
         
-        .bg-accent { background-color: var(--color-accent); }
-        .hover\:bg-accent-dark:hover { background-color: var(--color-accent-dark); }
+        .bg-accent { 
+            background-color: var(--color-pastel-green); 
+            color: var(--color-text-on-pastel);
+            font-weight: 700;
+        }
+        .hover\:bg-accent-dark:hover { 
+            background-color: var(--color-pastel-green-dark); 
+            color: var(--color-text-on-pastel);
+        }
         
         .bg-error { background-color: var(--color-error); }
         .hover\:bg-error-dark:hover { background-color: var(--color-error-dark); }
 
-        .border-primary { border-color: var(--color-primary); }
-        .focus\:ring-primary:focus { box-shadow: 0 0 0 2px var(--color-primary); } /* Replaced focus:ring-blue-700 */
-        .focus\:border-primary:focus { border-color: var(--color-primary); }
-
-        .hover\:text-primary:hover { color: var(--color-primary); }
-        .hover\:text-error-dark:hover { color: var(--color-error-dark); }
+        .border-primary { border-color: var(--color-primary-text); }
+        .focus\:ring-primary:focus { box-shadow: 0 0 0 2px var(--color-pastel-blue); }
 
         /* FODMAP Group cards in Info Modal */
         #info-modal-content .border-l-blue-400 { border-color: #60a5fa; }
@@ -148,7 +180,7 @@
         /* Styles for Severity Button Group */
         .severity-btn-group {
             display: flex;
-            border-radius: 0.5rem; /* rounded-lg */
+            border-radius: 9999px; /* rounded-full */
             overflow: hidden;
             border: 1px solid #cbd5e1; /* border-slate-300 */
         }
@@ -172,17 +204,18 @@
             background-color: #e2e8f0; /* bg-slate-200 */
         }
         .severity-btn.selected {
-            background-color: var(--color-primary);
-            color: white;
-            border-color: var(--color-primary-dark);
+            background-color: var(--color-pastel-blue);
+            color: var(--color-text-on-pastel);
+            font-weight: 700;
+            border-color: var(--color-pastel-blue-dark);
         }
 
         /* Styles for Log Accordion */
         .accordion-group {
             background-color: #fff;
-            border-radius: 0.75rem; /* rounded-xl */
+            border-radius: 1rem; /* rounded-2xl */
             box-shadow: 0 1px 3px rgba(0,0,0,0.07);
-            border: 1px solid #e2e8f0; /* border-slate-200 */
+            border: none;
             overflow: hidden;
             margin-bottom: 0.75rem; /* space-y-3 */
         }
@@ -248,17 +281,18 @@
         .custom-symptom-tag {
             display: inline-flex;
             align-items: center;
-            background-color: #e0e7ff; /* indigo-100 */
-            color: #3730a3; /* indigo-800 */
+            background-color: var(--color-tag-bg-selected);
+            color: var(--color-tag-text-selected);
+            border: 1px solid var(--color-tag-text-selected);
             border-radius: 9999px; /* rounded-full */
             padding: 0.25rem 0.75rem; /* py-1 px-3 */
             font-size: 0.75rem; /* text-xs */
-            font-weight: 500; /* font-medium */
+            font-weight: 600;
             margin: 0.25rem; /* m-1 */
         }
         .custom-symptom-tag .remove-tag-btn {
             margin-left: 0.5rem; /* ml-2 */
-            color: #4338ca; /* indigo-700 */
+            color: var(--color-tag-text-selected);
             cursor: pointer;
             background: none;
             border: none;
@@ -271,8 +305,8 @@
 
         /* Styles for API Key Accordion */
         .api-key-accordion {
-            border: 1px solid #e2e8f0; /* border-slate-200 */
-            border-radius: 0.5rem; /* rounded-lg */
+            border: none;
+            border-radius: 1rem; /* rounded-2xl */
             background-color: #f8fafc; /* bg-slate-50 */
             overflow: hidden;
         }
@@ -303,7 +337,7 @@
         }
         .api-key-accordion.expanded .api-key-body {
             max-height: 500px; /* Adjust as needed */
-            padding-top: 0.25rem; /* Add vertical padding ONLY when expanded */
+            padding-top: 0.5rem; /* Increased top padding */
             padding-bottom: 0.75rem; /* Add vertical padding ONLY when expanded */
         }
     </style>
@@ -314,7 +348,7 @@
 
     <div id="app" class="max-w-7xl mx-auto p-2 sm:p-4">
         <header class="fixed top-0 left-0 right-0 z-20 bg-slate-50/90 backdrop-blur-sm px-2 sm:px-4 py-2 flex items-center justify-between border-b border-slate-200">
-             <button id="hamburger-btn" class="text-muted hover:text-primary text-2xl w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-100">
+             <button id="hamburger-btn" class="text-muted hover:text-primary text-2xl w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100">
                 <i class="fas fa-bars"></i>
             </button>
              <div class="flex flex-col items-center">
@@ -323,7 +357,7 @@
              <div class="w-10"></div> 
         </header>
 
-        <nav id="main-nav" class="fixed left-0 right-0 z-10 flex justify-center border-b border-slate-200 bg-white rounded-b-lg shadow-sm max-w-3xl mx-auto">
+        <nav id="main-nav" class="fixed left-0 right-0 z-10 flex justify-center border-b border-slate-200 bg-white rounded-b-2xl shadow-sm max-w-3xl mx-auto">
             <button data-page="home" class="nav-item flex-1 text-center px-2 sm:px-4 text-muted transition-colors duration-300 ease-in-out hover:bg-slate-100 rounded-bl-lg text-xs sm:text-base">
                 <i class="fas fa-home-alt sm:mr-2"></i><span class="hidden sm:inline">Home</span>
             </button>
@@ -340,17 +374,17 @@
 
         <main id="content"> 
             <section id="home" class="page hidden max-w-3xl mx-auto">
-                <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
                     <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary">📈 Reintroduction Progress</h2>
                     <div id="progress-summary" class="space-y-2"> 
                     </div>
                 </div>
-                 <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                 <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
                     <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center">
                         <i class="fas fa-magic-sparkles text-warning mr-2"></i> 💡 AI Insights
                     </h2>
                     <div class="space-y-3"> 
-                        <button id="summarize-journey-btn" class="w-full bg-primary text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-primary-dark transition-colors duration-300 shadow flex items-center justify-center gap-2"> 
+                        <button id="summarize-journey-btn" class="w-full bg-accent  font-semibold py-2.5 px-4 rounded-full hover:bg-accent-dark transition-colors duration-300 shadow flex items-center justify-center gap-2"> 
                             ✨ Summarize My Journey
                         </button>
                          <p class="text-xs text-slate-400 text-center">Get an AI-powered summary of your reintroduction log to spot potential patterns.</p>
@@ -359,13 +393,13 @@
             </section>
 
             <section id="food-info" class="page hidden max-w-3xl mx-auto">
-                <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
                     <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center">🧠 AI Food Assistant</h2>
                      <p class="text-subtle mb-3 text-sm">Get instant FODMAP info for any food or ingredient list based on your profile. This is not medical advice.</p>
                     
                     <div class="flex gap-2 mb-3">
-                        <input type="text" id="ai-food-search-input" placeholder="e.g., 'avocado' or 'cashews'" class="w-full pl-4 pr-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"> 
-                        <button id="ai-text-search-btn" class="bg-primary text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-primary-dark transition-colors duration-300 shadow">Search</button> 
+                        <input type="text" id="ai-food-search-input" placeholder="e.g., 'avocado' or 'cashews'" class="w-full pl-4 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition"> 
+                        <button id="ai-text-search-btn" class="bg-primary  font-semibold py-2.5 px-4 rounded-full hover:bg-primary-dark transition-colors duration-300 shadow">Search</button> 
                     </div>
 
                     <div class="text-center my-3"><span class="text-slate-400 text-sm">OR</span></div>
@@ -378,10 +412,10 @@
                         <input type="file" id="camera-upload-input" class="hidden" accept="image/*" capture="environment">
                         
                         <div class="flex flex-col sm:flex-row gap-2 justify-center"> 
-                            <button id="upload-image-btn" class="flex-1 bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-dark transition-colors duration-300 shadow flex items-center justify-center gap-2">
+                            <button id="upload-image-btn" class="flex-1 bg-primary  font-semibold py-2 px-4 rounded-full hover:bg-primary-dark transition-colors duration-300 shadow flex items-center justify-center gap-2">
                                 <i class="fas fa-images mr-2"></i> Choose from Gallery
                             </button>
-                            <button id="take-photo-btn" class="flex-1 bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-dark transition-colors duration-300 shadow flex items-center justify-center gap-2">
+                            <button id="take-photo-btn" class="flex-1 bg-primary  font-semibold py-2 px-4 rounded-full hover:bg-primary-dark transition-colors duration-300 shadow flex items-center justify-center gap-2">
                                 <i class="fas fa-camera mr-2"></i> Take Photo
                             </button>
                         </div>
@@ -396,21 +430,21 @@
             </section>
 
             <section id="reintroduction-log" class="page hidden">
-                <div id="add-log-entry-wrapper" class="bg-white p-4 sm:p-6 rounded-xl shadow-md mb-4 max-w-3xl mx-auto"> 
+                <div id="add-log-entry-wrapper" class="bg-white p-4 sm:p-6 rounded-2xl shadow-md mb-4 max-w-3xl mx-auto"> 
                     <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary">✏️ Add Log Entry</h2>
                     <form id="log-form" class="space-y-3"> 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3"> 
-                            <input type="date" id="log-date" class="w-full p-2.5 border border-slate-300 rounded-lg" required> 
-                             <select id="log-fodmap-group" class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary" required> 
+                            <input type="date" id="log-date" class="w-full p-2.5 border border-slate-300 rounded-xl" required> 
+                             <select id="log-fodmap-group" class="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary" required> 
                                  <option value="" disabled selected>Select FODMAP Group...</option>
                              </select>
                         </div>
-                        <button type="button" id="plan-challenge-btn" class="w-full bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-dark transition-colors duration-300 shadow flex items-center justify-center gap-2">
+                        <button type="button" id="plan-challenge-btn" class="w-full bg-accent  font-semibold py-2 px-4 rounded-full hover:bg-accent-dark transition-colors duration-300 shadow flex items-center justify-center gap-2">
                            ✨ Plan My Challenge
                         </button>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3"> 
-                            <input type="text" id="log-food" placeholder="Food Name" class="w-full p-2.5 border border-slate-300 rounded-lg" required> 
-                            <input type="text" id="log-dose" placeholder="Dose" class="w-full p-2.5 border border-slate-300 rounded-lg" required> 
+                            <input type="text" id="log-food" placeholder="Food Name" class="w-full p-2.5 border border-slate-300 rounded-xl" required> 
+                            <input type="text" id="log-dose" placeholder="Dose" class="w-full p-2.5 border border-slate-300 rounded-xl" required> 
                         </div>
                         
                         <div>
@@ -423,8 +457,8 @@
                         <div>
                             <label class="block mb-1.5 text-sm font-medium text-secondary">Add Custom Symptom</label>
                             <div class="flex gap-2">
-                                <input type="text" id="custom-symptom-input" placeholder="e.g., Nausea" class="w-full p-2.5 border border-slate-300 rounded-lg">
-                                <button type="button" id="add-custom-symptom-btn" class="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-dark transition-colors duration-300 shadow">Add</button>
+                                <input type="text" id="custom-symptom-input" placeholder="e.g., Nausea" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                                <button type="button" id="add-custom-symptom-btn" class="bg-primary  font-semibold py-2 px-4 rounded-full hover:bg-primary-dark transition-colors duration-300 shadow">Add</button>
                             </div>
                             <div id="custom-symptom-tags-container" class="flex flex-wrap mt-2">
                                 <!-- Custom symptom tags will be injected here -->
@@ -441,8 +475,8 @@
                             <input type="hidden" id="log-severity-value" value="1">
                         </div>
 
-                        <textarea id="log-notes" rows="2" placeholder="Additional Notes (optional)" class="w-full p-2.5 border border-slate-300 rounded-lg"></textarea> 
-                        <button type="submit" class="w-full bg-primary text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-primary-dark transition-colors duration-300 shadow">Add Entry</button> 
+                        <textarea id="log-notes" rows="2" placeholder="Additional Notes (optional)" class="w-full p-2.5 border border-slate-300 rounded-xl"></textarea> 
+                        <button type="submit" class="w-full bg-primary  font-semibold py-2.5 px-4 rounded-full hover:bg-primary-dark transition-colors duration-300 shadow">Add Entry</button> 
                     </form>
                 </div>
                  <div class="space-y-3 max-w-3xl mx-auto"> 
@@ -458,7 +492,7 @@
             </section>
             
             <section id="profile" class="page hidden max-w-3xl mx-auto">
-                 <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                 <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
                     <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center">👤 Personalize Your Profile</h2>
                     <p class="text-subtle mb-4 text-sm">Your selections here will customize the AI Assistant's advice to your specific needs.</p> 
 
@@ -472,7 +506,7 @@
                             <div class="api-key-body">
                                 <!-- Text is now FIRST, and has a bottom margin (mb-2) -->
                                 <p class="text-xs text-subtle mb-2">Get your key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-primary underline">Google AI Studio</a>. This is saved only in your browser.</p> 
-                                <input type="password" id="profile-api-key" placeholder="Enter your Google AI API Key" class="w-full p-2 border border-slate-300 rounded-lg"> 
+                                <input type="password" id="profile-api-key" placeholder="Enter your Google AI API Key" class="w-full p-2 border border-slate-300 rounded-xl"> 
                             </div>
                         </div>
                         <div>
@@ -485,7 +519,7 @@
                             <h3 class="font-semibold text-secondary mb-1.5">Intolerances & Allergies</h3> 
                             <div id="profile-intolerances" class="flex flex-wrap gap-2"> 
                             </div>
-                            <input type="text" id="profile-allergies-other" placeholder="List other allergies (comma separated)" class="mt-2 w-full p-2 border border-slate-300 rounded-lg"> 
+                            <input type="text" id="profile-allergies-other" placeholder="List other allergies (comma separated)" class="mt-2 w-full p-2 border border-slate-300 rounded-xl"> 
                         </div>
                         
                         <div>
@@ -494,18 +528,18 @@
                             </div>
                         </div>
                         
-                        <button type="submit" class="w-full bg-primary text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-primary-dark transition-colors duration-300 shadow">Save Profile</button> 
+                        <button type="submit" class="w-full bg-primary  font-semibold py-2.5 px-4 rounded-full hover:bg-primary-dark transition-colors duration-300 shadow">Save Profile</button> 
                     </form>
                 </div>
             </section>
         </main>
         
-        <div id="toast" class="fixed bottom-4 right-4 bg-accent text-white py-2 px-4 rounded-lg shadow-xl opacity-0 transform translate-y-10 transition-all duration-500 ease-in-out text-sm z-50"> 
+        <div id="toast" class="fixed bottom-4 right-4 bg-accent  py-2 px-4 rounded-full shadow-xl opacity-0 transform translate-y-10 transition-all duration-500 ease-in-out text-sm z-50"> 
             <p>Saved successfully!</p>
         </div>
 
         <div id="gemini-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60] hidden"> 
-            <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full">
                 <div class="p-4 border-b border-slate-200 flex justify-between items-center"> 
                     <h3 id="gemini-modal-title" class="text-lg font-semibold text-secondary">AI Assistant</h3> 
                     <button id="gemini-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
@@ -522,7 +556,7 @@
         </div>
 
         <div id="info-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60] hidden"> 
-            <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full">
                 <div class="p-4 border-b border-slate-200 flex justify-between items-center"> 
                     <h3 id="info-modal-title" class="text-xl font-semibold text-primary">🚀 FODMAP Journey!</h3> 
                     <button id="info-modal-close" class="text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
@@ -577,7 +611,7 @@
                     </div>
                 </div>
                  <div class="p-3 bg-slate-50 border-t border-slate-200 text-right rounded-b-xl"> 
-                    <button id="info-modal-close-btn" class="bg-primary text-white font-semibold py-1.5 px-4 rounded-lg hover:bg-primary-dark transition-colors text-sm">Got it!</button> 
+                    <button id="info-modal-close-btn" class="bg-primary  font-semibold py-1.5 px-4 rounded-full hover:bg-primary-dark transition-colors text-sm">Got it!</button> 
                 </div>
             </div>
         </div>
@@ -591,7 +625,7 @@
             <nav>
                 <ul>
                     <li>
-                        <button id="open-info-modal-btn" class="w-full text-left py-2.5 px-3 rounded-lg hover:bg-slate-100 text-secondary font-medium text-sm"> 
+                        <button id="open-info-modal-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm"> 
                             <i class="fas fa-book-open w-5 mr-2 text-primary"></i>Understand FODMAPS
                         </button>
                     </li>
@@ -600,7 +634,8 @@
         </div>
     </div>
     
-    <button id="add-entry-fab" class="hidden fixed bottom-4 right-4 bg-accent text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-xl hover:bg-accent-dark transition-transform hover:scale-110 z-50"> 
+    <button id="add-entry-fab" class="hidden fixed bottom-4 right-4 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-xl transition-transform hover:scale-110 z-50" 
+            style="background-color: var(--color-accent-text);" > 
         <i class="fas fa-plus"></i>
     </button>
 
@@ -658,7 +693,7 @@
             const toast = document.getElementById('toast');
             function showToast(message = "Saved!", isError = false) {
                 toast.textContent = message;
-                toast.className = `fixed bottom-4 right-4 text-white py-2 px-4 rounded-lg shadow-xl opacity-0 transform translate-y-10 transition-all duration-500 ease-in-out text-sm z-50 ${isError ? 'bg-error' : 'bg-accent'}`; 
+                toast.className = `fixed bottom-4 right-4  py-2 px-4 rounded-lg shadow-xl opacity-0 transform translate-y-10 transition-all duration-500 ease-in-out text-sm z-50 ${isError ? 'bg-error' : 'bg-accent'}`; 
                 toast.classList.remove('opacity-0', 'translate-y-10');
                 setTimeout(() => toast.classList.add('opacity-0', 'translate-y-10'), 3000);
             }
@@ -1170,7 +1205,7 @@
                     header.parentElement.classList.toggle('expanded');
                 }
             });
-            const createCheckbox = (id, val, name, checked) => `<div class=inline-block><input type=checkbox id=${id} value="${val}" name=${name} class="profile-checkbox hidden" ${checked?'checked':''}><label for=${id} class="cursor-pointer border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted duration-200">${val}</label></div>`;
+            const createCheckbox = (id, val, name, checked) => `<div class=inline-block><input type=checkbox id=${id} value="${val}" name=${name} class="profile-checkbox hidden" ${checked?'checked':''}><label for=${id} class="cursor-pointer border border-slate-300 rounded-full px-2.5 py-1.5 text-xs font-medium text-muted duration-200">${val}</label></div>`;
 
             const setupProfilePage = () => {
                 document.getElementById('profile-diagnoses').innerHTML = PROFILE_OPTIONS.diagnoses.map(i => createCheckbox(`diag-${i}`, i, 'diagnoses', userProfile.diagnoses.includes(i))).join('');
