@@ -1,9 +1,9 @@
 {
-  "name": "FODMAP LOGMAP",
-  "short_name": "FODMAP LOGMAP",
+  "name": "",
+  "short_name": "FODMAP",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#A8C5E5",
+  "background_color": "#FFFFFF",
   "theme_color": "#2d61a0",
   "description": "Your FODMAP reintroduction companion.",
   "icons": [
