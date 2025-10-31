@@ -16,7 +16,7 @@
           --color-pastel-green-dark: #B0D684; /* Hover */
           --color-text-on-pastel: #283b6c; /* Dark text for accessibility */
           
-          /* Tints for selected tags */
+          /* Tints for selected tags (from your example) */
           --color-tag-bg: #f1f5f9; /* slate-100 */
           --color-tag-bg-selected: #EAF0F7; /* Light blue tint */
           --color-tag-text-selected: #2d61a0; /* Original primary blue for text */
@@ -88,8 +88,10 @@
         .profile-checkbox + label {
             border-radius: 9999px;
             background-color: var(--color-tag-bg);
-            border-color: var(--color-tag-bg);
+            border: 1px solid var(--color-tag-bg); /* Use border for consistent size */
+            color: var(--color-text-muted); /* Lighter text when unselected */
             font-weight: 600;
+            transition: all 0.2s ease-in-out;
         }
         .profile-checkbox:checked + label {
             background-color: var(--color-tag-bg-selected); 
@@ -208,6 +210,7 @@
             color: var(--color-text-on-pastel);
             font-weight: 700;
             border-color: var(--color-pastel-blue-dark);
+            border-radius: 9999px; /* This was missing */
         }
 
         /* Styles for Log Accordion */
@@ -340,6 +343,82 @@
             padding-top: 0.5rem; /* Increased top padding */
             padding-bottom: 0.75rem; /* Add vertical padding ONLY when expanded */
         }
+
+        /* Styles for Custom Select Dropdown */
+        .custom-select-container {
+            position: relative;
+        }
+        .custom-select-trigger {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 0.625rem 0.75rem; /* p-2.5 pl-3 pr-3 */
+            border: 1px solid #cbd5e1; /* border-slate-300 */
+            border-radius: 0.75rem; /* rounded-xl */
+            background-color: #fff;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1rem; /* text-base */
+            color: var(--color-text-base);
+        }
+        .custom-select-trigger.placeholder {
+            color: #94a3b8; /* text-slate-400 placeholder */
+            font-weight: 500;
+        }
+        .custom-select-trigger:focus {
+            box-shadow: 0 0 0 2px var(--color-pastel-blue);
+            border-color: var(--color-primary-text);
+            outline: none;
+        }
+        .custom-select-trigger .trigger-icon {
+            transition: transform 0.2s ease-in-out;
+            font-size: 0.875rem; /* text-sm */
+            color: var(--color-text-muted);
+        }
+        .custom-select-trigger.open .trigger-icon {
+            transform: rotate(180deg);
+        }
+        .custom-select-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: #fff;
+            border: 1px solid #e2e8f0; /* border-slate-200 */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-top: 0.25rem; /* mt-1 */
+            z-index: 20;
+            max-height: 200px;
+            overflow-y: auto;
+            opacity: 0;
+            transform: scaleY(0.95);
+            visibility: hidden;
+            transition: opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0.15s ease-out;
+        }
+        .custom-select-options.open {
+            opacity: 1;
+            transform: scaleY(1);
+            visibility: visible;
+        }
+        .custom-select-option {
+            padding: 0.5rem 1rem; /* py-2 px-4 */
+            cursor: pointer;
+            transition: background-color 0.15s ease-in-out;
+            font-size: 0.875rem; /* text-sm - THIS IS THE SMALLER FONT YOU WANTED */
+        }
+        .custom-select-option:hover {
+            background-color: #f1f5f9; /* bg-slate-100 */
+        }
+        .custom-select-option .option-title {
+            font-weight: 600;
+            color: var(--color-text-base);
+        }
+        .custom-select-option .option-examples {
+            font-size: 0.75rem; /* text-xs */
+            color: var(--color-text-muted);
+        }
     </style>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2d61a0">
@@ -435,9 +514,19 @@
                     <form id="log-form" class="space-y-3"> 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3"> 
                             <input type="date" id="log-date" class="w-full p-2.5 border border-slate-300 rounded-xl" required> 
-                             <select id="log-fodmap-group" class="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary" required> 
-                                 <option value="" disabled selected>Select FODMAP Group...</option>
-                             </select>
+                             <div class="custom-select-container" id="custom-fodmap-select-container">
+                            <!-- This is the visible button -->
+                            <button type="button" class="custom-select-trigger placeholder" id="custom-fodmap-select-trigger">
+                                <span id="custom-fodmap-select-text">Select FODMAP Group...</span>
+                                <i class="fas fa-chevron-down trigger-icon"></i>
+                            </button>
+                            <!-- This is the hidden list of options -->
+                            <ul class="custom-select-options" id="custom-fodmap-select-options">
+                                <!-- Options will be injected by JS -->
+                            </ul>
+                            <!-- This hidden input holds the actual value for the form -->
+                            <input type="hidden" id="log-fodmap-group" name="log-fodmap-group" value="">
+                        </div>
                         </div>
                         <button type="button" id="plan-challenge-btn" class="w-full bg-accent  font-semibold py-2 px-4 rounded-full hover:bg-accent-dark transition-colors duration-300 shadow flex items-center justify-center gap-2">
                            ✨ Plan My Challenge
@@ -733,6 +822,19 @@
             const populateFormForEdit = (entry) => {
                 document.getElementById('log-date').value = entry.date;
                 document.getElementById('log-fodmap-group').value = entry.group;
+                // Update the visible text of the custom dropdown
+                const groupData = FODMAP_GROUP_DATA.find(g => g.value === entry.group);
+                const style = FODMAP_STYLES[entry.group] || { icon: '❓' };
+                const triggerText = document.getElementById('custom-fodmap-select-text');
+                const trigger = document.getElementById('custom-fodmap-select-trigger');
+                
+                if (groupData) {
+                    triggerText.textContent = `${style.icon} ${groupData.name}`;
+                    trigger.classList.remove('placeholder');
+                } else {
+                    triggerText.textContent = 'Select FODMAP Group...';
+                    trigger.classList.add('placeholder');
+                }
                 document.getElementById('log-food').value = entry.food;
                 document.getElementById('log-dose').value = entry.dose;
                 document.getElementById('log-notes').value = entry.notes;
@@ -919,8 +1021,52 @@
             const otherSymptomInput = document.getElementById('log-symptom-other');
 
             const setupLogForm = () => {
-                const groupSel = document.getElementById('log-fodmap-group'); 
-                if (groupSel.options.length <= 1) FODMAP_GROUP_DATA.forEach(g => groupSel.innerHTML += `<option value="${g.value}">${g.name} ${g.examples}</option>`);
+                // --- NEW: Custom Select Dropdown Logic ---
+                const fodmapSelectContainer = document.getElementById('custom-fodmap-select-container');
+                const fodmapTrigger = document.getElementById('custom-fodmap-select-trigger');
+                const fodmapTriggerText = document.getElementById('custom-fodmap-select-text');
+                const fodmapOptions = document.getElementById('custom-fodmap-select-options');
+                const fodmapHiddenInput = document.getElementById('log-fodmap-group');
+
+                // Populate options list (only if it's empty)
+                if (fodmapOptions.children.length === 0) {
+                    FODMAP_GROUP_DATA.forEach(group => {
+                        const option = document.createElement('li');
+                        option.className = 'custom-select-option';
+                        option.dataset.value = group.value;
+                        
+                        // --- THIS IS THE FIX ---
+                        // The 'style' variable must be defined *before* it is used.
+                        // The duplicate/broken block has been removed.
+                        const style = FODMAP_STYLES[group.value] || { icon: '❓' };
+                        option.innerHTML = `
+                            <div class="option-title">${style.icon} ${group.name}</div>
+                            <div class="option-examples">${group.examples}</div>
+                        `;
+                        // --- END FIX ---
+
+                        fodmapOptions.appendChild(option);
+                    });
+                }
+
+                // Toggle dropdown
+                fodmapTrigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    fodmapOptions.classList.toggle('open');
+                    fodmapTrigger.classList.toggle('open');
+                });
+
+                // Handle option selection
+                fodmapOptions.addEventListener('click', (e) => {
+                    const option = e.target.closest('.custom-select-option');
+                    if (option) {
+                        fodmapHiddenInput.value = option.dataset.value; // Set hidden input
+                        fodmapTriggerText.textContent = option.querySelector('.option-title').textContent; // Set button text
+                        fodmapTrigger.classList.remove('placeholder'); // Remove placeholder styling
+                        fodmapOptions.classList.remove('open');
+                        fodmapTrigger.classList.remove('open');
+                    }
+                });
                 
                 // --- Severity Button Setup (Unchanged) ---
                 const sevCont = document.getElementById('log-severity'); 
@@ -948,11 +1094,11 @@
                 symptomTagsContainer.innerHTML = ''; // Clear container
 
                 // Add a "None" tag first
-                symptomTagsContainer.innerHTML += `<div class=inline-block><input type=checkbox id="symptom-None" value="None" name="symptoms" class="profile-checkbox hidden"><label for="symptom-None" class="cursor-pointer border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted duration-200">None</label></div>`;
+                symptomTagsContainer.innerHTML += `<div class=inline-block><input type=checkbox id="symptom-None" value="None" name="symptoms" class="profile-checkbox hidden"><label for="symptom-None" class="cursor-pointer border rounded-full px-2.5 py-1.5 text-xs font-medium text-muted duration-200">None</label></div>`;
 
                 // Add predefined symptom tags
                 SYMPTOM_OPTIONS.forEach(symptom => {
-                    symptomTagsContainer.innerHTML += `<div class=inline-block><input type=checkbox id="symptom-${symptom}" value="${symptom}" name="symptoms" class="profile-checkbox hidden"><label for="symptom-${symptom}" class="cursor-pointer border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted duration-200">${symptom}</label></div>`;
+                    symptomTagsContainer.innerHTML += `<div class=inline-block><input type=checkbox id="symptom-${symptom}" value="${symptom}" name="symptoms" class="profile-checkbox hidden"><label for="symptom-${symptom}" class="cursor-pointer border rounded-full px-2.5 py-1.5 text-xs font-medium text-muted duration-200">${symptom}</label></div>`;
                 });
 
                 const customSymptomInput = document.getElementById('custom-symptom-input');
@@ -1185,6 +1331,11 @@
                 
                 // --- Reset all form fields ---
                 document.getElementById('log-date').valueAsDate = new Date(); 
+                // Reset custom dropdown
+                document.getElementById('custom-fodmap-select-text').textContent = 'Select FODMAP Group...';
+                document.getElementById('custom-fodmap-select-trigger').classList.add('placeholder');
+                document.getElementById('log-fodmap-group').value = '';
+
                 document.getElementById('custom-symptom-tags-container').innerHTML = '';
                 document.querySelectorAll('input[name="symptoms"]').forEach(cb => cb.checked = false);
                 document.getElementById('severity-section').classList.add('hidden'); 
@@ -1377,6 +1528,16 @@ Use this exact template:
                 }
             }
         });
+
+        // --- Global click listener to close custom select ---
+            window.addEventListener('click', () => {
+                const options = document.getElementById('custom-fodmap-select-options');
+                if (options.classList.contains('open')) { // Only run if it's open
+                    options.classList.remove('open');
+                    document.getElementById('custom-fodmap-select-trigger').classList.remove('open');
+                }
+            });
+
     </script>
     <script>
         if ('serviceWorker' in navigator) {
