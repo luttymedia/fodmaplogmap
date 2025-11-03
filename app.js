@@ -1,0 +1,1122 @@
+document.addEventListener('DOMContentLoaded', () => {
+
+    let deferredPrompt; // This will store the event for later use
+    const installAppLi = document.getElementById('install-app-li');
+    const installAppBtn = document.getElementById('install-app-btn');
+
+     const FODMAP_GROUP_DATA = [ { value: "Fructose", name: "Fructose", examples: "(e.g., Honey, Mango)" }, { value: "Lactose", name: "Lactose", examples: "(e.g., Milk, Yogurt)" }, { value: "Fructans (Grains)", name: "Fructans - Grains", examples: "(e.g., Wheat, Rye)" }, { value: "Fructans (Veg & Fruit)", name: "Fructans - Veg & Fruit", examples: "(e.g., Onion, Garlic)" }, { value: "GOS", name: "Galactans (GOS)", examples: "(e.g., Beans, Lentils)" }, { value: "Polyols (Sorbitol)", name: "Polyols - Sorbitol", examples: "(e.g., Avocado, Blackberry)" }, { value: "Polyols (Mannitol)", name: "Polyols - Mannitol", examples: "(e.g., Cauliflower, Mushroom)" }, { value: "Restriction", name: "Daily Log", examples: "(A non-challenge or safe meal)" } ];
+     const FODMAP_STYLES = { "Fructose": { color: "bg-yellow-100 text-yellow-800", icon: "🍎" }, "Lactose": { color: "bg-blue-100 text-blue-800", icon: "🥛" }, "Fructans (Grains)": { color: "bg-orange-100 text-orange-800", icon: "🍞" }, "Fructans (Veg & Fruit)": { color: "bg-purple-100 text-purple-800", icon: "🧅" }, "GOS": { color: "bg-teal-100 text-teal-800", icon: "🫘" }, "Polyols (Sorbitol)": { color: "bg-green-100 text-green-800", icon: "🥑" }, "Polyols (Mannitol)": { color: "bg-indigo-100 text-indigo-800", icon: "🍄" }, "Restriction": { color: "bg-slate-100 text-slate-800", icon: "🍴" } };
+     const PROFILE_OPTIONS = { diagnoses: ["IMO", "SIBO", "IBS-D", "IBS-C", "IBS-M"], intolerances: ["Sorbitol", "Mannitol", "Lactose", "Fructose", "Gluten"], preferences: ["Vegetarian", "Vegan", "Pescatarian"] };
+     const SYMPTOM_OPTIONS = ["Bloating", "Gas", "Abdominal pain", "Diarrhea", "Constipation", "Fatigue", "Headache"];
+
+    const pages = document.querySelectorAll('.page');
+    const navItems = document.querySelectorAll('.nav-item');
+    const addEntryFab = document.getElementById('add-entry-fab');
+    let logEntries = JSON.parse(localStorage.getItem('fodmapLogEntries')) || [];
+    let userProfile = JSON.parse(localStorage.getItem('fodmapUserProfile')) || { diagnoses: [], intolerances: [], allergiesOther: '', preferences: [], apiKey: '' };            let currentFilter = 'All';
+    let currentPageIndex = 0;
+    let currentlyEditingId = null;
+    let stagedImageData = null; // To hold the base64 image data
+    let currentLogView = 'group'; // 'group' or 'date'
+    let currentDateSort = 'newest'; // 'newest' or 'oldest'
+    let openLogFormOnLoad = false; // Flag to auto-open the form
+
+    function navigateTo(pageId) {
+        const targetPage = document.getElementById(pageId);
+        if (!targetPage) return;
+
+        pages.forEach(page => page.classList.add('hidden'));
+        targetPage.classList.remove('hidden');
+        
+        navItems.forEach((item, index) => {
+            const isActive = item.dataset.page === pageId;
+            item.classList.toggle('active', isActive);
+            if (isActive) {
+                currentPageIndex = index;
+            }
+        });
+        
+        // --- NEW LOGIC for collapsible form ---
+        const logFormWrapper = document.getElementById('add-log-entry-wrapper');
+        if (pageId === 'reintroduction-log') {
+            if (openLogFormOnLoad) {
+                logFormWrapper.classList.add('expanded'); // Expand it
+                logFormWrapper.scrollIntoView({ behavior: 'smooth' }); // Scroll to it
+                openLogFormOnLoad = false; // Reset the flag
+            } else {
+                logFormWrapper.classList.remove('expanded'); // Ensure it's collapsed
+            }
+        }
+        // --- END NEW LOGIC ---
+
+        addEntryFab.classList.toggle('hidden', pageId === 'reintroduction-log');
+        window.scrollTo(0, 0);
+         document.querySelectorAll('.nav-item span').forEach(span => { span.classList.remove('hidden', 'sm:inline'); span.classList.add('hidden', 'sm:inline'); });
+    }
+
+    function goToNextTab() {
+        const nextIndex = (currentPageIndex + 1) % navItems.length;
+        const nextPageId = navItems[nextIndex].dataset.page;
+        navigateTo(nextPageId);
+    }
+
+    function goToPrevTab() {
+        const prevIndex = (currentPageIndex - 1 + navItems.length) % navItems.length;
+        const prevPageId = navItems[prevIndex].dataset.page;
+        navigateTo(prevPageId);
+    }
+
+    navItems.forEach(item => item.addEventListener('click', () => navigateTo(item.dataset.page)));
+    addEntryFab.addEventListener('click', () => { 
+        openLogFormOnLoad = true; // Set the flag to auto-open
+        navigateTo('reintroduction-log'); 
+    });
+    
+    const toast = document.getElementById('toast');
+    function showToast(message = "Saved!", isError = false) {
+        toast.textContent = message;
+        toast.className = `fixed bottom-4 right-4  py-2 px-4 rounded-lg shadow-xl opacity-0 transform translate-y-10 transition-all duration-500 ease-in-out text-sm z-50 ${isError ? 'bg-error' : 'bg-accent'}`; 
+        toast.classList.remove('opacity-0', 'translate-y-10');
+        setTimeout(() => toast.classList.add('opacity-0', 'translate-y-10'), 3000);
+    }
+
+    const aiFoodSearchInput = document.getElementById('ai-food-search-input');
+    const imageUploadInput = document.getElementById('image-upload-input');
+    const cameraUploadInput = document.getElementById('camera-upload-input');
+    
+    // New Elements
+    const aiSendBtn = document.getElementById('ai-send-btn');
+    const aiAttachBtn = document.getElementById('ai-attach-btn');
+    const aiAttachPopup = document.getElementById('ai-attach-popup');
+    const popupGalleryBtn = document.getElementById('popup-gallery-btn');
+    const popupCameraBtn = document.getElementById('popup-camera-btn');
+    
+    // Staged Image Elements
+    const stagedImageContainer = document.getElementById('staged-image-container');
+    const imagePreview = document.getElementById('image-preview');
+    const uploadPromptText = document.getElementById('upload-prompt-text');
+    const clearStagedImageBtn = document.getElementById('clear-staged-image-btn');
+    
+    const aiResultsLoader = document.getElementById('ai-results-loader');
+    const aiResultsContainer = document.getElementById('ai-results-container');
+    const aiResultsContent = document.getElementById('ai-results-content');
+    
+    const buildProfileContext = () => {
+        let context = "User profile:"; let hasInfo = false;
+        if (userProfile.diagnoses.length > 0) { context += ` Diagnoses: ${userProfile.diagnoses.join(', ')}.`; hasInfo = true; }
+        const allIntolerances = [...userProfile.intolerances, userProfile.allergiesOther].filter(Boolean);
+        if (allIntolerances.length > 0) { context += ` Intolerances/Allergies: ${allIntolerances.join(', ')}.`; hasInfo = true; }
+        if (userProfile.preferences.length > 0) { context += ` Preferences: ${userProfile.preferences.join(', ')}.`; hasInfo = true; }
+        return hasInfo ? context : "User profile not specified.";
+    };
+
+    const getProfileForDisplay = () => {
+        let displayLines = [];
+        if (userProfile.diagnoses.length > 0) { displayLines.push(`<strong>Diagnoses:</strong> ${userProfile.diagnoses.join(', ')}`); }
+        const allIntolerances = [...userProfile.intolerances, userProfile.allergiesOther].filter(Boolean);
+        if (allIntolerances.length > 0) { displayLines.push(`<strong>Intolerances/Allergies:</strong> ${allIntolerances.join(', ')}`); }
+        if (userProfile.preferences.length > 0) { displayLines.push(`<strong>Preferences:</strong> ${userProfile.preferences.join(', ')}`); }
+        
+        if (displayLines.length === 0) return null;
+        return displayLines.join('<br>');
+    };
+
+    const populateFormForEdit = (entry) => {
+        document.getElementById('log-date').value = entry.date;
+        document.getElementById('log-fodmap-group').value = entry.group;
+        // Update the visible text of the custom dropdown
+        const groupData = FODMAP_GROUP_DATA.find(g => g.value === entry.group);
+        const style = FODMAP_STYLES[entry.group] || { icon: '❓' };
+        const triggerText = document.getElementById('custom-fodmap-select-text');
+        const trigger = document.getElementById('custom-fodmap-select-trigger');
+        
+        if (groupData) {
+            triggerText.textContent = `${style.icon} ${groupData.name}`;
+            trigger.classList.remove('placeholder');
+        } else {
+            triggerText.textContent = 'Select FODMAP Group...';
+            trigger.classList.add('placeholder');
+        }
+        document.getElementById('log-food').value = entry.food;
+        document.getElementById('log-dose').value = entry.dose;
+        document.getElementById('log-notes').value = entry.notes;
+
+        // --- Populate Symptoms ---
+        // 1. Reset all fields first
+        document.querySelectorAll('input[name="symptoms"]').forEach(cb => cb.checked = false);
+        const customTagsContainer = document.getElementById('custom-symptom-tags-container');
+        customTagsContainer.innerHTML = '';
+        
+        const symptoms = entry.symptoms || ['None'];
+        let hasSymptoms = false;
+
+        symptoms.forEach(symptom => {
+            if (symptom === 'None') {
+                document.getElementById('symptom-None').checked = true;
+            } else {
+                const predefined = document.getElementById(`symptom-${symptom}`);
+                if (predefined) {
+                    predefined.checked = true; // Check the box
+                } else {
+                    // It's a custom tag
+                    const tag = document.createElement('div');
+                    tag.className = 'custom-symptom-tag';
+                    tag.textContent = symptom;
+                    tag.innerHTML += `<button type="button" class="remove-tag-btn">&times;</button>`;
+                    customTagsContainer.appendChild(tag);
+                }
+                hasSymptoms = true;
+            }
+        });
+        
+        // --- Populate Severity ---
+        const sevSect = document.getElementById('severity-section');
+        if (hasSymptoms) {
+            sevSect.classList.remove('hidden');
+            document.getElementById('log-severity-value').value = entry.severity;
+            document.querySelectorAll('#log-severity .severity-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.value == entry.severity);
+            });
+        } else {
+            sevSect.classList.add('hidden');
+        }
+
+        // --- Update UI ---
+        document.getElementById('log-form').querySelector('button[type="submit"]').textContent = 'Save Changes';
+        document.getElementById('add-log-entry-wrapper').scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const handleAIQuery = (prompt, title, imageData = null) => {
+         aiResultsLoader.classList.remove('hidden'); aiResultsContainer.classList.add('hidden'); aiResultsContent.innerHTML = '';
+         callGeminiAPI(prompt, imageData)
+            .then(response => {
+                if (response) { 
+                    const profileHTML = getProfileForDisplay();
+                    const disclaimer = `Disclaimer: I am a FODMAP expert analysis tool, not a medical professional. This information is for educational purposes regarding dietary management only and is not a substitute for personalized medical advice or treatment. Always consult with your doctor or a registered dietitian before making dietary changes.`;
+
+                    // 1. Process the AI response
+                    let aiContent = response
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')   // Bold
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')     // Italics
+                        .replace(/\n/g, '<br>'); // Newlines
+
+                    // 2. Build the full response with header and footer
+                    let html = `
+                        <div class="space-y-3">
+                            <div>
+                                <p><strong>Food:</strong> ${title}</p>
+                                ${profileHTML ? `<p>${profileHTML}</p>` : ''}
+                            </div>
+                            
+                            <hr class="border-slate-200">
+                            
+                            <div>${aiContent}</div>
+
+                            <hr class="border-slate-200">
+                            
+                            <p class="text-xs text-subtle italic">${disclaimer}</p>
+                        </div>
+                    `;
+                    
+                    aiResultsContent.innerHTML = html; 
+                    aiResultsContainer.classList.remove('hidden'); 
+                }                    
+                else { aiResultsContent.innerHTML = `<p class="text-error">Sorry, error.</p>`; aiResultsContainer.classList.remove('hidden'); }
+            }).finally(() => {
+                aiResultsLoader.classList.add('hidden');
+                // Clear inputs after search
+                aiFoodSearchInput.value = '';
+                stagedImageData = null;
+                stagedImageContainer.classList.add('hidden');
+            });
+    };
+
+    aiSendBtn.addEventListener('click', () => {
+        const foodName = aiFoodSearchInput.value.trim();
+        
+        // Check if we have an image or text
+        if (!stagedImageData && !foodName) {
+            showToast("Please enter food or upload an image.", true);
+            return;
+        }
+
+        let prompt;
+        let title;
+
+        if (stagedImageData) {
+            // We are searching with an image
+            title = `Image${foodName ? ` (${foodName})` : ''}`; // Use text as a caption if it exists
+            prompt = `FODMAP expert: Analyze ingredients in this image. ${buildProfileContext()}
+            ${foodName ? `The user added this text: "${foodName}".` : ''}
+            List all ingredients found. 
+            For any high-FODMAP ingredient, explain why in one short sentence. Use *italics* or emojis for emphasis.
+            Provide an **Overall Summary:** (Safe or Not Safe).
+            Format *only* with **bold** headings, *italics*, newlines, and emojis. 
+            Do NOT use tables, '###', '---', or '|'. Omit the disclaimer.`;
+            
+            handleAIQuery(prompt, title, stagedImageData);
+
+        } else if (foodName) {
+            // We are searching with text only
+            title = foodName;
+            prompt = `FODMAP expert: Analyze '${foodName}'. ${buildProfileContext()}
+            Provide a concise, 3-part answer. 
+            Use this exact template:
+            **FODMAP Level:** [Brief level & why. Use *italics* or emojis for emphasis, not full bold sentences.]
+            **Safe Portion:** [Brief portion size. Use *italics* or emojis for emphasis.]
+            **Substitutes:** [List 3-4 substitutes. Use *italics* or emojis for emphasis.]
+
+            Do NOT use tables, '###', '---', or '|'. Omit the disclaimer.`;
+            
+            handleAIQuery(prompt, title, null);
+        }
+    });
+
+    // Add text input "Enter" key listener
+    aiFoodSearchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            aiSendBtn.click(); // Trigger the send button click
+        }
+    });
+
+    // --- New AI Chat Bar Listeners ---
+    aiAttachBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Stop click from bubbling to the window
+        aiAttachPopup.classList.toggle('open');
+    });
+
+    popupGalleryBtn.addEventListener('click', () => {
+        imageUploadInput.click();
+    });
+
+    popupCameraBtn.addEventListener('click', () => {
+        cameraUploadInput.click();
+    });
+
+    clearStagedImageBtn.addEventListener('click', () => {
+        stagedImageData = null;
+        stagedImageContainer.classList.add('hidden');
+        imagePreview.src = '';
+    });
+
+    const handleFileSelect = (event) => {
+        const file = event.target.files[0]; if (!file) return; 
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            // 1. Get the base64 data
+            stagedImageData = e.target.result.split(',')[1]; 
+            
+            // 2. Show the preview
+            imagePreview.src = e.target.result;
+            uploadPromptText.textContent = file.name;
+            stagedImageContainer.classList.remove('hidden');
+
+            // 3. Close the popup
+            aiAttachPopup.classList.remove('open');
+        }; 
+        reader.readAsDataURL(file); 
+        event.target.value = null; 
+    };
+    
+    imageUploadInput.addEventListener('change', handleFileSelect);
+    cameraUploadInput.addEventListener('change', handleFileSelect);
+
+    const summaryContainer = document.getElementById('progress-summary');
+    const renderHomePage = () => {
+        summaryContainer.innerHTML = '';
+        let itemsAdded = 0; 
+
+        FODMAP_GROUP_DATA.forEach(groupData => {
+            if (groupData.value === "Restriction") return; // Skip this group
+            const entries = logEntries.filter(entry => entry.group === groupData.value); 
+            const count = entries.length;
+            
+            if (count > 0) {
+                itemsAdded++; 
+                let statusText, icon, color;
+                
+                if (count >= 3) { 
+                    statusText = `Completed (${count})`; 
+                    icon = "fa-check-circle"; 
+                    color = "text-accent"; 
+                } else { 
+                    statusText = `In Progress (${count})`; 
+                    icon = "fa-spinner fa-spin"; 
+                    color = "text-warning"; 
+                }
+                const style = FODMAP_STYLES[groupData.value] || { icon: '❓' };
+                const item = document.createElement('div'); 
+                item.className = 'progress-item bg-slate-100 rounded-lg transition-colors duration-300'; 
+                item.dataset.group = groupData.value;
+                
+                // --- UPDATED INNERHTML for symptoms array ---
+                item.innerHTML = `<div class="progress-item-header flex items-center justify-between p-3 cursor-pointer hover:bg-slate-200 rounded-lg"><div class="flex items-center gap-2"><i class="fas fa-chevron-right expand-icon text-slate-400 transition-transform duration-300 text-xs"></i><div><p class="font-semibold text-secondary text-sm"><span class="mr-1">${style.icon}</span>${groupData.name}</p><p class="text-xs text-subtle">${groupData.examples.slice(1, -1)}</p></div></div><div class="flex items-center gap-1.5 ${color}"><i class="fas ${icon} text-xs"></i><span class="text-xs font-medium">${statusText}</span></div></div><div class="progress-item-body border-t border-slate-200">${ entries.length > 0 ? entries.sort((a,b) => new Date(a.date) - new Date(b.date)).map(e => { 
+                    // --- START: UPDATED LOGIC ---
+                    const symptoms = e.symptoms || ['None']; 
+                    const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
+                    let symptomDisplay;
+
+                    if (hasSymptoms) {
+                        symptomDisplay = `${symptoms.join(', ')} (${e.severity}/5)`; // Added parentheses
+                    } else {
+                        symptomDisplay = 'No symptoms'; // Lowercase 's'
+                    }
+                    
+                    // Format date as "Oct 31, 25"
+                    const formattedDate = new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                    // Return the new format
+                    return `<p><strong>${formattedDate}:</strong> ${e.food}, ${e.dose} - <em>${symptomDisplay}</em></p>`
+                    // --- END: UPDATED LOGIC ---
+                }).join('') : '<p class="text-subtle italic p-3 text-xs">No entries.</p>' }</div>`;
+                summaryContainer.appendChild(item);
+            }
+        });
+
+        if (itemsAdded === 0) {
+            summaryContainer.innerHTML = `<p class="text-center text-subtle italic text-sm p-4">Your progress will show here once you add your first log entry!</p>`;
+        }
+    };
+    summaryContainer.addEventListener('click', (e) => {
+        const header = e.target.closest('.progress-item-header'); if (header) { const item = header.parentElement; const expanded = item.classList.contains('expanded'); summaryContainer.querySelectorAll('.progress-item').forEach(i => i.classList.remove('expanded')); if (!expanded) item.classList.add('expanded'); }
+    });
+
+    const logForm = document.getElementById('log-form');
+    const logEntriesContainer = document.getElementById('log-entries');
+    const logFilter = document.getElementById('log-filter');
+    const symptomSelector = document.getElementById('log-symptom');
+    const otherSymptomInput = document.getElementById('log-symptom-other');
+
+    const setupLogForm = () => {
+        // --- NEW: Custom Select Dropdown Logic ---
+        const fodmapSelectContainer = document.getElementById('custom-fodmap-select-container');
+        const fodmapTrigger = document.getElementById('custom-fodmap-select-trigger');
+        const fodmapTriggerText = document.getElementById('custom-fodmap-select-text');
+        const fodmapOptions = document.getElementById('custom-fodmap-select-options');
+        const fodmapHiddenInput = document.getElementById('log-fodmap-group');
+
+        // Populate options list (only if it's empty)
+        if (fodmapOptions.children.length === 0) {
+            FODMAP_GROUP_DATA.forEach(group => {
+                const option = document.createElement('li');
+                option.className = 'custom-select-option';
+                option.dataset.value = group.value;
+                
+                // --- THIS IS THE FIX ---
+                // The 'style' variable must be defined *before* it is used.
+                // The duplicate/broken block has been removed.
+                const style = FODMAP_STYLES[group.value] || { icon: '❓' };
+                option.innerHTML = `
+                    <div class="option-title">${style.icon} ${group.name}</div>
+                    <div class="option-examples">${group.examples}</div>
+                `;
+                // --- END FIX ---
+
+                fodmapOptions.appendChild(option);
+            });
+        }
+
+        // Toggle dropdown
+        fodmapTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fodmapOptions.classList.toggle('open');
+            fodmapTrigger.classList.toggle('open');
+        });
+
+        // Handle option selection
+        fodmapOptions.addEventListener('click', (e) => {
+            const option = e.target.closest('.custom-select-option');
+            if (option) {
+                fodmapHiddenInput.value = option.dataset.value; // Set hidden input
+                fodmapTriggerText.textContent = option.querySelector('.option-title').textContent; // Set button text
+                fodmapTrigger.classList.remove('placeholder'); // Remove placeholder styling
+                fodmapOptions.classList.remove('open');
+                fodmapTrigger.classList.remove('open');
+            }
+        });
+        
+        // --- Severity Button Setup (Unchanged) ---
+        const sevCont = document.getElementById('log-severity'); 
+        const sevSect = document.getElementById('severity-section'); 
+        const sevInput = document.getElementById('log-severity-value');
+        sevCont.innerHTML = ''; // Clear container
+        for (let i = 1; i <= 5; i++) {
+            const btn = document.createElement('button');
+            btn.type = 'button'; btn.className = 'severity-btn';
+            btn.textContent = i; btn.dataset.value = i;
+            if (i === 1) { btn.classList.add('selected'); }
+            sevCont.appendChild(btn);
+        }
+        sevCont.addEventListener('click', (e) => {
+            const clickedButton = e.target.closest('.severity-btn');
+            if (clickedButton) {
+                sevCont.querySelectorAll('.severity-btn').forEach(btn => btn.classList.remove('selected'));
+                clickedButton.classList.add('selected');
+                sevInput.value = clickedButton.dataset.value;
+            }
+        });
+
+        // --- NEW: Symptom Tag Setup ---
+        const symptomTagsContainer = document.getElementById('symptom-tags-container');
+        symptomTagsContainer.innerHTML = ''; // Clear container
+
+        // Add a "None" tag first
+        symptomTagsContainer.innerHTML += `<div class=inline-block><input type=checkbox id="symptom-None" value="None" name="symptoms" class="profile-checkbox hidden"><label for="symptom-None" class="cursor-pointer border rounded-full px-2.5 py-1.5 text-xs font-medium text-muted duration-200">None</label></div>`;
+
+        // Add predefined symptom tags
+        SYMPTOM_OPTIONS.forEach(symptom => {
+            symptomTagsContainer.innerHTML += `<div class=inline-block><input type=checkbox id="symptom-${symptom}" value="${symptom}" name="symptoms" class="profile-checkbox hidden"><label for="symptom-${symptom}" class="cursor-pointer border rounded-full px-2.5 py-1.5 text-xs font-medium text-muted duration-200">${symptom}</label></div>`;
+        });
+
+        const customSymptomInput = document.getElementById('custom-symptom-input');
+        const addCustomSymptomBtn = document.getElementById('add-custom-symptom-btn');
+        const customSymptomTagsContainer = document.getElementById('custom-symptom-tags-container');
+        const customSymptomTrigger = document.getElementById('custom-symptom-trigger');
+        const customSymptomBody = document.getElementById('custom-symptom-body');
+
+        const addCustomTag = () => {
+            const symptom = customSymptomInput.value.trim();
+            if (symptom) {
+                const tag = document.createElement('div');
+                tag.className = 'custom-symptom-tag';
+                tag.textContent = symptom;
+                tag.innerHTML += `<button type="button" class="remove-tag-btn">&times;</button>`;
+                customSymptomTagsContainer.appendChild(tag);
+                customSymptomInput.value = '';
+                updateSeverityVisibility();
+            }
+        };
+
+        addCustomSymptomBtn.addEventListener('click', addCustomTag);
+        customSymptomInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addCustomTag();
+            }
+        });
+
+        customSymptomTrigger.addEventListener('click', () => {
+            customSymptomBody.classList.toggle('hidden');
+            // Automatically focus the input field when shown
+            if (!customSymptomBody.classList.contains('hidden')) {
+                customSymptomInput.focus();
+            }
+        });
+
+        customSymptomTagsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-tag-btn')) {
+                e.target.parentElement.remove();
+                updateSeverityVisibility();
+            }
+        });
+
+        const updateSeverityVisibility = () => {
+            const hasPredefined = document.querySelectorAll('input[name="symptoms"]:checked').length > 0;
+            const hasCustom = customSymptomTagsContainer.children.length > 0;
+            const isNoneSelected = document.getElementById('symptom-None').checked;
+            
+            sevSect.classList.toggle('hidden', (!hasPredefined && !hasCustom) || isNoneSelected);
+        };
+
+        symptomTagsContainer.addEventListener('change', (e) => {
+            const noneCheckbox = document.getElementById('symptom-None');
+            // If "None" is checked, uncheck all others
+            if (e.target.value === 'None' && e.target.checked) {
+                document.querySelectorAll('input[name="symptoms"]:checked').forEach(cb => {
+                    if (cb.value !== 'None') cb.checked = false;
+                });
+                // Clear custom tags
+                customSymptomTagsContainer.innerHTML = '';
+                customSymptomBody.classList.add('hidden'); // Also hide the custom input
+            } 
+            
+            // If another tag is checked, uncheck "None"
+            else if (e.target.value !== 'None' && e.target.checked) {
+                noneCheckbox.checked = false;
+            }
+            updateSeverityVisibility();
+        });
+    };
+    
+    // --- Renders the "Group by FODMAP" view (Your old renderLogEntries function) ---
+    const renderLogByGroup = () => {
+        const accordionContainer = document.getElementById('log-accordion-container');
+        accordionContainer.innerHTML = '';
+        let groupsWithEntries = 0;
+
+        FODMAP_GROUP_DATA.forEach(groupData => {
+            const entriesForGroup = logEntries
+                .filter(entry => entry.group === groupData.value)
+                .sort((a, b) => new Date(b.date) - new Date(a.date)); 
+
+            if (entriesForGroup.length > 0) {
+                groupsWithEntries++;
+                const style = FODMAP_STYLES[groupData.value] || { icon: '❓' };
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'accordion-group';
+                
+                const header = document.createElement('div');
+                header.className = 'accordion-header';
+                header.innerHTML = `
+                    <h3>${style.icon} ${groupData.name} (${entriesForGroup.length})</h3>
+                    <i class="fas fa-chevron-down accordion-icon"></i>
+                `;
+                
+                const body = document.createElement('div');
+                body.className = 'accordion-body';
+                
+                entriesForGroup.forEach(entry => {
+                    let symptomText;
+                    let severityText = '';
+                    let noteText = ''; 
+                    const symptoms = entry.symptoms || ['None'];
+                    const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
+                    if (hasSymptoms) {
+                        symptomText = `Symptoms: <strong>${symptoms.join(', ')}</strong>`;
+                        severityText = `<div>Severity: <strong>${entry.severity}/5</strong></div>`;
+                    } else {
+                        symptomText = 'Symptoms: <strong>None</strong>';
+                    }
+                    const trimmedNote = entry.notes ? entry.notes.trim() : '';
+                    if (trimmedNote !== '' && trimmedNote.toLowerCase() !== 'no notes') {
+                        noteText = `<div style="margin-top: 0.25rem;">Note: <em>${entry.notes.replace(/\n/g, '<br>')}</em></div>`;
+                    }
+                    const entryDiv = document.createElement('div');
+                    entryDiv.className = 'accordion-entry';
+                    entryDiv.innerHTML = `
+                        <div class="entry-header flex justify-between items-start">
+                            <p class="font-semibold text-secondary text-sm">${entry.food}, ${entry.dose}</p>
+                            <span class="text-xs text-subtle flex-shrink-0 ml-2">${new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <div class="entry-details">
+                                <div>${symptomText}</div>
+                                ${severityText}
+                                ${noteText}
+                            </div>
+                            <div class="entry-actions text-right flex-shrink-0 ml-2">
+                                <button class="edit-entry-btn text-accent hover:text-accent-dark text-xs p-1 rounded" data-id="${entry.id}">
+                                    <i class="fas fa-pen-to-square"></i>
+                                </button>
+                                <button class="delete-entry-btn text-error hover:text-error-dark text-xs p-1 rounded" data-id="${entry.id}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    body.appendChild(entryDiv);
+                });
+                groupDiv.appendChild(header);
+                groupDiv.appendChild(body);
+                accordionContainer.appendChild(groupDiv);
+            }
+        });
+        if (groupsWithEntries === 0) {
+            accordionContainer.innerHTML = `<p class="text-subtle text-center py-6 bg-white rounded-lg shadow-sm col-span-full text-sm">No log entries yet. Add one above!</p>`;
+        }
+    };
+
+    // --- Renders the new "View by Date" timeline ---
+    const renderLogByDate = () => {
+        const dateContainer = document.getElementById('log-date-container');
+        dateContainer.innerHTML = '';
+        
+        if (logEntries.length === 0) {
+            dateContainer.innerHTML = `<p class="text-subtle text-center py-6 bg-white rounded-lg shadow-sm col-span-full text-sm">No log entries yet. Add one above!</p>`;
+            return;
+        }
+
+        // 1. Sort entries based on the global sort variable
+        const sortedEntries = [...logEntries].sort((a, b) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            return currentDateSort === 'newest' ? dateB - dateA : dateA - dateB;
+        });
+
+        let currentHeaderDate = null;
+        const today = new Date().toLocaleDateString('en-CA');
+        const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA');
+
+        // 2. Loop and build timeline
+        sortedEntries.forEach(entry => {
+            const entryDate = new Date(entry.date).toLocaleDateString('en-CA');
+            
+            // 3. Add date header if it's a new day
+            if (entryDate !== currentHeaderDate) {
+                let dateHeaderText = new Date(entry.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                if (entryDate === today) dateHeaderText = 'Today';
+                else if (entryDate === yesterday) dateHeaderText = 'Yesterday';
+                
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'timeline-date-header';
+                headerDiv.textContent = dateHeaderText;
+                dateContainer.appendChild(headerDiv);
+                currentHeaderDate = entryDate;
+            }
+
+            // 4. Build the entry card (similar to accordion, but as a standalone card)
+            const style = FODMAP_STYLES[entry.group] || { icon: '❓' };
+            const groupInfo = FODMAP_GROUP_DATA.find(g => g.value === entry.group);
+            const groupName = groupInfo ? groupInfo.name : entry.group;
+            
+            let symptomText;
+            let severityText = '';
+            let noteText = ''; 
+            const symptoms = entry.symptoms || ['None'];
+            const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
+            if (hasSymptoms) {
+                symptomText = `Symptoms: <strong>${symptoms.join(', ')}</strong>`;
+                severityText = `<div>Severity: <strong>${entry.severity}/5</strong></div>`;
+            } else {
+                symptomText = 'Symptoms: <strong>None</strong>';
+            }
+            const trimmedNote = entry.notes ? entry.notes.trim() : '';
+            if (trimmedNote !== '' && trimmedNote.toLowerCase() !== 'no notes') {
+                noteText = `<div style="margin-top: 0.25rem;">Note: <em>${entry.notes.replace(/\n/g, '<br>')}</em></div>`;
+            }
+
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'timeline-entry-card'; // Use new card style
+            entryDiv.innerHTML = `
+                <div class="entry-header flex justify-between items-start">
+                    <p class="font-semibold text-secondary text-sm">${entry.food}, ${entry.dose}</p>
+                    <span class="text-xs font-semibold px-1.5 py-0.5 rounded-full ${style.color}">${style.icon} ${groupName.split(' ')[0]}</span>
+                </div>
+                <div class="flex justify-between items-end">
+                    <div class="entry-details">
+                        <div>${symptomText}</div>
+                        ${severityText}
+                        ${noteText}
+                    </div>
+                    <div class="entry-actions text-right flex-shrink-0 ml-2">
+                        <button class="edit-entry-btn text-accent hover:text-accent-dark text-xs p-1 rounded" data-id="${entry.id}">
+                            <i class="fas fa-pen-to-square"></i>
+                        </button>
+                        <button class="delete-entry-btn text-error hover:text-error-dark text-xs p-1 rounded" data-id="${entry.id}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            dateContainer.appendChild(entryDiv);
+        });
+    };
+
+    // --- This is the new MAIN render function ---
+    const renderLogEntries = () => {
+        if (currentLogView === 'group') {
+            renderLogByGroup();
+        } else {
+            renderLogByDate();
+        }
+    };
+
+    // --- Reusable Log Click Handler for Edit/Delete/Expand ---
+    const handleLogClick = (e) => {
+        const header = e.target.closest('.accordion-header');
+        const deleteBtn = e.target.closest('.delete-entry-btn');
+        const editBtn = e.target.closest('.edit-entry-btn');
+
+        if (editBtn) {
+            // --- HANDLE EDIT ---
+            const entryId = parseInt(editBtn.dataset.id);
+            const entryToEdit = logEntries.find(entry => entry.id === entryId);
+            if (entryToEdit) {
+                currentlyEditingId = entryId; // Set global edit state
+                populateFormForEdit(entryToEdit);
+                // Ensure form is expanded
+                document.getElementById('add-log-entry-wrapper').classList.add('expanded');
+            }
+        } else if (deleteBtn) {
+            // --- HANDLE DELETE ---
+            const entryId = parseInt(deleteBtn.dataset.id);
+            logEntries = logEntries.filter(entry => entry.id !== entryId);
+            saveLogEntries(); // Re-render and save
+            showToast("Entry deleted.");
+        } else if (header) {
+            // --- HANDLE EXPAND ---
+            header.parentElement.classList.toggle('expanded');
+        }
+    };
+
+    // Attach listener to both containers
+    document.getElementById('log-accordion-container').addEventListener('click', handleLogClick);
+    document.getElementById('log-date-container').addEventListener('click', handleLogClick);
+
+    // --- New View Toggle Listeners ---
+    const logViewToggleBtns = document.querySelectorAll('.log-view-toggle-btn');
+    const logSortBtn = document.getElementById('log-sort-btn');
+    // Set initial text for the sort button
+    logSortBtn.innerHTML = `<i class="fas fa-arrow-down-wide-short"></i> <span class="text-sm ml-1">Sort: Newest</span>`;
+    const logSubtitle = document.getElementById('log-subtitle');
+    const groupContainer = document.getElementById('log-accordion-container');
+    const dateContainer = document.getElementById('log-date-container');
+
+    logViewToggleBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Set active button
+            logViewToggleBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Update state
+            currentLogView = btn.dataset.view;
+
+            // Get the new sort container
+            const logSortContainer = document.getElementById('log-sort-container');
+
+            // Toggle containers and sort button
+            if (currentLogView === 'group') {
+                groupContainer.classList.remove('hidden');
+                dateContainer.classList.add('hidden');
+                logSortContainer.classList.add('hidden'); // Hide the container
+                logSubtitle.textContent = 'Tap a group to see entries.';
+            } else {
+                groupContainer.classList.add('hidden');
+                dateContainer.classList.remove('hidden');
+                logSortContainer.classList.remove('hidden'); // Show the container
+                logSubtitle.textContent = 'Showing all entries by date.';
+            }
+            // Re-render the log
+            renderLogEntries();
+        });
+    });
+
+    logSortBtn.addEventListener('click', () => {
+        // Flip the sort order
+        currentDateSort = (currentDateSort === 'newest') ? 'oldest' : 'newest';
+        
+        // Update the icon and text
+        logSortBtn.innerHTML = `<i class="fas ${currentDateSort === 'newest' ? 'fa-arrow-down-wide-short' : 'fa-arrow-up-wide-short'}"></i>
+        <span class="text-sm ml-1">Sort: ${currentDateSort === 'newest' ? 'Newest' : 'Oldest'}</span>`;
+        
+        // Re-render the date list
+        renderLogByDate();
+    });
+
+    const saveLogEntries = () => { localStorage.setItem('fodmapLogEntries', JSON.stringify(logEntries)); renderLogEntries(); renderHomePage(); };
+
+    logForm.addEventListener('submit', (e) => {
+        e.preventDefault(); 
+        const sev = document.getElementById('log-severity-value');
+        
+        // Get predefined symptoms
+        let selectedSymptoms = Array.from(document.querySelectorAll('input[name="symptoms"]:checked')).map(el => el.value);
+        
+        // Get custom symptoms
+        const customSymptoms = Array.from(document.querySelectorAll('.custom-symptom-tag')).map(tag => tag.firstChild.textContent);
+        
+        // Combine lists
+        let allSymptoms = [...selectedSymptoms, ...customSymptoms];
+
+        // If "None" is selected or list is empty, just use "None"
+        if (allSymptoms.includes('None') || allSymptoms.length === 0) {
+            allSymptoms = ['None'];
+        }
+
+        const entryData = { 
+            date: document.getElementById('log-date').value, 
+            group: document.getElementById('log-fodmap-group').value, 
+            food: document.getElementById('log-food').value, 
+            dose: document.getElementById('log-dose').value, 
+            symptoms: allSymptoms, // Save the new array
+            severity: allSymptoms.includes('None') ? '1' : sev.value, // Save severity, or 1 if "None"
+            notes: document.getElementById('log-notes').value 
+        };
+
+        if (currentlyEditingId) {
+            // --- UPDATE EXISTING ENTRY ---
+            const index = logEntries.findIndex(entry => entry.id === currentlyEditingId);
+            if (index !== -1) {
+                logEntries[index] = { ...entryData, id: currentlyEditingId }; // Keep original ID
+            }
+            currentlyEditingId = null; // Reset edit state
+            showToast("Entry updated!");
+        } else {
+            // --- ADD NEW ENTRY ---
+            const newEntry = { ...entryData, id: Date.now() };
+            logEntries.push(newEntry); 
+            showToast("Added!");
+        }
+
+        saveLogEntries(); 
+        logForm.reset(); 
+        
+        // --- Reset all form fields ---
+        document.getElementById('log-date').valueAsDate = new Date(); 
+        // Reset custom dropdown
+        document.getElementById('custom-fodmap-select-text').textContent = 'Select FODMAP Group...';
+        document.getElementById('custom-fodmap-select-trigger').classList.add('placeholder');
+        document.getElementById('log-fodmap-group').value = '';
+
+        document.getElementById('custom-symptom-tags-container').innerHTML = '';
+        document.getElementById('custom-symptom-body').classList.add('hidden'); // Collapse the custom input
+        document.querySelectorAll('input[name="symptoms"]').forEach(cb => cb.checked = false);
+        document.getElementById('severity-section').classList.add('hidden'); 
+        document.getElementById('log-form').querySelector('button[type="submit"]').textContent = 'Add Entry'; // Reset button text
+        
+        // Reset severity button group
+        document.getElementById('log-severity-value').value = '1';
+        document.querySelectorAll('#log-severity .severity-btn').forEach(btn => {
+            btn.classList.toggle('selected', btn.dataset.value === '1');
+        });
+    });
+    
+    const profileForm = document.getElementById('profile-form');
+    // Add click listener for the new API Key accordion
+    profileForm.addEventListener('click', (e) => {
+        const header = e.target.closest('.api-key-header');
+        if (header) {
+            header.parentElement.classList.toggle('expanded');
+        }
+    });
+    const createCheckbox = (id, val, name, checked) => `<div class=inline-block><input type=checkbox id=${id} value="${val}" name=${name} class="profile-checkbox hidden" ${checked?'checked':''}><label for=${id} class="cursor-pointer border border-slate-300 rounded-full px-2.5 py-1.5 text-xs font-medium text-muted duration-200">${val}</label></div>`;
+
+    const setupProfilePage = () => {
+        document.getElementById('profile-diagnoses').innerHTML = PROFILE_OPTIONS.diagnoses.map(i => createCheckbox(`diag-${i}`, i, 'diagnoses', userProfile.diagnoses.includes(i))).join('');
+        document.getElementById('profile-intolerances').innerHTML = PROFILE_OPTIONS.intolerances.map(i => createCheckbox(`intol-${i}`, i, 'intolerances', userProfile.intolerances.includes(i))).join('');
+        document.getElementById('profile-preferences').innerHTML = PROFILE_OPTIONS.preferences.map(i => createCheckbox(`pref-${i}`, i, 'preferences', userProfile.preferences.includes(i))).join('');
+        document.getElementById('profile-allergies-other').value = userProfile.allergiesOther || '';
+        document.getElementById('profile-api-key').value = userProfile.apiKey || '';
+
+        // Smart-open the API key section if the key is missing
+        if (!userProfile.apiKey) {
+            document.getElementById('api-key-accordion-container').classList.add('expanded');
+        }
+    };
+
+    profileForm.addEventListener('submit', (e) => {
+        e.preventDefault(); userProfile.diagnoses = Array.from(document.querySelectorAll('input[name=diagnoses]:checked')).map(el => el.value); userProfile.intolerances = Array.from(document.querySelectorAll('input[name=intolerances]:checked')).map(el => el.value); userProfile.preferences = Array.from(document.querySelectorAll('input[name=preferences]:checked')).map(el => el.value); userProfile.allergiesOther = document.getElementById('profile-allergies-other').value.trim();
+        userProfile.apiKey = document.getElementById('profile-api-key').value.trim();
+        localStorage.setItem('fodmapUserProfile', JSON.stringify(userProfile)); showToast("Profile Saved!");
+    });
+
+    const hamBtn = document.getElementById('hamburger-btn'); const sideMdl = document.getElementById('side-menu-modal'); const sideOvl = document.getElementById('side-menu-overlay'); const sideClose = document.getElementById('side-menu-close'); const openInfoBtn = document.getElementById('open-info-modal-btn'); const infoMdl = document.getElementById('info-modal'); const infoClose = document.getElementById('info-modal-close'); const infoCloseBtn = document.getElementById('info-modal-close-btn');
+    const openSide = () => { sideMdl.classList.remove('hidden'); sideOvl.classList.remove('hidden'); }; const closeSide = () => { sideMdl.classList.add('hidden'); sideOvl.classList.add('hidden'); }; const openInfo = () => { infoMdl.classList.remove('hidden'); }; const closeInfo = () => { infoMdl.classList.add('hidden'); };
+    hamBtn.addEventListener('click', openSide); sideClose.addEventListener('click', closeSide); sideOvl.addEventListener('click', closeSide); openInfoBtn.addEventListener('click', () => { closeSide(); openInfo(); }); infoClose.addEventListener('click', closeInfo); infoCloseBtn.addEventListener('click', closeInfo);
+
+    const geminiMdl = document.getElementById('gemini-modal'); const geminiTitle = document.getElementById('gemini-modal-title'); const geminiContent = document.getElementById('gemini-modal-content'); const geminiLoader = document.getElementById('gemini-modal-loader'); const geminiError = document.getElementById('gemini-modal-error'); const geminiClose = document.getElementById('gemini-modal-close');
+    const openGemini = (title) => { geminiTitle.textContent = title; geminiMdl.classList.remove('hidden'); geminiLoader.classList.remove('hidden'); geminiContent.classList.add('hidden'); geminiError.classList.add('hidden'); }; const closeGemini = () => geminiMdl.classList.add('hidden'); geminiClose.addEventListener('click', closeGemini);
+    const callGeminiAPI = async (prompt, imgData = null, retries = 3, delay = 1000) => {
+        const key = userProfile.apiKey || ""; 
+        if (!key) {
+            console.error("API Key is missing. Please add it in the Profile tab.");
+            showToast("API Key is missing. Add it in your Profile.", true);
+            return null; // Stop the API call
+        }
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`; let parts = [{ text: prompt }]; if (imgData) parts.push({ inlineData: { mimeType: 'image/jpeg', data: imgData } }); const payload = { contents: [{ parts }] };
+        try {
+            const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (!res.ok) { if (res.status === 429 && retries > 0) { await new Promise(r => setTimeout(r, delay)); return callGeminiAPI(prompt, imgData, retries - 1, delay * 2); } throw new Error(`${res.statusText} (${res.status})`); }
+            const result = await res.json(); return result.candidates?.[0]?.content?.parts?.[0]?.text;
+        } catch (err) { console.error("API failed:", err); return null; }
+    };
+    document.getElementById('summarize-journey-btn').addEventListener('click', async () => {
+        if (logEntries.length === 0) { showToast("Need logs.", true); return; } 
+        openGemini('✨ Summary'); 
+        const logTxt = logEntries.map(e => `Date:${e.date},Grp:${e.group},Food:${e.food},Dose:${e.dose},Sym:${e.symptom==='Other'?e.otherSymptom:e.symptom},Sev:${e.severity}/5`).join('; '); 
+        
+        // 1. UPDATED PROMPT:
+        const prompt = `FODMAP helper (no medical advice). Analyze log based on profile: ${buildProfileContext()}. Log: ${logTxt}
+
+        Provide a gentle, 3-part summary based *only* on the log entries and user profile.
+        Format *only* with **bold** headings, *italics* for emphasis, and newlines. Use bullet points (like - or *) for lists.
+        Do NOT use '###', '|', or tables. Omit the disclaimer.
+
+        Use this exact template:
+        **Overall Observation:** [A 1-2 sentence gentle observation about any potential patterns.]
+        **Potential Triggers:** [A bulleted list of foods/groups from the log that *consistently* show symptoms with a severity of 3-5. If none, say "No clear triggers noted yet."]
+        **Seemingly Well-Tolerated:** [A bulleted list of foods/groups from the log that *consistently* show "None" or low severity (1-2). If none, say "Keep logging to find your safe foods."]`
+
+                        const summary = await callGeminiAPI(prompt); 
+                        geminiLoader.classList.add('hidden'); 
+                        if (summary === null && !userProfile.apiKey) { geminiMdl.classList.add('hidden'); return; } 
+                        
+                        // 2. FIXED PARSER:
+                        if (summary) { 
+                            // Add the same parser we use for the AI assistant
+                            let html = summary
+                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')   // Bold
+                                .replace(/\*(.*?)\*/g, '<em>$1</em>')     // Italics
+                                .replace(/(\n|^)[\-\*] (.*?)(?=\n|$)/g, '<br>• $2') // Bullets
+                                .replace(/\n/g, '<br>'); // Newlines
+                            geminiContent.innerHTML = html; // Use .innerHTML, not .textContent
+                            geminiContent.classList.remove('hidden'); 
+                        } else { 
+                            geminiError.textContent = 'Summary failed.'; 
+                            geminiError.classList.remove('hidden'); 
+                        }
+                    });
+    document.getElementById('plan-challenge-btn').addEventListener('click', async () => {
+        const sel = document.getElementById('log-fodmap-group'); 
+        const val = sel.value; // This gets the clean value, e.g., "Fructose"
+        if (!val) { showToast("Select group.", true); return; } 
+        
+        // 1. Use `val` for the modal title, not the full text
+        openGemini(`✨ ${val} Plan`); 
+
+        // 2. Use `val` in the prompt for a cleaner request
+        const prompt = `FODMAP helper (no medical advice). User profile: ${buildProfileContext()}.
+Create a 3-day reintroduction challenge plan for '${val}'.
+Give a couple of specific foods and an increasing portion for each day.
+Briefly explain *why* these foods are good choices (e.g., "contains only this FODMAP").
+Include a "Washout Day" instruction after Day 3.
+Format *only* with **bold** headings, *italics* for emphasis, and newlines. Use bullet points (- or *).
+Do NOT use '###', '|', or tables. Omit the disclaimer.
+
+Use this exact template:
+**Foods:** [Food Names]
+*Why these foods?:* [Brief explanation]
+
+**Challenge Plan:**
+- **Day 1:** [Portion]
+- **Day 2:** [Larger Portion]
+- **Day 3:** [Largest Portion]
+
+**After Day 3:** Wait 2-3 "washout" days and log any delayed symptoms before starting your next challenge.`;
+
+        const plan = await callGeminiAPI(prompt); 
+        geminiLoader.classList.add('hidden'); 
+        if (plan === null && !userProfile.apiKey) { geminiMdl.classList.add('hidden'); return; } 
+        
+        // 3. Use the full parser to render HTML
+        if (plan) { 
+            let html = plan
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')   // Bold
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')     // Italics
+                .replace(/(\n|^)[\-\*] (.*?)(?=\n|$)/g, '<br>• $2') // Bullets
+                .replace(/\n/g, '<br>'); // This line is now correct
+            geminiContent.innerHTML = html; // Use .innerHTML
+            geminiContent.classList.remove('hidden'); 
+        } else { 
+            geminiError.textContent = 'Plan failed.'; 
+            geminiError.classList.remove('hidden'); 
+        }
+    });
+
+    // Listen for the beforeinstallprompt event
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent the default browser prompt from appearing
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        // Show our custom install button in the menu
+        if (installAppLi) {
+            installAppLi.style.display = 'block'; // Make the list item visible
+        }
+    });
+
+    // Add click listener to our custom install button
+    if (installAppBtn) {
+        installAppBtn.addEventListener('click', () => {
+            // Hide the button in the menu
+            if (installAppLi) {
+                installAppLi.style.display = 'none';
+            }
+            // Show the browser's installation prompt
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                // Wait for the user to respond to the prompt
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    } else {
+                        console.log('User dismissed the install prompt');
+                    }
+                    // Clear the deferredPrompt variable, as it can only be used once
+                    deferredPrompt = null;
+                });
+            }
+            // Close the side menu after clicking
+            closeSide();
+        });
+    }
+
+    // Listen for the 'appinstalled' event to know when the user has successfully installed
+    window.addEventListener('appinstalled', () => {
+        console.log('PWA was successfully installed!');
+        // Hide the button if the app is installed
+        if (installAppLi) {
+            installAppLi.style.display = 'none';
+        }
+        deferredPrompt = null;
+    });
+
+    // Hide the button if the app is already running in standalone mode
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+        if (installAppLi) {
+            installAppLi.style.display = 'none';
+        }
+    }
+
+    // Dynamically set nav top and body padding
+    const calculatePadding = () => { 
+        const h = document.querySelector('header'); 
+        const n = document.getElementById('main-nav'); 
+        if (h && n) { 
+            const headerHeight = h.offsetHeight;
+            const navHeight = n.offsetHeight;
+            n.style.top = `${headerHeight}px`; // Stick nav to header
+            document.body.style.paddingTop = `${headerHeight + navHeight}px`; // Set body padding
+        } 
+    };
+    navigateTo('home'); setupLogForm(); renderLogEntries(); renderHomePage(); setupProfilePage(); document.getElementById('log-date').valueAsDate = new Date(); calculatePadding(); window.addEventListener('resize', calculatePadding);
+
+    // --- Swipe Navigation ---
+    const mainContent = document.getElementById('content');
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    mainContent.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    mainContent.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+        const minSwipeDistance = 50; // Minimum pixels for a swipe
+
+        // Check for horizontal swipe and ignore vertical scrolls
+        if (Math.abs(deltaX) > minSwipeDistance && Math.abs(deltaY) < minSwipeDistance) {
+            if (deltaX > 0) {
+                // Swipe Right (Go to Previous Tab)
+                goToPrevTab();
+            } else {
+                // Swipe Left (Go to Next Tab)
+                goToNextTab();
+            }
+        }
+    }
+
+    // --- Click listener for Add Log Entry accordion ---
+    // MOVED FROM OUTSIDE FOR SAFETY
+    document.getElementById('log-form-header').addEventListener('click', () => {
+        document.getElementById('add-log-entry-wrapper').classList.toggle('expanded');
+    });
+
+    // --- Global click listener to close popups ---
+    // MOVED FROM OUTSIDE FOR SAFETY (and to fix `aiAttachPopup` bug)
+    window.addEventListener('click', () => {
+        // Close custom select
+        const fodmapOptions = document.getElementById('custom-fodmap-select-options');
+        if (fodmapOptions.classList.contains('open')) { 
+            fodmapOptions.classList.remove('open');
+            document.getElementById('custom-fodmap-select-trigger').classList.remove('open');
+        }
+        
+        // Close attachment popup
+        if (aiAttachPopup.classList.contains('open')) {
+            aiAttachPopup.classList.remove('open');
+        }
+    });
+
+});
