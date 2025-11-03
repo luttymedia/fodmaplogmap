@@ -14,6 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const pages = document.querySelectorAll('.page');
     const navItems = document.querySelectorAll('.nav-item');
     const addEntryFab = document.getElementById('add-entry-fab');
+    const hamBtn = document.getElementById('hamburger-btn'); const sideMdl = document.getElementById('side-menu-modal'); const sideOvl = document.getElementById('side-menu-overlay'); const sideClose = document.getElementById('side-menu-close'); const openInfoBtn = document.getElementById('open-info-modal-btn'); const infoMdl = document.getElementById('info-modal'); const infoClose = document.getElementById('info-modal-close'); const infoCloseBtn = document.getElementById('info-modal-close-btn');
+    // --- Phase-Controlled Elements ---
+    const progressCard = document.getElementById('home-progress-card'); // You'll need to add this ID in index.html
+    const insightsCard = document.getElementById('home-insights-card'); // You'll need to add this ID in index.html
+    const planChallengeBtn = document.getElementById('plan-challenge-btn');
+    const fodmapSelectContainer = document.getElementById('custom-fodmap-select-container');
+    const fodmapHiddenInput = document.getElementById('log-fodmap-group');
     
     // --- Application State Object ---
 
@@ -30,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const appState = {
         logEntries: JSON.parse(localStorage.getItem('fodmapLogEntries')) || [],
         // Merge saved profile over defaults to ensure all keys exist
-        userProfile: { ...defaultProfile, ...JSON.parse(localStorage.getItem('fodmapUserProfile')) },
+        userProfile: { ...defaultProfile, ...(localStorage.getItem('fodmapUserProfile') ? JSON.parse(localStorage.getItem('fodmapUserProfile')) : {}) },
         currentPageIndex: 0,
         currentlyEditingId: null,
         stagedImageData: null,
@@ -41,19 +48,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Updates the UI contextually based on the user's current phase.
-     * This function will be expanded later.
+     * This function is called on startup and whenever the phase is changed.
      * @param {string} phase - The current phase (e.g., 'restriction')
      */
     function updateUiForPhase(phase) {
         console.log(`[Inference] Updating UI for phase: ${phase}`);
-        
-        // For now, just re-render the main components.
-        // This ensures that any new logic we add to them
-        // will be applied when the phase changes.
+
+        // Default to 'reintroduction' behavior if phase is unknown
+        const isReintro = (phase === 'reintroduction' || phase === 'personalization');
+
+        // --- 1. Home Page ---
+        // Show/hide the "Reintroduction Progress" card
+        if (progressCard) {
+            progressCard.classList.toggle('hidden', !isReintro);
+        }
+        // Show/hide the "AI Insights" card (Summarize Journey)
+        if (insightsCard) {
+            insightsCard.classList.toggle('hidden', !isReintro);
+        }
+
+        // --- 2. Reintro Log Page ---
+        // Show/hide the "Plan My Challenge" button
+        if (planChallengeBtn) {
+            planChallengeBtn.classList.toggle('hidden', !isReintro);
+        }
+        // Show/hide the FODMAP Group dropdown
+        if (fodmapSelectContainer) {
+            fodmapSelectContainer.classList.toggle('hidden', !isReintro);
+        }
+
+        // --- 3. Update Log Form Defaults ---
+        if (!isReintro) {
+            // If we're *not* in reintroduction, force the log group to "Restriction"
+            if (fodmapHiddenInput) {
+                fodmapHiddenInput.value = 'Restriction';
+            }
+        }
+
+        // --- 4. Re-render components ---
+        // (This is good practice to apply any other logic that might depend on phase)
         renderHomePage();
         renderLogEntries();
-        
-        // We'll add more logic here soon.
     }
 
     function navigateTo(pageId) {
@@ -110,9 +145,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const toast = document.getElementById('toast');
     function showToast(message = "Saved!", isError = false) {
         toast.textContent = message;
-        toast.className = `fixed bottom-4 right-4  py-2 px-4 rounded-lg shadow-xl opacity-0 transform translate-y-10 transition-all duration-500 ease-in-out text-sm z-50 ${isError ? 'bg-error' : 'bg-accent'}`; 
-        toast.classList.remove('opacity-0', 'translate-y-10');
-        setTimeout(() => toast.classList.add('opacity-0', 'translate-y-10'), 3000);
+        
+        // Get the calculated top padding of the body (which includes header + nav)
+        const bodyPaddingTop = document.body.style.paddingTop || '100px';
+        
+        // New classes: top-left, new animation, AND pointer-events-none by default
+        toast.className = `fixed left-4 py-2 px-4 rounded-lg shadow-xl opacity-0 transform -translate-y-10 transition-all duration-500 ease-in-out text-sm z-50 pointer-events-none ${isError ? 'bg-error' : 'bg-accent'}`;
+        
+        // Set the top position dynamically
+        toast.style.top = `calc(${bodyPaddingTop} + 0.5rem)`; // 0.5rem (8px) margin from nav
+        
+        // Show toast: remove opacity/translate AND remove pointer-events-none
+        toast.classList.remove('opacity-0', '-translate-y-10', 'pointer-events-none');
+        
+        // Hide toast: add back opacity/translate AND add back pointer-events-none
+        setTimeout(() => {
+            toast.classList.add('opacity-0', '-translate-y-10', 'pointer-events-none');
+        }, 3000);
     }
 
     const aiFoodSearchInput = document.getElementById('ai-food-search-input');
@@ -780,7 +829,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('log-date-container').addEventListener('click', handleLogClick);
 
     // --- New View Toggle Listeners ---
-    const logViewToggleBtns = document.querySelectorAll('.log-view-toggle-btn');
+    const logViewToggleBtns = document.querySelectorAll('.log-view-toggle .log-view-toggle-btn');
     const logSortBtn = document.getElementById('log-sort-btn');
     // Set initial text for the sort button
     logSortBtn.innerHTML = `<i class="fas fa-arrow-down-wide-short"></i> <span class="text-sm ml-1">Sort: Newest</span>`;
@@ -851,7 +900,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const entryData = { 
             date: document.getElementById('log-date').value, 
-            group: document.getElementById('log-fodmap-group').value, 
+            // NEW LOGIC: Use "Restriction" if not in reintro phase
+            group: (appState.userProfile.currentPhase === 'reintroduction' || appState.userProfile.currentPhase === 'personalization') 
+                   ? document.getElementById('log-fodmap-group').value 
+                   : 'Restriction',
             food: document.getElementById('log-food').value, 
             dose: document.getElementById('log-dose').value, 
             symptoms: allSymptoms, // Save the new array
@@ -898,6 +950,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     const profileForm = document.getElementById('profile-form');
+
     // Add click listener for the new API Key accordion
     profileForm.addEventListener('click', (e) => {
         const header = e.target.closest('.api-key-header');
@@ -905,53 +958,6 @@ document.addEventListener('DOMContentLoaded', () => {
             header.parentElement.classList.toggle('expanded');
         }
     });
-    const createCheckbox = (id, val, name, checked) => `<div class=inline-block><input type=checkbox id=${id} value="${val}" name=${name} class="profile-checkbox hidden" ${checked?'checked':''}><label for=${id} class="cursor-pointer border border-slate-300 rounded-full px-2.5 py-1.5 text-xs font-medium text-muted duration-200">${val}</label></div>`;
-
-    const setupProfilePage = () => {
-        document.getElementById('profile-diagnoses').innerHTML = PROFILE_OPTIONS.diagnoses.map(i => createCheckbox(`diag-${i}`, i, 'diagnoses', appState.userProfile.diagnoses.includes(i))).join('');
-        document.getElementById('profile-intolerances').innerHTML = PROFILE_OPTIONS.intolerances.map(i => createCheckbox(`intol-${i}`, i, 'intolerances', appState.userProfile.intolerances.includes(i))).join('');
-        document.getElementById('profile-preferences').innerHTML = PROFILE_OPTIONS.preferences.map(i => createCheckbox(`pref-${i}`, i, 'preferences', appState.userProfile.preferences.includes(i))).join('');
-        document.getElementById('profile-allergies-other').value = appState.userProfile.allergiesOther || '';
-        document.getElementById('profile-api-key').value = appState.userProfile.apiKey || '';
-
-        // Smart-open the API key section if the key is missing
-        if (!appState.userProfile.apiKey) {
-            document.getElementById('api-key-accordion-container').classList.add('expanded');
-        }
-    };
-
-    profileForm.addEventListener('submit', (e) => {
-        e.preventDefault(); 
-        appState.userProfile.diagnoses = Array.from(document.querySelectorAll('input[name=diagnoses]:checked')).map(el => el.value); 
-        appState.userProfile.intolerances = Array.from(document.querySelectorAll('input[name=intolerances]:checked')).map(el => el.value); 
-        appState.userProfile.preferences = Array.from(document.querySelectorAll('input[name=preferences]:checked')).map(el => el.value); 
-        appState.userProfile.allergiesOther = document.getElementById('profile-allergies-other').value.trim();
-        appState.userProfile.apiKey = document.getElementById('profile-api-key').value.trim();
-        localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile)); 
-        showToast("Profile Saved!");
-    });
-
-    const hamBtn = document.getElementById('hamburger-btn'); const sideMdl = document.getElementById('side-menu-modal'); const sideOvl = document.getElementById('side-menu-overlay'); const sideClose = document.getElementById('side-menu-close'); const openInfoBtn = document.getElementById('open-info-modal-btn'); const infoMdl = document.getElementById('info-modal'); const infoClose = document.getElementById('info-modal-close'); const infoCloseBtn = document.getElementById('info-modal-close-btn');
-    
-    const openSide = () => {
-        // Set the active phase button *before* showing the menu
-        const phaseToggleBtns = document.querySelectorAll('#side-menu-phases .log-view-toggle-btn');
-        phaseToggleBtns.forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.phase === appState.userProfile.currentPhase);
-        });
-        sideMdl.classList.remove('hidden'); 
-        sideOvl.classList.remove('hidden'); 
-    }; 
-    const closeSide = () => { sideMdl.classList.add('hidden'); sideOvl.classList.add('hidden'); }; 
-    const openInfo = () => { infoMdl.classList.remove('hidden'); }; 
-    const closeInfo = () => { infoMdl.classList.add('hidden'); };
-    
-    hamBtn.addEventListener('click', openSide); 
-    sideClose.addEventListener('click', closeSide); 
-    sideOvl.addEventListener('click', closeSide); 
-    openInfoBtn.addEventListener('click', () => { closeSide(); openInfo(); }); 
-    infoClose.addEventListener('click', closeInfo); 
-    infoCloseBtn.addEventListener('click', closeInfo);
 
     // NEW listener for the phase buttons inside the side menu
     sideMdl.addEventListener('click', (e) => {
@@ -983,6 +989,51 @@ document.addEventListener('DOMContentLoaded', () => {
             closeSide();
         }
     });
+    const createCheckbox = (id, val, name, checked) => `<div class=inline-block><input type=checkbox id=${id} value="${val}" name=${name} class="profile-checkbox hidden" ${checked?'checked':''}><label for=${id} class="cursor-pointer border border-slate-300 rounded-full px-2.5 py-1.5 text-xs font-medium text-muted duration-200">${val}</label></div>`;
+
+    const setupProfilePage = () => {
+        document.getElementById('profile-diagnoses').innerHTML = PROFILE_OPTIONS.diagnoses.map(i => createCheckbox(`diag-${i}`, i, 'diagnoses', appState.userProfile.diagnoses.includes(i))).join('');
+        document.getElementById('profile-intolerances').innerHTML = PROFILE_OPTIONS.intolerances.map(i => createCheckbox(`intol-${i}`, i, 'intolerances', appState.userProfile.intolerances.includes(i))).join('');
+        document.getElementById('profile-preferences').innerHTML = PROFILE_OPTIONS.preferences.map(i => createCheckbox(`pref-${i}`, i, 'preferences', appState.userProfile.preferences.includes(i))).join('');
+        document.getElementById('profile-allergies-other').value = appState.userProfile.allergiesOther || '';
+        document.getElementById('profile-api-key').value = appState.userProfile.apiKey || '';
+
+        // Smart-open the API key section if the key is missing
+        if (!appState.userProfile.apiKey) {
+            document.getElementById('api-key-accordion-container').classList.add('expanded');
+        }
+    };
+
+    profileForm.addEventListener('submit', (e) => {
+        e.preventDefault(); 
+        appState.userProfile.diagnoses = Array.from(document.querySelectorAll('input[name=diagnoses]:checked')).map(el => el.value); 
+        appState.userProfile.intolerances = Array.from(document.querySelectorAll('input[name=intolerances]:checked')).map(el => el.value); 
+        appState.userProfile.preferences = Array.from(document.querySelectorAll('input[name=preferences]:checked')).map(el => el.value); 
+        appState.userProfile.allergiesOther = document.getElementById('profile-allergies-other').value.trim();
+        appState.userProfile.apiKey = document.getElementById('profile-api-key').value.trim();
+        localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile)); 
+        showToast("Profile Saved!");
+    });
+    
+    const openSide = () => {
+        // Set the active phase button *before* showing the menu
+        const phaseToggleBtns = document.querySelectorAll('#side-menu-phases .log-view-toggle-btn');
+        phaseToggleBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.phase === appState.userProfile.currentPhase);
+        });
+        sideMdl.classList.remove('hidden'); 
+        sideOvl.classList.remove('hidden'); 
+    }; 
+    const closeSide = () => { sideMdl.classList.add('hidden'); sideOvl.classList.add('hidden'); }; 
+    const openInfo = () => { infoMdl.classList.remove('hidden'); }; 
+    const closeInfo = () => { infoMdl.classList.add('hidden'); };
+    
+    hamBtn.addEventListener('click', openSide); 
+    sideClose.addEventListener('click', closeSide); 
+    sideOvl.addEventListener('click', closeSide); 
+    openInfoBtn.addEventListener('click', () => { closeSide(); openInfo(); }); 
+    infoClose.addEventListener('click', closeInfo); 
+    infoCloseBtn.addEventListener('click', closeInfo);
 
     const geminiMdl = document.getElementById('gemini-modal'); const geminiTitle = document.getElementById('gemini-modal-title'); const geminiContent = document.getElementById('gemini-modal-content'); const geminiLoader = document.getElementById('gemini-modal-loader'); const geminiError = document.getElementById('gemini-modal-error'); const geminiClose = document.getElementById('gemini-modal-close');
     const openGemini = (title) => { geminiTitle.textContent = title; geminiMdl.classList.remove('hidden'); geminiLoader.classList.remove('hidden'); geminiContent.classList.add('hidden'); geminiError.classList.add('hidden'); }; const closeGemini = () => geminiMdl.classList.add('hidden'); geminiClose.addEventListener('click', closeGemini);
