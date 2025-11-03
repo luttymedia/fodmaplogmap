@@ -1,4 +1,6 @@
 :root {
+  --header-height: 100px; /* Fallback, JS will correct */
+
   /* New Wellness Palette */
   --color-pastel-blue: #A8C5E5;
   --color-pastel-blue-dark: #8BAFD4; /* Hover */
@@ -30,8 +32,9 @@
 body {
     font-family: 'Quicksand', sans-serif;
     font-weight: 500;
-    /* Fallback padding-top, JS will correct this */
-    padding-top: 100px; 
+    /* Fallback padding, JS will correct this */
+    padding-top: var(--header-height); 
+    padding-bottom: 80px; /* Fallback for bottom nav */
     overscroll-behavior-x: none; /* Prevent browser back/forward swipe */
     color: var(--color-text-base); /* Set base text color */
 }
@@ -636,7 +639,7 @@ main section > div { margin-bottom: 1rem; }
     color: var(--color-secondary-text);
     padding: 1rem 0 0.5rem 0.25rem; /* pt-4 pb-2 px-1 */
     position: sticky;
-    top: 100px; /* Adjust based on your sticky header height */
+    top: var(--header-height); /* JS will correct this variable */
     background-color: var(--color-page-bg, #f8fafc); /* bg-slate-50 */
     z-index: 5;
     border-bottom: 1px solid #e2e8f0; /* border-slate-200 */

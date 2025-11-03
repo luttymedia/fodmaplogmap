@@ -1196,8 +1196,13 @@ Use this exact template:
         if (h && n) { 
             const headerHeight = h.offsetHeight;
             const navHeight = n.offsetHeight;
-            n.style.top = `${headerHeight}px`; // Stick nav to header
-            document.body.style.paddingTop = `${headerHeight + navHeight}px`; // Set body padding
+            
+            // Set padding for header and bottom nav
+            document.body.style.paddingTop = `${headerHeight}px`;
+            document.body.style.paddingBottom = `${navHeight}px`;
+
+            // Set CSS variable for sticky elements (like timeline header)
+            document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
         } 
     };
     navigateTo('home');
