@@ -124,23 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const isReintro = (phase === 'reintroduction');
         const isPersonal = (phase === 'personalization');
         
-        // --- NEW: Profile Page ---
-        if (phaseSettingsCard) {
-            if (isPretreat || isRestrict) {
-                phaseSettingsCard.classList.remove('hidden');
-                // Set title
-                const titleText = (isPretreat) ? 'Pre-Treatment Phase Settings' : 'Restriction Phase Settings';
-                phaseSettingsTitle.textContent = titleText;
-                
-                // --- CRITICAL ---
-                // We must re-populate the profile fields *every time the phase changes*
-                // to show the correct data for that phase.
-                setupProfilePage(); 
-            } else {
-                phaseSettingsCard.classList.add('hidden');
-            }
-        }
-
         // --- Profile Page ---
         const p13nCard = document.getElementById('profile-personalization-card');
         if (phaseSettingsCard) {
@@ -167,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (progressCard) progressCard.classList.toggle('hidden', !isReintro);
         if (personalizationCard) personalizationCard.classList.toggle('hidden', !isPersonal);
         
-        // Insights card: Show for Reintro ONLY (per your request)
+        // Insights card: Show for Reintro ONLY
         if (insightsCard) insightsCard.classList.toggle('hidden', !isReintro);
 
         // --- Call Home Page Renderers ---
@@ -180,12 +163,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isReintro) renderHomePage(); // This is the reintro progress list
 
         // --- 2. Reintro Log Page (Form) ---
-        // Show group/plan buttons ONLY for Reintroduction
+        // Plan button: Show for Reintro ONLY
         if (planChallengeBtn) planChallengeBtn.classList.toggle('hidden', !isReintro);
-        if (fodmapSelectContainer) fodmapSelectContainer.classList.toggle('hidden', !isReintro);
+        
+        // *** MODIFICATION: Show group select for Reintro AND Personalization ***
+        if (fodmapSelectContainer) {
+            fodmapSelectContainer.classList.toggle('hidden', !(isReintro || isPersonal));
+        }
 
         // --- 3. Update Log Form Defaults ---
-        if (!isReintro) {
+        // *** MODIFICATION: This logic is now correct, as isReintro is false for Personalization ***
+        // *** NO, wait, the submit handler logic is already correct. We just needed to update the UI visibility.
+        // *** Let's check the submit handler.
+        // group: (appState.userProfile.currentPhase === 'reintroduction' || appState.userProfile.currentPhase === 'personalization') 
+        // Yes, the submit handler is already correct. This part below is also fine.
+        if (!isReintro && !isPersonal) { // Only force restriction for pre-treat/restrict
             if (fodmapHiddenInput) {
                 fodmapHiddenInput.value = 'Restriction';
             }
@@ -197,10 +189,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const reintroTabText = reintroTab.querySelector('span');
             const reintroTabIcon = reintroTab.querySelector('i');
             
-            // Use "Reintro Log" for reintro, "Daily Log" for all other phases
+            // *** MODIFICATION: Add "Personal Log" ***
             if (isReintro) {
                 if (reintroTabText) reintroTabText.textContent = 'Reintro Log';
                 if (reintroTabIcon) reintroTabIcon.className = 'fas fa-clipboard-list sm:mr-2';
+            } else if (isPersonal) {
+                if (reintroTabText) reintroTabText.textContent = 'Personal Log';
+                if (reintroTabIcon) reintroTabIcon.className = 'fas fa-book-medical sm:mr-2'; // Same icon as daily log
             } else {
                 if (reintroTabText) reintroTabText.textContent = 'Daily Log';
                 if (reintroTabIcon) reintroTabIcon.className = 'fas fa-book-medical sm:mr-2';
@@ -741,9 +736,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const overallStatus = `
                 <div class="p13n-overall-status-container">
                     <div class="p13n-editor-btn-group" data-target="group">
-                        <button type="button" class="p13n-editor-btn tolerated ${groupData.groupStatus === 'tolerated' ? 'selected' : ''}" data-status="tolerated">Tolerated</Gbutton>
+                        <button type="button" class="p13n-editor-btn tolerated ${groupData.groupStatus === 'tolerated' ? 'selected' : ''}" data-status="tolerated">Tolerated</button>
                         <button type="button" class="p13n-editor-btn trigger ${groupData.groupStatus === 'trigger' ? 'selected' : ''}" data-status="trigger">Trigger</button>
-                        <button type="button" class="p13n-editor-btn unknown ${groupData.groupStatus === 'unknown' ? 'selected' : ''}" data-status="unknown">Unknown</button>
+                        <button type="button" class="p13n-editor-btn mixed ${groupData.groupStatus === 'mixed' ? 'selected' : ''}" data-status="mixed">Mixed</button>
                     </div>
                 </div>
             `;
@@ -779,74 +774,111 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- NEW: Runs the Auto-Scan logic ---
+    // --- NEW: Runs the Auto-Scan logic (MERGE NON-DESTRUCTIVE) ---
     function runAutoScan() {
-        const newMap = appState.userProfile.personalizationMap;
-        const allFoodsByGroup = {}; // { Lactose: { Milk: [], Yogurt: [] }, ... }
+        // --- 1. NEW: Use custom action modal ---
+        showActionModal({
+            title: 'Confirm Scan',
+            message: "This will scan your log for NEWLY logged foods and add them to your diet list. It will NOT overwrite any changes you have already made.",
+            confirmText: 'Continue',
+            onConfirm: () => {
+                // --- All of the original scan logic now goes inside onConfirm ---
+                const scanMap = {}; // This is a temporary map to hold the scan results
+                const allFoodsByGroup = {};
 
-        // 1. Group all log entries by group and then by food name
-        appState.logEntries.forEach(entry => {
-            if (entry.group === 'Restriction' || !entry.group) return;
+                // 2. Group all log entries by group and then by food name
+                appState.logEntries.forEach(entry => {
+                    if (entry.group === 'Restriction' || !entry.group) return;
 
-            if (!allFoodsByGroup[entry.group]) {
-                allFoodsByGroup[entry.group] = {};
-            }
-            const foodName = entry.food.trim().toLowerCase();
-            if (!allFoodsByGroup[entry.group][foodName]) {
-                allFoodsByGroup[entry.group][foodName] = [];
-            }
-            allFoodsByGroup[entry.group][foodName].push(entry);
-        });
-
-        // 2. Process each group in the map
-        Object.keys(newMap).forEach(groupName => {
-            const groupEntries = allFoodsByGroup[groupName];
-            newMap[groupName].foods = []; // Clear existing foods
-            let isGroupATrigger = false;
-
-            if (groupEntries) {
-                // 3. Process each food within the group
-                Object.keys(groupEntries).forEach(foodName => {
-                    const foodEntries = groupEntries[foodName];
-                    let isFoodATrigger = false;
-                    let notes = new Set(); // Use a Set to avoid duplicate notes
-
-                    foodEntries.forEach(entry => {
-                        const symptoms = entry.symptoms || ['None'];
-                        const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
-                        const severity = parseInt(entry.severity, 10) || 0;
-
-                        if (hasSymptoms || severity > 2) {
-                            isFoodATrigger = true;
-                            isGroupATrigger = true;
-                            notes.add(`${entry.dose} = ${severity}/5 severity`);
-                        } else {
-                            notes.add(`${entry.dose} = tolerated`);
-                        }
-                    });
-
-                    // 4. Add the food object to the map
-                    newMap[groupName].foods.push({
-                        name: foodName.charAt(0).toUpperCase() + foodName.slice(1), // Capitalize
-                        status: isFoodATrigger ? 'trigger' : 'tolerated',
-                        notes: Array.from(notes).join('; ')
-                    });
+                    if (!allFoodsByGroup[entry.group]) {
+                        allFoodsByGroup[entry.group] = {};
+                    }
+                    const foodName = entry.food.trim().toLowerCase();
+                    if (!allFoodsByGroup[entry.group][foodName]) {
+                        allFoodsByGroup[entry.group][foodName] = [];
+                    }
+                    allFoodsByGroup[entry.group][foodName].push(entry);
                 });
-            }
-            
-            // 5. Set the overall group status
-            if (newMap[groupName].foods.length === 0) {
-                newMap[groupName].groupStatus = 'unknown';
-            } else {
-                newMap[groupName].groupStatus = isGroupATrigger ? 'trigger' : 'tolerated';
+
+                // 3. Process each group in the scan
+                Object.keys(defaultPersonalizationMap).forEach(groupName => { // Use default map to get all groups
+                    const groupEntries = allFoodsByGroup[groupName];
+                    scanMap[groupName] = { foods: [], isGroupATrigger: false }; // Init temp scan object
+
+                    if (groupEntries) {
+                        // 4. Process each food within the group
+                        Object.keys(groupEntries).forEach(foodName => {
+                            const foodEntries = groupEntries[foodName];
+                            let isFoodATrigger = false;
+                            let notes = new Set(); 
+
+                            foodEntries.forEach(entry => {
+                                const symptoms = entry.symptoms || ['None'];
+                                const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
+                                const severity = parseInt(entry.severity, 10) || 0;
+
+                                if (hasSymptoms || severity > 2) {
+                                    isFoodATrigger = true;
+                                    scanMap[groupName].isGroupATrigger = true;
+                                    notes.add(`${entry.dose} = ${severity}/5 severity`);
+                                } else {
+                                    notes.add(`${entry.dose} = tolerated`);
+                                }
+                            });
+
+                            // 5. Add the food object to the SCAN map
+                            scanMap[groupName].foods.push({
+                                name: foodName.charAt(0).toUpperCase() + foodName.slice(1), // Capitalize
+                                status: isFoodATrigger ? 'trigger' : 'tolerated',
+                                notes: Array.from(notes).join('; ')
+                            });
+                        });
+                    }
+                });
+
+                // --- 6. NEW: Non-destructive MERGE logic ---
+                const userMap = appState.userProfile.personalizationMap;
+                let foodsAdded = 0;
+
+                Object.keys(scanMap).forEach(groupName => {
+                    const scannedGroup = scanMap[groupName];
+                    const userGroup = userMap[groupName];
+
+                    // Loop through scanned foods
+                    scannedGroup.foods.forEach(scannedFood => {
+                        // Check if this food *already exists* in the user's saved map
+                        const foodExists = userGroup.foods.some(
+                            userFood => userFood.name.toLowerCase() === scannedFood.name.toLowerCase()
+                        );
+
+                        // If it does NOT exist, add it.
+                        if (!foodExists) {
+                            userGroup.foods.push(scannedFood);
+                            foodsAdded++;
+                        }
+                        // If it *does* exist, we do nothing, preserving the user's edits.
+                    });
+
+                    // Update group status only if it's still 'unknown'
+                    if (userGroup.groupStatus === 'unknown' && scannedGroup.isGroupATrigger) {
+                        userGroup.groupStatus = 'trigger';
+                    }
+                });
+
+                // --- 7. Final Save & Re-render ---
+                appState.userProfile.personalizationMap = userMap;
+                localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile)); // Save
+                renderPersonalizationEditor(); // Re-render the editor with new data
+                renderPersonalizationSummary(); // Re-render the home page
+                
+                if (foodsAdded > 0) {
+                    showToast(`Scan complete! Added ${foodsAdded} new food(s).`);
+                } else {
+                    showToast("Scan complete! No new foods found in your log.");
+                }
+                // --- End of original scan logic ---
             }
         });
-
-        appState.userProfile.personalizationMap = newMap;
-        localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile)); // Save
-        renderPersonalizationEditor(); // Re-render the editor with new data
-        renderPersonalizationSummary(); // Re-render the home page
-        showToast("Auto-Scan Complete!");
     }
 
     // --- Renders Personalization Home Tab (GROUP VIEW) ---
@@ -881,6 +913,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (groupData.groupStatus === 'trigger') {
                     statusIcon = 'fa-exclamation-triangle text-error';
                     statusText = 'Potential Trigger';
+                } else if (groupData.groupStatus === 'mixed') {
+                    statusIcon = 'fa-circle-half-stroke text-warning'; // New icon
+                    statusText = 'Mixed'; // New text
                 }
 
                 const header = document.createElement('div');
@@ -900,17 +935,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     body.innerHTML = groupData.foods.map(food => {
                         let foodIcon = '✅';
                         let foodClass = 'p13n-food-tolerated';
-                        let notesHTML = ''; // Hide notes by default
+                        let notesHTML = ''; // Start empty
 
                         if (food.status === 'trigger') {
                             foodIcon = '⚠️';
                             foodClass = 'p13n-food-trigger';
-                            // ONLY show notes if it's a trigger and notes exist
-                            if (food.notes) {
-                                notesHTML = `<span class="notes">(${food.notes})</span>`;
-                            }
                         }
                         
+                        // Show notes if they exist, regardless of status
+                        if (food.notes) {
+                            notesHTML = `<span class="notes">(${food.notes})</span>`;
+                        }
+
                         return `
                             <div class="p13n-food-item ${foodClass}">
                                 <span class="icon">${foodIcon}</span>
@@ -987,6 +1023,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="p13n-tolerance-item tolerated">
                     <span class="icon">✅</span>
                     <span class="food-name">${food.name}</span>
+                    ${food.notes ? `<span class="notes">(${food.notes})</span>` : ''}
                 </div>
             `).join('');
         } else {
@@ -1645,10 +1682,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- 3. NEW: Save Personalization Map (Personalization Phase) ---
         if (phase === 'personalization') {
             const editor = document.getElementById('personalization-editor-container');
-            const newMap = appState.userProfile.personalizationMap;
+            const userMap = appState.userProfile.personalizationMap; // Reference the existing map
 
             // Loop over all group cards in the editor
-            editor.querySelectorAll('.p13n-editor-group-card').forEach(groupCard => {
+            editor.querySelectorAll('.accordion-group').forEach(groupCard => {
                 const groupName = groupCard.dataset.group;
                 
                 // Read all food items from the DOM
@@ -1661,21 +1698,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     newFoodList.push({
                         name: foodName,
                         status: foodStatus,
-                        notes: foodNotes
+                        notes: foodNotes // Notes are correctly attached here
                     });
                 });
                 
-                // Save the food list
-                newMap[groupName].foods = newFoodList;
-                // Group status was already saved in state by the click handler, so it's fine.
+                // Critical step: Update the foods array in the appState object directly.
+                userMap[groupName].foods = newFoodList;
             });
             
-            appState.userProfile.personalizationMap = newMap;
-            renderPersonalizationSummary(); // Re-render the Home page
+            // The map is already a reference to appState.userProfile.personalizationMap
+            // Now we call the re-render function
+            renderPersonalizationSummary(); // This re-renders the Home tab with the new data
         }
 
         // --- 4. Final Save to localStorage & Toast ---
-        localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile)); 
+        localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
         showToast("Profile Saved!");
     });
 
@@ -1720,16 +1757,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Handle Add Food Button ---
         if (target.classList.contains('p13n-add-food-btn')) {
-            const foodName = prompt("Enter food name:");
-            if (foodName && foodName.trim() !== '') {
-                const groupName = target.closest('.accordion-group').dataset.group;
-                appState.userProfile.personalizationMap[groupName].foods.push({
-                    name: foodName.trim(),
-                    status: 'tolerated',
-                    notes: 'Manually added'
-                });
-                renderPersonalizationEditor(); // Re-render to show new food
-            }
+            showActionModal({
+                title: 'Add Food Item',
+                message: 'Enter the name of the food you want to add:',
+                type: 'prompt',
+                confirmText: 'Add',
+                onConfirm: (foodName) => {
+                    // onConfirm already checks for empty string, so we just proceed
+                    const groupName = target.closest('.accordion-group').dataset.group;
+                    appState.userProfile.personalizationMap[groupName].foods.push({
+                        name: foodName.trim(),
+                        status: 'tolerated',
+                        notes: 'Manually added'
+                    });
+                    renderPersonalizationEditor(); // Re-render to show new food
+                }
+            });
         }
 
         // --- Handle Delete Food Button ---
@@ -1786,6 +1829,78 @@ document.addEventListener('DOMContentLoaded', () => {
     infoCloseBtn.addEventListener('click', closeInfo);
 
     const geminiMdl = document.getElementById('gemini-modal'); const geminiTitle = document.getElementById('gemini-modal-title'); const geminiContent = document.getElementById('gemini-modal-content'); const geminiLoader = document.getElementById('gemini-modal-loader'); const geminiError = document.getElementById('gemini-modal-error'); const geminiClose = document.getElementById('gemini-modal-close');
+    // --- NEW: Action Modal Elements ---
+    const actionModal = document.getElementById('action-modal');
+    const actionModalClose = document.getElementById('action-modal-close');
+    const actionModalTitle = document.getElementById('action-modal-title');
+    const actionModalMessage = document.getElementById('action-modal-message');
+    const actionModalInputContainer = document.getElementById('action-modal-input-container');
+    const actionModalInput = document.getElementById('action-modal-input');
+    const actionModalBtnCancel = document.getElementById('action-modal-btn-cancel');
+    const actionModalBtnConfirm = document.getElementById('action-modal-btn-confirm');
+    // --- END: Action Modal Elements ---
+    /**
+     * Shows a custom modal for confirmations (yes/no) or prompts (input).
+     * @param {object} config - Configuration object
+     * @param {string} config.title - The text for the modal's title.
+     * @param {string} config.message - The text for the modal's body.
+     * @param {string} [config.type='confirm'] - 'confirm' or 'prompt'.
+     * @param {string} [config.confirmText='OK'] - Text for the confirm button.
+     * @param {string} [config.cancelText='Cancel'] - Text for the cancel button.
+     * @param {function} config.onConfirm - Callback function if confirmed. Receives input value if type is 'prompt'.
+     * @param {function} [config.onCancel] - Callback function if cancelled.
+     */
+    function showActionModal({ title, message, type = 'confirm', confirmText = 'OK', cancelText = 'Cancel', onConfirm, onCancel }) {
+        actionModalTitle.textContent = title;
+        actionModalMessage.textContent = message;
+        actionModalBtnConfirm.textContent = confirmText;
+        actionModalBtnCancel.textContent = cancelText;
+
+        // Configure for prompt
+        if (type === 'prompt') {
+            actionModalInputContainer.classList.remove('hidden');
+            actionModalInput.value = ''; // Clear old value
+            actionModalInput.focus();
+        } else {
+            actionModalInputContainer.classList.add('hidden');
+        }
+
+        actionModal.classList.remove('hidden');
+
+        // --- Create temporary, one-time listeners ---
+        const handleConfirm = () => {
+            const inputValue = actionModalInput.value;
+            if (type === 'prompt' && !inputValue.trim()) {
+                // Don't close if prompt is empty and user hits confirm
+                actionModalInput.focus();
+                return; 
+            }
+            if (onConfirm) {
+                onConfirm(inputValue); // Pass the value
+            }
+            closeModal();
+        };
+
+        const handleCancel = () => {
+            if (onCancel) {
+                onCancel();
+            }
+            closeModal();
+        };
+
+        const closeModal = () => {
+            actionModal.classList.add('hidden');
+            // Remove the temporary listeners to avoid memory leaks
+            actionModalBtnConfirm.removeEventListener('click', handleConfirm);
+            actionModalBtnCancel.removeEventListener('click', handleCancel);
+            actionModalClose.removeEventListener('click', handleCancel);
+        };
+        
+        // Attach the new, one-time listeners
+        actionModalBtnConfirm.addEventListener('click', handleConfirm);
+        actionModalBtnCancel.addEventListener('click', handleCancel);
+        actionModalClose.addEventListener('click', handleCancel);
+    }
     const openGemini = (title) => { geminiTitle.textContent = title; geminiMdl.classList.remove('hidden'); geminiLoader.classList.remove('hidden'); geminiContent.classList.add('hidden'); geminiError.classList.add('hidden'); }; const closeGemini = () => geminiMdl.classList.add('hidden'); geminiClose.addEventListener('click', closeGemini);
     const callGeminiAPI = async (prompt, imgData = null, retries = 3, delay = 1000) => {
         const key = appState.userProfile.apiKey || ""; 

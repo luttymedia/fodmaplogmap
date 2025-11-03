@@ -333,14 +333,14 @@
                         </div>
                         
                         <div>
-                            <h3 class="font-semibold text-secondary mb-1.5">Intolerances & Allergies</h3> 
+                            <h3 class="font-semibold text-secondary mb-1.5 mt-4">Intolerances & Allergies</h3> 
                             <div id="profile-intolerances" class="flex flex-wrap gap-2"> 
                             </div>
-                            <input type="text" id="profile-allergies-other" placeholder="List other allergies (comma separated)" class="mt-2 w-full p-2 border border-slate-300 rounded-xl"> 
+                            <input type="text" id="profile-allergies-other" placeholder="List other allergies (comma separated)" class="mt-2 w-full p-2 border border-slate-300 rounded-xl mt-4"> 
                         </div>
                         
                         <div>
-                            <h3 class="font-semibold text-secondary mb-1.5">Dietary Preferences</h3> 
+                            <h3 class="font-semibold text-secondary mb-1.5 mt-4">Dietary Preferences</h3> 
                             <div id="profile-preferences" class="flex flex-wrap gap-2"> 
                             </div>
                         </div>
@@ -376,6 +376,24 @@
             </div>
         </div>
 
+        <div id="action-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[70] hidden"> 
+            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center"> 
+                    <h3 id="action-modal-title" class="text-lg font-semibold text-secondary">Action</h3> 
+                    <button id="action-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+                </div>
+                <div class="p-4 space-y-3"> 
+                    <p id="action-modal-message" class="text-sm text-secondary"></p>
+                    <div id="action-modal-input-container" class="hidden">
+                        <input type="text" id="action-modal-input" class="w-full p-2.5 border border-slate-300 rounded-xl" />
+                    </div>
+                </div>
+                 <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl"> 
+                    <button id="action-modal-btn-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button> 
+                    <button id="action-modal-btn-confirm" class="bg-primary font-semibold py-1.5 px-4 rounded-full hover:bg-primary-dark transition-colors text-sm">Confirm</button> 
+                </div>
+            </div>
+        </div>
         <div id="info-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60] hidden"> 
             <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full">
                 <div class="p-4 border-b border-slate-200 flex justify-between items-center"> 
