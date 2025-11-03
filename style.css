@@ -135,6 +135,19 @@ body {
 #side-menu-overlay { transition: opacity 0.3s ease-in-out; }
 #side-menu-overlay.hidden { opacity: 0; pointer-events: none; }
 
+/* Style for the active phase in the side menu */
+#side-menu-phases .log-view-toggle-btn.active {
+    background-color: var(--color-pastel-green);
+    color: var(--color-text-on-pastel);
+    font-weight: 700;
+    box-shadow: none; /* Remove the white button shadow */
+}
+
+/* Hover effect for inactive buttons */
+#side-menu-phases .log-view-toggle-btn:not(.active):hover {
+    background-color: #f1f5f9; /* bg-slate-100 */
+}
+
 /* Compact Info Modal Styles */
 #info-modal-content h2 { font-size: 1.25rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.25rem; color: var(--color-secondary); }
 #info-modal-content h3 { font-size: 1.1rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.25rem; color: var(--color-primary); }

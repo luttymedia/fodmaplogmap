@@ -201,7 +201,7 @@
             <section id="profile" class="page hidden max-w-3xl mx-auto">
                  <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
                     <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center">👤 Personalize Your Profile</h2>
-                    <p class="text-subtle mb-4 text-sm">Your selections here will customize the AI Assistant's advice to your specific needs.</p> 
+                    <p class="text-subtle mb-4 text-sm">Your selections here will customize the AI Assistant's advice to your specific needs.</p>
 
                     <form id="profile-form" class="space-y-4">
                         <div id="api-key-accordion-container" class="api-key-accordion">
@@ -342,6 +342,18 @@
                         <button id="install-app-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
                             <i class="fas fa-download w-5 mr-2 text-primary"></i>Install App
                         </button>
+                    </li>
+                    <li class="pt-2 mt-2 border-t border-slate-200">
+                        <h3 class="px-3 py-1 text-sm font-semibold text-secondary flex items-center">
+                            <i class="fas fa-list-ol w-5 mr-2 text-primary"></i>Phase Selector
+                        </h3>
+                        <div id="side-menu-phases" class="flex flex-col space-y-1 mt-1">
+                            <!-- We re-use .log-view-toggle-btn but in a vertical layout -->
+                            <button class="log-view-toggle-btn text-left justify-start" data-phase="pretreatment">Pre-treatment</button>
+                            <button class="log-view-toggle-btn text-left justify-start" data-phase="restriction">Restriction</button>
+                            <button class="log-view-toggle-btn text-left justify-start" data-phase="reintroduction">Reintroduction</button>
+                            <button class="log-view-toggle-btn text-left justify-start" data-phase="personalization">Personalization</button>
+                        </div>
                     </li>
                 </ul>
             </nav>

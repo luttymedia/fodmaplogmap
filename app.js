@@ -16,15 +16,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const addEntryFab = document.getElementById('add-entry-fab');
     
     // --- Application State Object ---
+
+    // Define the default profile structure
+    const defaultProfile = { 
+        diagnoses: [], 
+        intolerances: [], 
+        allergiesOther: '', 
+        preferences: [], 
+        apiKey: '',
+        currentPhase: 'reintroduction'
+    };
+
     const appState = {
         logEntries: JSON.parse(localStorage.getItem('fodmapLogEntries')) || [],
-        userProfile: JSON.parse(localStorage.getItem('fodmapUserProfile')) || { 
-            diagnoses: [], 
-            intolerances: [], 
-            allergiesOther: '', 
-            preferences: [], 
-            apiKey: '' 
-        },
+        // Merge saved profile over defaults to ensure all keys exist
+        userProfile: { ...defaultProfile, ...JSON.parse(localStorage.getItem('fodmapUserProfile')) },
         currentPageIndex: 0,
         currentlyEditingId: null,
         stagedImageData: null,
@@ -32,7 +38,23 @@ document.addEventListener('DOMContentLoaded', () => {
         currentDateSort: 'newest', // 'newest' or 'oldest'
         openLogFormOnLoad: false
     };
-    // Note: The 'currentFilter' variable wasn't being used, so I've removed it.
+
+    /**
+     * Updates the UI contextually based on the user's current phase.
+     * This function will be expanded later.
+     * @param {string} phase - The current phase (e.g., 'restriction')
+     */
+    function updateUiForPhase(phase) {
+        console.log(`[Inference] Updating UI for phase: ${phase}`);
+        
+        // For now, just re-render the main components.
+        // This ensures that any new logic we add to them
+        // will be applied when the phase changes.
+        renderHomePage();
+        renderLogEntries();
+        
+        // We'll add more logic here soon.
+    }
 
     function navigateTo(pageId) {
         const targetPage = document.getElementById(pageId);
@@ -910,8 +932,57 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const hamBtn = document.getElementById('hamburger-btn'); const sideMdl = document.getElementById('side-menu-modal'); const sideOvl = document.getElementById('side-menu-overlay'); const sideClose = document.getElementById('side-menu-close'); const openInfoBtn = document.getElementById('open-info-modal-btn'); const infoMdl = document.getElementById('info-modal'); const infoClose = document.getElementById('info-modal-close'); const infoCloseBtn = document.getElementById('info-modal-close-btn');
-    const openSide = () => { sideMdl.classList.remove('hidden'); sideOvl.classList.remove('hidden'); }; const closeSide = () => { sideMdl.classList.add('hidden'); sideOvl.classList.add('hidden'); }; const openInfo = () => { infoMdl.classList.remove('hidden'); }; const closeInfo = () => { infoMdl.classList.add('hidden'); };
-    hamBtn.addEventListener('click', openSide); sideClose.addEventListener('click', closeSide); sideOvl.addEventListener('click', closeSide); openInfoBtn.addEventListener('click', () => { closeSide(); openInfo(); }); infoClose.addEventListener('click', closeInfo); infoCloseBtn.addEventListener('click', closeInfo);
+    
+    const openSide = () => {
+        // Set the active phase button *before* showing the menu
+        const phaseToggleBtns = document.querySelectorAll('#side-menu-phases .log-view-toggle-btn');
+        phaseToggleBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.phase === appState.userProfile.currentPhase);
+        });
+        sideMdl.classList.remove('hidden'); 
+        sideOvl.classList.remove('hidden'); 
+    }; 
+    const closeSide = () => { sideMdl.classList.add('hidden'); sideOvl.classList.add('hidden'); }; 
+    const openInfo = () => { infoMdl.classList.remove('hidden'); }; 
+    const closeInfo = () => { infoMdl.classList.add('hidden'); };
+    
+    hamBtn.addEventListener('click', openSide); 
+    sideClose.addEventListener('click', closeSide); 
+    sideOvl.addEventListener('click', closeSide); 
+    openInfoBtn.addEventListener('click', () => { closeSide(); openInfo(); }); 
+    infoClose.addEventListener('click', closeInfo); 
+    infoCloseBtn.addEventListener('click', closeInfo);
+
+    // NEW listener for the phase buttons inside the side menu
+    sideMdl.addEventListener('click', (e) => {
+        const clickedButton = e.target.closest('#side-menu-phases .log-view-toggle-btn');
+
+        if (clickedButton && !clickedButton.classList.contains('active')) {
+            const newPhase = clickedButton.dataset.phase;
+            
+            // 1. Update state
+            appState.userProfile.currentPhase = newPhase;
+            
+            // 2. Save to localStorage
+            localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+            
+            // 3. Update button UI
+            sideMdl.querySelectorAll('#side-menu-phases .log-view-toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            clickedButton.classList.add('active');
+            
+            // 4. Show toast
+            const phaseName = newPhase.charAt(0).toUpperCase() + newPhase.slice(1);
+            showToast(`Switched to ${phaseName} phase!`);
+            
+            // 5. Update the rest of the app
+            updateUiForPhase(newPhase);
+
+            // 6. Close the menu
+            closeSide();
+        }
+    });
 
     const geminiMdl = document.getElementById('gemini-modal'); const geminiTitle = document.getElementById('gemini-modal-title'); const geminiContent = document.getElementById('gemini-modal-content'); const geminiLoader = document.getElementById('gemini-modal-loader'); const geminiError = document.getElementById('gemini-modal-error'); const geminiClose = document.getElementById('gemini-modal-close');
     const openGemini = (title) => { geminiTitle.textContent = title; geminiMdl.classList.remove('hidden'); geminiLoader.classList.remove('hidden'); geminiContent.classList.add('hidden'); geminiError.classList.add('hidden'); }; const closeGemini = () => geminiMdl.classList.add('hidden'); geminiClose.addEventListener('click', closeGemini);
@@ -1078,7 +1149,15 @@ Use this exact template:
             document.body.style.paddingTop = `${headerHeight + navHeight}px`; // Set body padding
         } 
     };
-    navigateTo('home'); setupLogForm(); renderLogEntries(); renderHomePage(); setupProfilePage(); document.getElementById('log-date').valueAsDate = new Date(); calculatePadding(); window.addEventListener('resize', calculatePadding);
+    navigateTo('home');
+    setupLogForm();
+    renderLogEntries();
+    renderHomePage();
+    setupProfilePage();
+    updateUiForPhase(appState.userProfile.currentPhase);
+    document.getElementById('log-date').valueAsDate = new Date();
+    calculatePadding();
+    window.addEventListener('resize', calculatePadding);
 
     // --- Swipe Navigation ---
     const mainContent = document.getElementById('content');
