@@ -4,22 +4,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const installAppLi = document.getElementById('install-app-li');
     const installAppBtn = document.getElementById('install-app-btn');
 
+     // --- CONSTANTS ---
      const FODMAP_GROUP_DATA = [ { value: "Fructose", name: "Fructose", examples: "(e.g., Honey, Mango)" }, { value: "Lactose", name: "Lactose", examples: "(e.g., Milk, Yogurt)" }, { value: "Fructans (Grains)", name: "Fructans - Grains", examples: "(e.g., Wheat, Rye)" }, { value: "Fructans (Veg & Fruit)", name: "Fructans - Veg & Fruit", examples: "(e.g., Onion, Garlic)" }, { value: "GOS", name: "Galactans (GOS)", examples: "(e.g., Beans, Lentils)" }, { value: "Polyols (Sorbitol)", name: "Polyols - Sorbitol", examples: "(e.g., Avocado, Blackberry)" }, { value: "Polyols (Mannitol)", name: "Polyols - Mannitol", examples: "(e.g., Cauliflower, Mushroom)" }, { value: "Restriction", name: "Daily Log", examples: "(A non-challenge or safe meal)" } ];
      const FODMAP_STYLES = { "Fructose": { color: "bg-yellow-100 text-yellow-800", icon: "🍎" }, "Lactose": { color: "bg-blue-100 text-blue-800", icon: "🥛" }, "Fructans (Grains)": { color: "bg-orange-100 text-orange-800", icon: "🍞" }, "Fructans (Veg & Fruit)": { color: "bg-purple-100 text-purple-800", icon: "🧅" }, "GOS": { color: "bg-teal-100 text-teal-800", icon: "🫘" }, "Polyols (Sorbitol)": { color: "bg-green-100 text-green-800", icon: "🥑" }, "Polyols (Mannitol)": { color: "bg-indigo-100 text-indigo-800", icon: "🍄" }, "Restriction": { color: "bg-slate-100 text-slate-800", icon: "🍴" } };
      const PROFILE_OPTIONS = { diagnoses: ["IMO", "SIBO", "IBS-D", "IBS-C", "IBS-M"], intolerances: ["Sorbitol", "Mannitol", "Lactose", "Fructose", "Gluten"], preferences: ["Vegetarian", "Vegan", "Pescatarian"] };
      const SYMPTOM_OPTIONS = ["Bloating", "Gas", "Abdominal pain", "Diarrhea", "Constipation", "Fatigue", "Headache"];
 
+    // --- DOM Elements (mostly constant) ---
     const pages = document.querySelectorAll('.page');
     const navItems = document.querySelectorAll('.nav-item');
     const addEntryFab = document.getElementById('add-entry-fab');
-    let logEntries = JSON.parse(localStorage.getItem('fodmapLogEntries')) || [];
-    let userProfile = JSON.parse(localStorage.getItem('fodmapUserProfile')) || { diagnoses: [], intolerances: [], allergiesOther: '', preferences: [], apiKey: '' };            let currentFilter = 'All';
-    let currentPageIndex = 0;
-    let currentlyEditingId = null;
-    let stagedImageData = null; // To hold the base64 image data
-    let currentLogView = 'group'; // 'group' or 'date'
-    let currentDateSort = 'newest'; // 'newest' or 'oldest'
-    let openLogFormOnLoad = false; // Flag to auto-open the form
+    
+    // --- Application State Object ---
+    const appState = {
+        logEntries: JSON.parse(localStorage.getItem('fodmapLogEntries')) || [],
+        userProfile: JSON.parse(localStorage.getItem('fodmapUserProfile')) || { 
+            diagnoses: [], 
+            intolerances: [], 
+            allergiesOther: '', 
+            preferences: [], 
+            apiKey: '' 
+        },
+        currentPageIndex: 0,
+        currentlyEditingId: null,
+        stagedImageData: null,
+        currentLogView: 'group', // 'group' or 'date'
+        currentDateSort: 'newest', // 'newest' or 'oldest'
+        openLogFormOnLoad: false
+    };
+    // Note: The 'currentFilter' variable wasn't being used, so I've removed it.
 
     function navigateTo(pageId) {
         const targetPage = document.getElementById(pageId);
@@ -32,17 +45,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const isActive = item.dataset.page === pageId;
             item.classList.toggle('active', isActive);
             if (isActive) {
-                currentPageIndex = index;
+                appState.currentPageIndex = index;
             }
         });
         
         // --- NEW LOGIC for collapsible form ---
         const logFormWrapper = document.getElementById('add-log-entry-wrapper');
         if (pageId === 'reintroduction-log') {
-            if (openLogFormOnLoad) {
+            if (appState.openLogFormOnLoad) {
                 logFormWrapper.classList.add('expanded'); // Expand it
                 logFormWrapper.scrollIntoView({ behavior: 'smooth' }); // Scroll to it
-                openLogFormOnLoad = false; // Reset the flag
+                appState.openLogFormOnLoad = false; // Reset the flag
             } else {
                 logFormWrapper.classList.remove('expanded'); // Ensure it's collapsed
             }
@@ -55,20 +68,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function goToNextTab() {
-        const nextIndex = (currentPageIndex + 1) % navItems.length;
+        const nextIndex = (appState.currentPageIndex + 1) % navItems.length;
         const nextPageId = navItems[nextIndex].dataset.page;
         navigateTo(nextPageId);
     }
 
     function goToPrevTab() {
-        const prevIndex = (currentPageIndex - 1 + navItems.length) % navItems.length;
+        const prevIndex = (appState.currentPageIndex - 1 + navItems.length) % navItems.length;
         const prevPageId = navItems[prevIndex].dataset.page;
         navigateTo(prevPageId);
     }
 
     navItems.forEach(item => item.addEventListener('click', () => navigateTo(item.dataset.page)));
     addEntryFab.addEventListener('click', () => { 
-        openLogFormOnLoad = true; // Set the flag to auto-open
+        appState.openLogFormOnLoad = true; // Set the flag to auto-open
         navigateTo('reintroduction-log'); 
     });
     
@@ -103,19 +116,19 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const buildProfileContext = () => {
         let context = "User profile:"; let hasInfo = false;
-        if (userProfile.diagnoses.length > 0) { context += ` Diagnoses: ${userProfile.diagnoses.join(', ')}.`; hasInfo = true; }
-        const allIntolerances = [...userProfile.intolerances, userProfile.allergiesOther].filter(Boolean);
+        if (appState.userProfile.diagnoses.length > 0) { context += ` Diagnoses: ${appState.userProfile.diagnoses.join(', ')}.`; hasInfo = true; }
+        const allIntolerances = [...appState.userProfile.intolerances, appState.userProfile.allergiesOther].filter(Boolean);
         if (allIntolerances.length > 0) { context += ` Intolerances/Allergies: ${allIntolerances.join(', ')}.`; hasInfo = true; }
-        if (userProfile.preferences.length > 0) { context += ` Preferences: ${userProfile.preferences.join(', ')}.`; hasInfo = true; }
+        if (appState.userProfile.preferences.length > 0) { context += ` Preferences: ${appState.userProfile.preferences.join(', ')}.`; hasInfo = true; }
         return hasInfo ? context : "User profile not specified.";
     };
 
     const getProfileForDisplay = () => {
         let displayLines = [];
-        if (userProfile.diagnoses.length > 0) { displayLines.push(`<strong>Diagnoses:</strong> ${userProfile.diagnoses.join(', ')}`); }
-        const allIntolerances = [...userProfile.intolerances, userProfile.allergiesOther].filter(Boolean);
+        if (appState.userProfile.diagnoses.length > 0) { displayLines.push(`<strong>Diagnoses:</strong> ${appState.userProfile.diagnoses.join(', ')}`); }
+        const allIntolerances = [...appState.userProfile.intolerances, appState.userProfile.allergiesOther].filter(Boolean);
         if (allIntolerances.length > 0) { displayLines.push(`<strong>Intolerances/Allergies:</strong> ${allIntolerances.join(', ')}`); }
-        if (userProfile.preferences.length > 0) { displayLines.push(`<strong>Preferences:</strong> ${userProfile.preferences.join(', ')}`); }
+        if (appState.userProfile.preferences.length > 0) { displayLines.push(`<strong>Preferences:</strong> ${appState.userProfile.preferences.join(', ')}`); }
         
         if (displayLines.length === 0) return null;
         return displayLines.join('<br>');
@@ -226,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 aiResultsLoader.classList.add('hidden');
                 // Clear inputs after search
                 aiFoodSearchInput.value = '';
-                stagedImageData = null;
+                appState.stagedImageData = null;
                 stagedImageContainer.classList.add('hidden');
             });
     };
@@ -235,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const foodName = aiFoodSearchInput.value.trim();
         
         // Check if we have an image or text
-        if (!stagedImageData && !foodName) {
+        if (!appState.stagedImageData && !foodName) {
             showToast("Please enter food or upload an image.", true);
             return;
         }
@@ -243,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let prompt;
         let title;
 
-        if (stagedImageData) {
+        if (appState.stagedImageData) {
             // We are searching with an image
             title = `Image${foodName ? ` (${foodName})` : ''}`; // Use text as a caption if it exists
             prompt = `FODMAP expert: Analyze ingredients in this image. ${buildProfileContext()}
@@ -254,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
             Format *only* with **bold** headings, *italics*, newlines, and emojis. 
             Do NOT use tables, '###', '---', or '|'. Omit the disclaimer.`;
             
-            handleAIQuery(prompt, title, stagedImageData);
+            handleAIQuery(prompt, title, appState.stagedImageData);
 
         } else if (foodName) {
             // We are searching with text only
@@ -295,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     clearStagedImageBtn.addEventListener('click', () => {
-        stagedImageData = null;
+        appState.stagedImageData = null;
         stagedImageContainer.classList.add('hidden');
         imagePreview.src = '';
     });
@@ -305,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const reader = new FileReader();
         reader.onload = (e) => {
             // 1. Get the base64 data
-            stagedImageData = e.target.result.split(',')[1]; 
+            appState.stagedImageData = e.target.result.split(',')[1]; 
             
             // 2. Show the preview
             imagePreview.src = e.target.result;
@@ -329,7 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         FODMAP_GROUP_DATA.forEach(groupData => {
             if (groupData.value === "Restriction") return; // Skip this group
-            const entries = logEntries.filter(entry => entry.group === groupData.value); 
+            const entries = appState.logEntries.filter(entry => entry.group === groupData.value); 
             const count = entries.length;
             
             if (count > 0) {
@@ -546,7 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let groupsWithEntries = 0;
 
         FODMAP_GROUP_DATA.forEach(groupData => {
-            const entriesForGroup = logEntries
+            const entriesForGroup = appState.logEntries
                 .filter(entry => entry.group === groupData.value)
                 .sort((a, b) => new Date(b.date) - new Date(a.date)); 
 
@@ -622,16 +635,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const dateContainer = document.getElementById('log-date-container');
         dateContainer.innerHTML = '';
         
-        if (logEntries.length === 0) {
+        if (appState.logEntries.length === 0) {
             dateContainer.innerHTML = `<p class="text-subtle text-center py-6 bg-white rounded-lg shadow-sm col-span-full text-sm">No log entries yet. Add one above!</p>`;
             return;
         }
 
         // 1. Sort entries based on the global sort variable
-        const sortedEntries = [...logEntries].sort((a, b) => {
+        const sortedEntries = [...appState.logEntries].sort((a, b) => {
             const dateA = new Date(a.date);
             const dateB = new Date(b.date);
-            return currentDateSort === 'newest' ? dateB - dateA : dateA - dateB;
+            return appState.currentDateSort === 'newest' ? dateB - dateA : dateA - dateB;
         });
 
         let currentHeaderDate = null;
@@ -705,7 +718,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- This is the new MAIN render function ---
     const renderLogEntries = () => {
-        if (currentLogView === 'group') {
+        if (appState.currentLogView === 'group') {
             renderLogByGroup();
         } else {
             renderLogByDate();
@@ -721,9 +734,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (editBtn) {
             // --- HANDLE EDIT ---
             const entryId = parseInt(editBtn.dataset.id);
-            const entryToEdit = logEntries.find(entry => entry.id === entryId);
+            const entryToEdit = appState.logEntries.find(entry => entry.id === entryId);
             if (entryToEdit) {
-                currentlyEditingId = entryId; // Set global edit state
+                appState.currentlyEditingId = entryId; // Set global edit state
                 populateFormForEdit(entryToEdit);
                 // Ensure form is expanded
                 document.getElementById('add-log-entry-wrapper').classList.add('expanded');
@@ -731,7 +744,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (deleteBtn) {
             // --- HANDLE DELETE ---
             const entryId = parseInt(deleteBtn.dataset.id);
-            logEntries = logEntries.filter(entry => entry.id !== entryId);
+            appState.logEntries = appState.logEntries.filter(entry => entry.id !== entryId);
             saveLogEntries(); // Re-render and save
             showToast("Entry deleted.");
         } else if (header) {
@@ -760,13 +773,13 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add('active');
 
             // Update state
-            currentLogView = btn.dataset.view;
+            appState.currentLogView = btn.dataset.view;
 
             // Get the new sort container
             const logSortContainer = document.getElementById('log-sort-container');
 
             // Toggle containers and sort button
-            if (currentLogView === 'group') {
+            if (appState.currentLogView === 'group') {
                 groupContainer.classList.remove('hidden');
                 dateContainer.classList.add('hidden');
                 logSortContainer.classList.add('hidden'); // Hide the container
@@ -784,17 +797,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     logSortBtn.addEventListener('click', () => {
         // Flip the sort order
-        currentDateSort = (currentDateSort === 'newest') ? 'oldest' : 'newest';
+        appState.currentDateSort = (appState.currentDateSort === 'newest') ? 'oldest' : 'newest';
         
         // Update the icon and text
-        logSortBtn.innerHTML = `<i class="fas ${currentDateSort === 'newest' ? 'fa-arrow-down-wide-short' : 'fa-arrow-up-wide-short'}"></i>
-        <span class="text-sm ml-1">Sort: ${currentDateSort === 'newest' ? 'Newest' : 'Oldest'}</span>`;
+        logSortBtn.innerHTML = `<i class="fas ${appState.currentDateSort === 'newest' ? 'fa-arrow-down-wide-short' : 'fa-arrow-up-wide-short'}"></i>
+        <span class="text-sm ml-1">Sort: ${appState.currentDateSort === 'newest' ? 'Newest' : 'Oldest'}</span>`;
         
         // Re-render the date list
         renderLogByDate();
     });
 
-    const saveLogEntries = () => { localStorage.setItem('fodmapLogEntries', JSON.stringify(logEntries)); renderLogEntries(); renderHomePage(); };
+    const saveLogEntries = () => { localStorage.setItem('fodmapLogEntries', JSON.stringify(appState.logEntries)); renderLogEntries(); renderHomePage(); };
 
     logForm.addEventListener('submit', (e) => {
         e.preventDefault(); 
@@ -824,18 +837,18 @@ document.addEventListener('DOMContentLoaded', () => {
             notes: document.getElementById('log-notes').value 
         };
 
-        if (currentlyEditingId) {
+        if (appState.currentlyEditingId) {
             // --- UPDATE EXISTING ENTRY ---
-            const index = logEntries.findIndex(entry => entry.id === currentlyEditingId);
+            const index = appState.logEntries.findIndex(entry => entry.id === appState.currentlyEditingId);
             if (index !== -1) {
-                logEntries[index] = { ...entryData, id: currentlyEditingId }; // Keep original ID
+                appState.logEntries[index] = { ...entryData, id: appState.currentlyEditingId }; // Keep original ID
             }
-            currentlyEditingId = null; // Reset edit state
+            appState.currentlyEditingId = null; // Reset edit state
             showToast("Entry updated!");
         } else {
             // --- ADD NEW ENTRY ---
             const newEntry = { ...entryData, id: Date.now() };
-            logEntries.push(newEntry); 
+            appState.logEntries.push(newEntry); 
             showToast("Added!");
         }
 
@@ -873,22 +886,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const createCheckbox = (id, val, name, checked) => `<div class=inline-block><input type=checkbox id=${id} value="${val}" name=${name} class="profile-checkbox hidden" ${checked?'checked':''}><label for=${id} class="cursor-pointer border border-slate-300 rounded-full px-2.5 py-1.5 text-xs font-medium text-muted duration-200">${val}</label></div>`;
 
     const setupProfilePage = () => {
-        document.getElementById('profile-diagnoses').innerHTML = PROFILE_OPTIONS.diagnoses.map(i => createCheckbox(`diag-${i}`, i, 'diagnoses', userProfile.diagnoses.includes(i))).join('');
-        document.getElementById('profile-intolerances').innerHTML = PROFILE_OPTIONS.intolerances.map(i => createCheckbox(`intol-${i}`, i, 'intolerances', userProfile.intolerances.includes(i))).join('');
-        document.getElementById('profile-preferences').innerHTML = PROFILE_OPTIONS.preferences.map(i => createCheckbox(`pref-${i}`, i, 'preferences', userProfile.preferences.includes(i))).join('');
-        document.getElementById('profile-allergies-other').value = userProfile.allergiesOther || '';
-        document.getElementById('profile-api-key').value = userProfile.apiKey || '';
+        document.getElementById('profile-diagnoses').innerHTML = PROFILE_OPTIONS.diagnoses.map(i => createCheckbox(`diag-${i}`, i, 'diagnoses', appState.userProfile.diagnoses.includes(i))).join('');
+        document.getElementById('profile-intolerances').innerHTML = PROFILE_OPTIONS.intolerances.map(i => createCheckbox(`intol-${i}`, i, 'intolerances', appState.userProfile.intolerances.includes(i))).join('');
+        document.getElementById('profile-preferences').innerHTML = PROFILE_OPTIONS.preferences.map(i => createCheckbox(`pref-${i}`, i, 'preferences', appState.userProfile.preferences.includes(i))).join('');
+        document.getElementById('profile-allergies-other').value = appState.userProfile.allergiesOther || '';
+        document.getElementById('profile-api-key').value = appState.userProfile.apiKey || '';
 
         // Smart-open the API key section if the key is missing
-        if (!userProfile.apiKey) {
+        if (!appState.userProfile.apiKey) {
             document.getElementById('api-key-accordion-container').classList.add('expanded');
         }
     };
 
     profileForm.addEventListener('submit', (e) => {
-        e.preventDefault(); userProfile.diagnoses = Array.from(document.querySelectorAll('input[name=diagnoses]:checked')).map(el => el.value); userProfile.intolerances = Array.from(document.querySelectorAll('input[name=intolerances]:checked')).map(el => el.value); userProfile.preferences = Array.from(document.querySelectorAll('input[name=preferences]:checked')).map(el => el.value); userProfile.allergiesOther = document.getElementById('profile-allergies-other').value.trim();
-        userProfile.apiKey = document.getElementById('profile-api-key').value.trim();
-        localStorage.setItem('fodmapUserProfile', JSON.stringify(userProfile)); showToast("Profile Saved!");
+        e.preventDefault(); 
+        appState.userProfile.diagnoses = Array.from(document.querySelectorAll('input[name=diagnoses]:checked')).map(el => el.value); 
+        appState.userProfile.intolerances = Array.from(document.querySelectorAll('input[name=intolerances]:checked')).map(el => el.value); 
+        appState.userProfile.preferences = Array.from(document.querySelectorAll('input[name=preferences]:checked')).map(el => el.value); 
+        appState.userProfile.allergiesOther = document.getElementById('profile-allergies-other').value.trim();
+        appState.userProfile.apiKey = document.getElementById('profile-api-key').value.trim();
+        localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile)); 
+        showToast("Profile Saved!");
     });
 
     const hamBtn = document.getElementById('hamburger-btn'); const sideMdl = document.getElementById('side-menu-modal'); const sideOvl = document.getElementById('side-menu-overlay'); const sideClose = document.getElementById('side-menu-close'); const openInfoBtn = document.getElementById('open-info-modal-btn'); const infoMdl = document.getElementById('info-modal'); const infoClose = document.getElementById('info-modal-close'); const infoCloseBtn = document.getElementById('info-modal-close-btn');
@@ -898,7 +916,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const geminiMdl = document.getElementById('gemini-modal'); const geminiTitle = document.getElementById('gemini-modal-title'); const geminiContent = document.getElementById('gemini-modal-content'); const geminiLoader = document.getElementById('gemini-modal-loader'); const geminiError = document.getElementById('gemini-modal-error'); const geminiClose = document.getElementById('gemini-modal-close');
     const openGemini = (title) => { geminiTitle.textContent = title; geminiMdl.classList.remove('hidden'); geminiLoader.classList.remove('hidden'); geminiContent.classList.add('hidden'); geminiError.classList.add('hidden'); }; const closeGemini = () => geminiMdl.classList.add('hidden'); geminiClose.addEventListener('click', closeGemini);
     const callGeminiAPI = async (prompt, imgData = null, retries = 3, delay = 1000) => {
-        const key = userProfile.apiKey || ""; 
+        const key = appState.userProfile.apiKey || ""; 
         if (!key) {
             console.error("API Key is missing. Please add it in the Profile tab.");
             showToast("API Key is missing. Add it in your Profile.", true);
@@ -912,9 +930,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) { console.error("API failed:", err); return null; }
     };
     document.getElementById('summarize-journey-btn').addEventListener('click', async () => {
-        if (logEntries.length === 0) { showToast("Need logs.", true); return; } 
+        if (appState.logEntries.length === 0) { showToast("Need logs.", true); return; } 
         openGemini('✨ Summary'); 
-        const logTxt = logEntries.map(e => `Date:${e.date},Grp:${e.group},Food:${e.food},Dose:${e.dose},Sym:${e.symptom==='Other'?e.otherSymptom:e.symptom},Sev:${e.severity}/5`).join('; '); 
+        const logTxt = appState.logEntries.map(e => `Date:${e.date},Grp:${e.group},Food:${e.food},Dose:${e.dose},Sym:${e.symptom==='Other'?e.otherSymptom:e.symptom},Sev:${e.severity}/5`).join('; '); 
         
         // 1. UPDATED PROMPT:
         const prompt = `FODMAP helper (no medical advice). Analyze log based on profile: ${buildProfileContext()}. Log: ${logTxt}
@@ -930,7 +948,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         const summary = await callGeminiAPI(prompt); 
                         geminiLoader.classList.add('hidden'); 
-                        if (summary === null && !userProfile.apiKey) { geminiMdl.classList.add('hidden'); return; } 
+                        if (summary === null && !appState.userProfile.apiKey) { geminiMdl.classList.add('hidden'); return; } 
                         
                         // 2. FIXED PARSER:
                         if (summary) { 
@@ -977,7 +995,7 @@ Use this exact template:
 
         const plan = await callGeminiAPI(prompt); 
         geminiLoader.classList.add('hidden'); 
-        if (plan === null && !userProfile.apiKey) { geminiMdl.classList.add('hidden'); return; } 
+        if (plan === null && !appState.userProfile.apiKey) { geminiMdl.classList.add('hidden'); return; } 
         
         // 3. Use the full parser to render HTML
         if (plan) { 
@@ -1098,13 +1116,11 @@ Use this exact template:
     }
 
     // --- Click listener for Add Log Entry accordion ---
-    // MOVED FROM OUTSIDE FOR SAFETY
     document.getElementById('log-form-header').addEventListener('click', () => {
         document.getElementById('add-log-entry-wrapper').classList.toggle('expanded');
     });
 
     // --- Global click listener to close popups ---
-    // MOVED FROM OUTSIDE FOR SAFETY (and to fix `aiAttachPopup` bug)
     window.addEventListener('click', () => {
         // Close custom select
         const fodmapOptions = document.getElementById('custom-fodmap-select-options');
@@ -1114,6 +1130,7 @@ Use this exact template:
         }
         
         // Close attachment popup
+        const aiAttachPopup = document.getElementById('ai-attach-popup');
         if (aiAttachPopup.classList.contains('open')) {
             aiAttachPopup.classList.remove('open');
         }
