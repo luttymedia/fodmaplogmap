@@ -669,17 +669,17 @@ body {
     left: 0;
     right: 0;
     z-index: 15; /* Below header (z-20) but above content */
-    padding: 0.25rem 1rem; /* 4px vertical, 16px horizontal */
+    padding: 0.125rem 1rem; /* 2px vertical, 16px horizontal */
     text-align: center;
     transition: background-color 0.3s ease-in-out, top 0.3s ease-in-out;
 }
 
 #phase-bar-text {
     color: white;
-    font-weight: 700; /* bold */
-    font-size: 0.875rem; /* text-sm */
+    font-weight: 650; /* bold */
+    font-size: 0.75rem; /* text-xs */
     text-transform: uppercase;
-    letter-spacing: 0.05em; /* slightly wider */
+    letter-spacing: 0.1em; /* slightly wider */
 }
 
 /* Dynamic Phase Background Colors */
@@ -687,3 +687,24 @@ body {
 .phase-restriction { background-color: var(--phase-color-restriction); }
 .phase-reintroduction { background-color: var(--phase-color-reintro); }
 .phase-personalization { background-color: var(--phase-color-personal); }
+
+/* New Personalization Summary Tags */
+.summary-tag {
+    display: inline-block;
+    padding: 0.25rem 0.75rem; /* py-1 px-3 */
+    border-radius: 9999px; /* rounded-full */
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600;
+}
+.summary-tag.tolerated {
+    background-color: var(--color-pastel-green);
+    color: var(--color-text-on-pastel);
+}
+.summary-tag.trigger {
+    background-color: #fecaca; /* bg-red-200 */
+    color: #991b1b; /* text-red-800 */
+}
+.summary-tag.unknown {
+    background-color: #f1f5f9; /* bg-slate-100 */
+    color: #475569; /* text-slate-600 */
+}

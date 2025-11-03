@@ -25,6 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Phase-Controlled Elements ---
     const progressCard = document.getElementById('home-progress-card'); // You'll need to add this ID in index.html
     const insightsCard = document.getElementById('home-insights-card'); // You'll need to add this ID in index.html
+    const pretreatmentCard = document.getElementById('home-pretreatment-card');
+    const restrictionCard = document.getElementById('home-restriction-card');
+    const personalizationCard = document.getElementById('home-personalization-card');
     const planChallengeBtn = document.getElementById('plan-challenge-btn');
     const fodmapSelectContainer = document.getElementById('custom-fodmap-select-container');
     const fodmapHiddenInput = document.getElementById('log-fodmap-group');
@@ -38,7 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
         allergiesOther: '', 
         preferences: [], 
         apiKey: '',
-        currentPhase: 'reintroduction'
+        currentPhase: 'reintroduction',
+        phaseStartDate: null, // We will set this in the Profile page later
+        phaseDurationWeeks: 4 // Default to 4 weeks, can also be set in Profile
     };
 
     const appState = {
@@ -61,10 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateUiForPhase(phase) {
         console.log(`[Inference] Updating UI for phase: ${phase}`);
 
-        // --- NEW: Update Phase Bar ---
+        // --- Update Phase Bar ---
         const phaseBar = document.getElementById('phase-bar');
         const phaseBarText = document.getElementById('phase-bar-text');
-        const style = PHASE_STYLES[phase] || PHASE_STYLES['restriction']; // Default to restriction
+        const style = PHASE_STYLES[phase] || PHASE_STYLES['restriction']; // Default
 
         if (phaseBar && phaseBarText) {
             phaseBarText.textContent = style.label;
@@ -74,24 +79,31 @@ document.addEventListener('DOMContentLoaded', () => {
             phaseBar.classList.add(style.colorClass);
         }
 
-        // Default to 'reintroduction' behavior if phase is unknown
-        const isReintro = (phase === 'reintroduction' || phase === 'personalization');
+        // --- Define Phase Booleans ---
+        const isPretreat = (phase === 'pre-treatment');
+        const isRestrict = (phase === 'restriction');
+        const isReintro = (phase === 'reintroduction');
+        const isPersonal = (phase === 'personalization');
+        
+        // --- 1. Home Page Card Visibility ---
+        if (pretreatmentCard) pretreatmentCard.classList.toggle('hidden', !isPretreat);
+        if (restrictionCard) restrictionCard.classList.toggle('hidden', !isRestrict);
+        if (progressCard) progressCard.classList.toggle('hidden', !isReintro);
+        if (personalizationCard) personalizationCard.classList.toggle('hidden', !isPersonal);
+        
+        // Insights card: Show for Reintro ONLY (per your request)
+        if (insightsCard) insightsCard.classList.toggle('hidden', !isReintro);
 
-        // --- 1. Home Page ---
-        if (progressCard) {
-            progressCard.classList.toggle('hidden', !isReintro);
-        }
-        if (insightsCard) {
-            insightsCard.classList.toggle('hidden', !isReintro);
-        }
+        // --- Call Home Page Renderers ---
+        if (isPretreat) renderCountdown('pre-treatment');
+        if (isRestrict) renderCountdown('restriction');
+        if (isPersonal) renderPersonalizationSummary();
+        if (isReintro) renderHomePage(); // This is the reintro progress list
 
-        // --- 2. Reintro Log Page ---
-        if (planChallengeBtn) {
-            planChallengeBtn.classList.toggle('hidden', !isReintro);
-        }
-        if (fodmapSelectContainer) {
-            fodmapSelectContainer.classList.toggle('hidden', !isReintro);
-        }
+        // --- 2. Reintro Log Page (Form) ---
+        // Show group/plan buttons ONLY for Reintroduction
+        if (planChallengeBtn) planChallengeBtn.classList.toggle('hidden', !isReintro);
+        if (fodmapSelectContainer) fodmapSelectContainer.classList.toggle('hidden', !isReintro);
 
         // --- 3. Update Log Form Defaults ---
         if (!isReintro) {
@@ -100,23 +112,23 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // --- NEW: Update Nav Tab Label ---
+        // --- 4. Update Nav Tab Label ---
         const reintroTab = document.querySelector('button[data-page="reintroduction-log"]');
         if (reintroTab) {
             const reintroTabText = reintroTab.querySelector('span');
             const reintroTabIcon = reintroTab.querySelector('i');
             
+            // Use "Reintro Log" for reintro, "Daily Log" for all other phases
             if (isReintro) {
                 if (reintroTabText) reintroTabText.textContent = 'Reintro Log';
-                if (reintroTabIcon) reintroTabIcon.className = 'fas fa-clipboard-list sm:mr-2'; // Original icon
+                if (reintroTabIcon) reintroTabIcon.className = 'fas fa-clipboard-list sm:mr-2';
             } else {
                 if (reintroTabText) reintroTabText.textContent = 'Daily Log';
-                if (reintroTabIcon) reintroTabIcon.className = 'fas fa-book-medical sm:mr-2'; // New icon for daily log
+                if (reintroTabIcon) reintroTabIcon.className = 'fas fa-book-medical sm:mr-2';
             }
         }
 
-        // --- 4. Re-render components ---
-        renderHomePage();
+        // --- 5. Re-render Log Entries List (to be safe) ---
         renderLogEntries();
     }
 
@@ -495,6 +507,100 @@ document.addEventListener('DOMContentLoaded', () => {
         const header = e.target.closest('.progress-item-header'); if (header) { const item = header.parentElement; const expanded = item.classList.contains('expanded'); summaryContainer.querySelectorAll('.progress-item').forEach(i => i.classList.remove('expanded')); if (!expanded) item.classList.add('expanded'); }
     });
 
+    // --- NEW COUNTDOWN RENDERER ---
+    function renderCountdown(phase) {
+        const { phaseStartDate, phaseDurationWeeks } = appState.userProfile;
+        const containerId = (phase === 'pre-treatment') ? 'home-pretreatment-countdown' : 'home-restriction-countdown';
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        if (!phaseStartDate) {
+            container.innerHTML = `<span class="text-sm text-subtle">Set your <strong>Phase Start Date</strong> in your Profile to begin the countdown.</span>`;
+            return;
+        }
+
+        const totalDays = phaseDurationWeeks * 7;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize today
+        const start = new Date(phaseStartDate + 'T00:00:00'); // Assume local timezone
+        
+        // Calculate days elapsed (ensuring it's at least 0)
+        const timeDiff = today.getTime() - start.getTime();
+        const daysElapsed = Math.max(0, Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1); // +1 because day 1 is elapsed
+        
+        const daysRemaining = Math.max(0, totalDays - daysElapsed);
+        const currentWeek = Math.min(phaseDurationWeeks, Math.floor((daysElapsed - 1) / 7) + 1);
+
+        if (daysRemaining > 0) {
+            container.innerHTML = `
+                <div class="font-bold text-lg text-primary">Week ${currentWeek} of ${phaseDurationWeeks}</div>
+                <div class="text-sm text-muted">${daysRemaining} days remaining</div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="font-bold text-lg text-accent">Phase Complete!</div>
+                <div class="text-sm text-muted">Ready for the next step.</div>
+            `;
+        }
+    }
+
+    // --- NEW PERSONALIZATION SUMMARY RENDERER ---
+    function renderPersonalizationSummary() {
+        const toleratedContainer = document.getElementById('summary-tolerated');
+        const triggersContainer = document.getElementById('summary-triggers');
+        if (!toleratedContainer || !triggersContainer) return;
+
+        const toleratedGroups = new Set();
+        const triggerGroups = new Set();
+        const allTestedGroups = new Set();
+
+        // 1. Loop through all log entries
+        appState.logEntries.forEach(entry => {
+            if (entry.group === 'Restriction') return; // Skip safe meals
+            
+            allTestedGroups.add(entry.group);
+            const symptoms = entry.symptoms || ['None'];
+            const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
+            const severity = parseInt(entry.severity, 10) || 0;
+
+            if (hasSymptoms || severity > 2) {
+                triggerGroups.add(entry.group); // If any entry has symptoms/severity, mark as a trigger
+            }
+        });
+
+        // 2. A group is 'tolerated' if it was tested AND never marked as a trigger
+        allTestedGroups.forEach(group => {
+            if (!triggerGroups.has(group)) {
+                toleratedGroups.add(group);
+            }
+        });
+
+        // 3. Render the tags
+        toleratedContainer.innerHTML = '';
+        triggersContainer.innerHTML = '';
+
+        if (toleratedGroups.size === 0 && triggerGroups.size === 0) {
+            toleratedContainer.innerHTML = `<p class="text-sm text-subtle">No reintroduction logs found. Start logging to see your summary here.</p>`;
+            return;
+        }
+
+        toleratedGroups.forEach(group => {
+            const style = FODMAP_STYLES[group] || { icon: '❓' };
+            toleratedContainer.innerHTML += `<span class="summary-tag tolerated">${style.icon} ${group}</span>`;
+        });
+        if (toleratedGroups.size === 0) {
+            toleratedContainer.innerHTML = `<p class="text-sm text-subtle">No tolerated groups identified yet. Keep logging!</p>`;
+        }
+
+        triggerGroups.forEach(group => {
+            const style = FODMAP_STYLES[group] || { icon: '❓' };
+            triggersContainer.innerHTML += `<span class="summary-tag trigger">${style.icon} ${group}</span>`;
+        });
+        if (triggerGroups.size === 0) {
+            triggersContainer.innerHTML = `<p class="text-sm text-subtle">No triggers identified yet. Great news!</p>`;
+        }
+    }
+
     const logForm = document.getElementById('log-form');
     const logEntriesContainer = document.getElementById('log-entries');
     const logFilter = document.getElementById('log-filter');
@@ -857,6 +963,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('log-accordion-container').addEventListener('click', handleLogClick);
     document.getElementById('log-date-container').addEventListener('click', handleLogClick);
 
+    // --- AI Shortcut Button on Home Page ---
+    const aiShortcutBtn = document.getElementById('home-ai-shortcut-btn');
+    if (aiShortcutBtn) {
+        aiShortcutBtn.addEventListener('click', () => {
+            navigateTo('food-info');
+        });
+    }
+    
     // --- New View Toggle Listeners ---
     const logViewToggleBtns = document.querySelectorAll('.log-view-toggle .log-view-toggle-btn');
     const logSortBtn = document.getElementById('log-sort-btn');
@@ -1246,10 +1360,10 @@ Use this exact template:
     };
     navigateTo('home');
     setupLogForm();
-    renderLogEntries();
-    renderHomePage();
+    // renderLogEntries(); // <-- REMOVED
+    // renderHomePage(); // <-- REMOVED
     setupProfilePage();
-    updateUiForPhase(appState.userProfile.currentPhase);
+    updateUiForPhase(appState.userProfile.currentPhase); // This now handles all initial rendering
     document.getElementById('log-date').valueAsDate = new Date();
     calculatePadding();
     window.addEventListener('resize', calculatePadding);

@@ -16,14 +16,14 @@
 <body class="bg-slate-50">
 
     <div id="app" class="max-w-7xl mx-auto p-2 sm:p-4">
-        <header class="fixed top-0 left-0 right-0 z-20 bg-slate-50/90 backdrop-blur-sm px-2 sm:px-4 py-2 flex items-center justify-between border-b border-slate-200">
-             <button id="hamburger-btn" class="text-muted hover:text-primary text-2xl w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100">
+        <header class="fixed top-0 left-0 right-0 z-20 bg-slate-50/90 backdrop-blur-sm px-2 sm:px-4 py-1 flex items-center justify-between border-b border-slate-200">
+             <button id="hamburger-btn" class="text-muted hover:text-primary text-2xl w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100">
                 <i class="fas fa-bars"></i>
             </button>
              <div class="flex flex-col items-center">
-                 <img src="fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" class="h-9 sm:h-9">
+                 <img src="fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" class="h-8 sm:h-8">
              </div>
-             <div class="w-10"></div> 
+             <div class="w-9"></div> 
         </header>
 
         <div id="phase-bar">
@@ -62,7 +62,56 @@
                          <p class="text-xs text-slate-400 text-center">Get an AI-powered summary of your reintroduction log to spot potential patterns.</p>
                     </div>
                 </div>
-            </section>
+
+                <div id="home-pretreatment-card" class="hidden bg-white p-4 sm:p-6 rounded-2xl shadow-md space-y-4">
+                    <h2 class="text-xl sm:text-2xl font-semibold text-secondary">Pre-Treatment Focus</h2>
+                    <div class="p-3 bg-slate-50 rounded-lg">
+                        <h3 class="font-semibold text-secondary mb-2">My Diet Rules:</h3>
+                        <ul class="list-disc list-inside text-muted space-y-1 text-sm">
+                            <li>Avoid: <strong>Lactose</strong></li>
+                            <li>Avoid: <strong>Gluten</strong></li>
+                            <li>Avoid: <strong>Apples</strong></li>
+                            <li>Avoid: <strong>Peaches</strong></li>
+                            <li>Avoid: <strong>Pears</strong></li>
+                        </ul>
+                    </div>
+                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
+                        <h3 class="font-semibold text-primary mb-1">Phase Countdown</h3>
+                        <div id="home-pretreatment-countdown" class="text-sm text-secondary"></div>
+                    </div>
+                </div>
+
+                <div id="home-restriction-card" class="hidden bg-white p-4 sm:p-6 rounded-2xl shadow-md space-y-4">
+                    <h2 class="text-xl sm:text-2xl font-semibold text-secondary">Restriction Phase</h2>
+                    <div class="p-3 bg-slate-50 rounded-lg text-sm text-secondary">
+                        <p><strong>Goal:</strong> Avoid all high-FODMAP foods to establish a baseline. Use the AI Assistant to check foods before you eat!</p>
+                    </div>
+                    <button id="home-ai-shortcut-btn" class="w-full bg-accent font-semibold py-2.5 px-4 rounded-full hover:bg-accent-dark transition-colors duration-300 shadow flex items-center justify-center gap-2"> 
+                        <i class="fas fa-brain"></i> Check Food with AI
+                    </button>
+                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
+                        <h3 class="font-semibold text-primary mb-1">Phase Countdown</h3>
+                        <div id="home-restriction-countdown" class="text-sm text-secondary"></div>
+                    </div>
+                </div>
+
+                <div id="home-personalization-card" class="hidden bg-white p-4 sm:p-6 rounded-2xl shadow-md space-y-4">
+                    <h2 class="text-xl sm:text-2xl font-semibold text-secondary">Your Long-Term Diet</h2>
+                    <p class="text-sm text-subtle">Based on your log, here's a summary of your journey. Continue to log new foods to refine this list.</p>
+                    <div class="space-y-3">
+                        <div>
+                            <h3 class="font-semibold text-accent mb-2 flex items-center gap-2"><i class="fas fa-check-circle"></i> Tolerated Groups</h3>
+                            <div id="summary-tolerated" class="flex flex-wrap gap-2">
+                                </div>
+                        </div>
+                         <div>
+                            <h3 class="font-semibold text-error mb-2 flex items-center gap-2"><i class="fas fa-exclamation-triangle"></i> Potential Triggers</h3>
+                            <div id="summary-triggers" class="flex flex-wrap gap-2">
+                                 </div>
+                        </div>
+                    </div>
+                </div>
+                </section>
 
             <section id="food-info" class="page hidden max-w-3xl mx-auto">
                 <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
