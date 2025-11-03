@@ -708,3 +708,15 @@ body {
     background-color: #f1f5f9; /* bg-slate-100 */
     color: #475569; /* text-slate-600 */
 }
+
+/* New Progress Bar Text */
+.progress-bar-text {
+    font-size: 0.625rem; /* text-xxs */
+    line-height: 0.875rem; /* h-3.5 */
+    font-weight: 700;
+    color: var(--color-text-on-pastel);
+    /* Prevent text from wrapping */
+    white-space: nowrap; 
+    /* Hide text if bar is too small */
+    overflow: hidden; 
+}

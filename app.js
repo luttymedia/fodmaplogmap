@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Phase-Controlled Elements ---
     const progressCard = document.getElementById('home-progress-card'); // You'll need to add this ID in index.html
     const insightsCard = document.getElementById('home-insights-card'); // You'll need to add this ID in index.html
-    const pretreatmentCard = document.getElementById('home-pretreatment-card');
+    const pretreatmentCard = document.getElementById('home-pre-treatment-card');
     const restrictionCard = document.getElementById('home-restriction-card');
     const personalizationCard = document.getElementById('home-personalization-card');
     const planChallengeBtn = document.getElementById('plan-challenge-btn');
@@ -42,8 +42,21 @@ document.addEventListener('DOMContentLoaded', () => {
         preferences: [], 
         apiKey: '',
         currentPhase: 'reintroduction',
-        phaseStartDate: null, // We will set this in the Profile page later
-        phaseDurationWeeks: 4 // Default to 4 weeks, can also be set in Profile
+        phaseSettings: {
+            "pre-treatment": {
+                startDate: null,
+                durationNum: 4,
+                durationUnit: 'weeks',
+                rules: "Avoid: Lactose\nAvoid: Gluten\nAvoid: Apples\nAvoid: Peaches\nAvoid: Pears" // New key
+            },
+            "restriction": {
+                startDate: null,
+                durationNum: 4,
+                durationUnit: 'weeks'
+                // No rules needed, as it's always "avoid all"
+            }
+            // Reintro/Personalization do not have countdowns
+        }
     };
 
     const appState = {
@@ -82,9 +95,28 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Define Phase Booleans ---
         const isPretreat = (phase === 'pre-treatment');
         const isRestrict = (phase === 'restriction');
+        const phaseSettingsCard = document.getElementById('profile-phase-settings-card');
+        const phaseSettingsTitle = document.getElementById('profile-phase-settings-title');
         const isReintro = (phase === 'reintroduction');
         const isPersonal = (phase === 'personalization');
         
+        // --- NEW: Profile Page ---
+        if (phaseSettingsCard) {
+            if (isPretreat || isRestrict) {
+                phaseSettingsCard.classList.remove('hidden');
+                // Set title
+                const titleText = (isPretreat) ? 'Pre-Treatment Phase Settings' : 'Restriction Phase Settings';
+                phaseSettingsTitle.textContent = titleText;
+                
+                // --- CRITICAL ---
+                // We must re-populate the profile fields *every time the phase changes*
+                // to show the correct data for that phase.
+                setupProfilePage(); 
+            } else {
+                phaseSettingsCard.classList.add('hidden');
+            }
+        }
+
         // --- 1. Home Page Card Visibility ---
         if (pretreatmentCard) pretreatmentCard.classList.toggle('hidden', !isPretreat);
         if (restrictionCard) restrictionCard.classList.toggle('hidden', !isRestrict);
@@ -95,7 +127,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (insightsCard) insightsCard.classList.toggle('hidden', !isReintro);
 
         // --- Call Home Page Renderers ---
-        if (isPretreat) renderCountdown('pre-treatment');
+        if (isPretreat) {
+            renderCountdown('pre-treatment');
+            renderPreTreatmentCard(); // Add this call
+        }
         if (isRestrict) renderCountdown('restriction');
         if (isPersonal) renderPersonalizationSummary();
         if (isReintro) renderHomePage(); // This is the reintro progress list
@@ -509,39 +544,123 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- NEW COUNTDOWN RENDERER ---
     function renderCountdown(phase) {
-        const { phaseStartDate, phaseDurationWeeks } = appState.userProfile;
-        const containerId = (phase === 'pre-treatment') ? 'home-pretreatment-countdown' : 'home-restriction-countdown';
-        const container = document.getElementById(containerId);
-        if (!container) return;
+        // --- Get phase-specific settings ---
+        const settings = appState.userProfile.phaseSettings[phase];
+        
+        // --- Get NEW DOM elements ---
+        const textContainer = document.getElementById(`home-${phase}-countdown-text`);
+        const progressContainer = document.getElementById(`home-${phase}-progress-container`);
+        const progressBar = document.getElementById(`home-${phase}-progress-bar`);
+        const progressText = document.getElementById(`home-${phase}-progress-text`); // New text element
 
-        if (!phaseStartDate) {
-            container.innerHTML = `<span class="text-sm text-subtle">Set your <strong>Phase Start Date</strong> in your Profile to begin the countdown.</span>`;
+        if (!textContainer || !progressContainer || !progressBar || !progressText) {
+            // This check will now fail for 'pre-treatment' until you update its HTML
+            console.error(`Countdown render failed for ${phase}, elements missing.`);
             return;
         }
 
-        const totalDays = phaseDurationWeeks * 7;
+        if (!settings || !settings.startDate) {
+            textContainer.innerHTML = `<span class="text-sm text-subtle">Set your <strong>Phase Start Date</strong> in your Profile to begin the countdown.</span>`;
+            progressContainer.classList.add('hidden'); // Hide bar
+            return;
+        }
+
+        // --- Calculate totalDays based on unit ---
+        let totalDays = 0;
+        const num = settings.durationNum;
+        const unit = settings.durationUnit;
+
+        if (unit === 'days') {
+            totalDays = num;
+        } else if (unit === 'weeks') {
+            totalDays = num * 7;
+        } else if (unit === 'months') {
+            totalDays = num * 30; // Approximation
+        }
+
+        if (totalDays <= 0) { // Avoid division by zero
+            progressContainer.classList.add('hidden');
+            textContainer.innerHTML = `<span class="text-sm text-subtle">Please set a duration greater than 0 in your Profile.</span>`;
+            return;
+        }
+
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Normalize today
-        const start = new Date(phaseStartDate + 'T00:00:00'); // Assume local timezone
+        const start = new Date(settings.startDate + 'T00:00:00'); // Assume local timezone
+        
+        // --- Format Start Date ---
+        const formattedStartDate = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         
         // Calculate days elapsed (ensuring it's at least 0)
         const timeDiff = today.getTime() - start.getTime();
         const daysElapsed = Math.max(0, Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1); // +1 because day 1 is elapsed
         
         const daysRemaining = Math.max(0, totalDays - daysElapsed);
-        const currentWeek = Math.min(phaseDurationWeeks, Math.floor((daysElapsed - 1) / 7) + 1);
+        const percentComplete = Math.max(0, Math.min(100, (daysElapsed / totalDays) * 100));
+
+        // --- Calculate duration display ---
+        let durationDisplay = `${settings.durationNum} ${settings.durationUnit}`;
+        let currentUnitNum = 0;
+
+        if (settings.durationUnit === 'weeks') {
+            currentUnitNum = Math.min(settings.durationNum, Math.floor((daysElapsed - 1) / 7) + 1);
+            durationDisplay = `Week ${currentUnitNum} of ${settings.durationNum}`;
+        } else if (settings.durationUnit === 'days') {
+            currentUnitNum = Math.min(settings.durationNum, daysElapsed);
+            durationDisplay = `Day ${currentUnitNum} of ${settings.durationNum}`;
+        } else if (settings.durationUnit === 'months') {
+            currentUnitNum = Math.min(settings.durationNum, Math.floor((daysElapsed - 1) / 30) + 1); // Approx
+            durationDisplay = `Month ${currentUnitNum} of ${settings.durationNum}`;
+        }
+
+        // --- Render the components ---
+        progressContainer.classList.remove('hidden'); // Show bar
+        progressBar.style.width = `${percentComplete}%`;
+        
+        // --- NEW: Set Percentage Text ---
+        // Only show text if the bar is wide enough
+        if (percentComplete > 10) { 
+            progressText.textContent = `${Math.floor(percentComplete)}%`;
+        } else {
+            progressText.textContent = '';
+        }
 
         if (daysRemaining > 0) {
-            container.innerHTML = `
-                <div class="font-bold text-lg text-primary">Week ${currentWeek} of ${phaseDurationWeeks}</div>
+            textContainer.innerHTML = `
+                <div class="font-bold text-lg text-primary">${durationDisplay}</div>
                 <div class="text-sm text-muted">${daysRemaining} days remaining</div>
+                <div class="text-xs text-subtle mt-1">Starting date: ${formattedStartDate}</div>
             `;
         } else {
-            container.innerHTML = `
-                <div class="font-bold text-lg text-accent">Phase Complete!</div>
-                <div class="text-sm text-muted">Ready for the next step.</div>
+            // --- FIX: Show bar and set to 100% on complete ---
+            progressContainer.classList.remove('hidden');
+            progressBar.style.width = `100%`;
+            progressText.textContent = `100%`; // Show 100% on complete
+            textContainer.innerHTML = `
+                <div class="font-bold text-lg text-accent">Phase Complete! 🎉</div>
+                <div class="text-sm text-muted">Congratulations!</div>
+                <div class="text-xs text-subtle mt-1">Starting date: ${formattedStartDate}</div>
             `;
         }
+    }
+
+    // --- NEW: Renders the pre-treatment rules card on the Home page ---
+    function renderPreTreatmentCard() {
+        const rulesList = document.getElementById('home-pretreatment-rules-list');
+        if (!rulesList) return;
+
+        const rulesString = appState.userProfile.phaseSettings["pre-treatment"].rules;
+        
+        if (!rulesString || rulesString.trim() === '') {
+            rulesList.innerHTML = `<li class="list-none text-subtle italic">No rules set. Add them in your Profile.</li>`;
+            return;
+        }
+
+        const rulesArray = rulesString.split('\n');
+        rulesList.innerHTML = rulesArray
+            .filter(line => line.trim() !== '') // Remove empty lines
+            .map(line => `<li>${line}</li>`) // Render each line as a list item
+            .join('');
     }
 
     // --- NEW PERSONALIZATION SUMMARY RENDERER ---
@@ -1145,6 +1264,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!appState.userProfile.apiKey) {
             document.getElementById('api-key-accordion-container').classList.add('expanded');
         }
+
+        const phase = appState.userProfile.currentPhase;
+        const rulesContainer = document.getElementById('profile-pretreatment-rules-container');
+
+        // Load Phase-Specific Settings (Date, Duration)
+        if (appState.userProfile.phaseSettings[phase]) {
+            const settings = appState.userProfile.phaseSettings[phase];
+            document.getElementById('profile-phase-start-date').value = settings.startDate || '';
+            document.getElementById('profile-phase-duration-num').value = settings.durationNum || 4;
+            document.getElementById('profile-phase-duration-unit').value = settings.durationUnit || 'weeks';
+        }
+
+        // --- NEW: Load Pre-treatment Rules ---
+        if (phase === 'pre-treatment' && rulesContainer) {
+            rulesContainer.classList.remove('hidden'); // Show the textarea
+            document.getElementById('profile-pretreatment-rules').value = appState.userProfile.phaseSettings["pre-treatment"].rules || '';
+        } else if (rulesContainer) {
+            rulesContainer.classList.add('hidden'); // Hide it for all other phases
+        }
     };
 
     profileForm.addEventListener('submit', (e) => {
@@ -1154,6 +1292,27 @@ document.addEventListener('DOMContentLoaded', () => {
         appState.userProfile.preferences = Array.from(document.querySelectorAll('input[name=preferences]:checked')).map(el => el.value); 
         appState.userProfile.allergiesOther = document.getElementById('profile-allergies-other').value.trim();
         appState.userProfile.apiKey = document.getElementById('profile-api-key').value.trim();
+
+        // --- NEW: Save Phase Settings ---
+        const phase = appState.userProfile.currentPhase;
+        // Only save settings if the card is visible for the current phase
+        if (appState.userProfile.phaseSettings[phase]) {
+            // This part saves Start Date and Duration (for Pre-treat and Restriction)
+            const settings = appState.userProfile.phaseSettings[phase]; // Get existing settings
+            settings.startDate = document.getElementById('profile-phase-start-date').value || null;
+            settings.durationNum = parseInt(document.getElementById('profile-phase-duration-num').value, 10) || 4;
+            settings.durationUnit = document.getElementById('profile-phase-duration-unit').value;
+            
+            // Re-render the countdown on the home page in case it changed
+            renderCountdown(phase);
+        }
+
+        // --- NEW: Save Pre-treatment Rules ---
+        if (phase === 'pre-treatment') {
+            appState.userProfile.phaseSettings["pre-treatment"].rules = document.getElementById('profile-pretreatment-rules').value;
+            renderPreTreatmentCard(); // Re-render the home card
+        }
+
         localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile)); 
         showToast("Profile Saved!");
     });

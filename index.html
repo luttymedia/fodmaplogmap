@@ -63,21 +63,21 @@
                     </div>
                 </div>
 
-                <div id="home-pretreatment-card" class="hidden bg-white p-4 sm:p-6 rounded-2xl shadow-md space-y-4">
+                <div id="home-pre-treatment-card" class="hidden bg-white p-4 sm:p-6 rounded-2xl shadow-md space-y-4">
                     <h2 class="text-xl sm:text-2xl font-semibold text-secondary">Pre-Treatment Focus</h2>
                     <div class="p-3 bg-slate-50 rounded-lg">
                         <h3 class="font-semibold text-secondary mb-2">My Diet Rules:</h3>
-                        <ul class="list-disc list-inside text-muted space-y-1 text-sm">
-                            <li>Avoid: <strong>Lactose</strong></li>
-                            <li>Avoid: <strong>Gluten</strong></li>
-                            <li>Avoid: <strong>Apples</strong></li>
-                            <li>Avoid: <strong>Peaches</strong></li>
-                            <li>Avoid: <strong>Pears</strong></li>
-                        </ul>
+                        <ul id="home-pretreatment-rules-list" class="list-disc list-inside text-muted space-y-1 text-sm">
+                            </ul>
                     </div>
-                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
-                        <h3 class="font-semibold text-primary mb-1">Phase Countdown</h3>
-                        <div id="home-pretreatment-countdown" class="text-sm text-secondary"></div>
+                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h3 class="font-semibold text-primary mb-2 text-center">Phase Countdown</h3>
+                        <div id="home-pre-treatment-countdown-text" class="text-sm text-secondary text-center mb-2"></div>
+                        <div id="home-pre-treatment-progress-container" class="hidden w-full bg-slate-200 rounded-full h-3.5 relative">
+                            <div id="home-pre-treatment-progress-bar" class="bg-primary h-3.5 rounded-full flex items-center justify-center">
+                                <span id="home-pre-treatment-progress-text" class="progress-bar-text"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -89,9 +89,14 @@
                     <button id="home-ai-shortcut-btn" class="w-full bg-accent font-semibold py-2.5 px-4 rounded-full hover:bg-accent-dark transition-colors duration-300 shadow flex items-center justify-center gap-2"> 
                         <i class="fas fa-brain"></i> Check Food with AI
                     </button>
-                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
-                        <h3 class="font-semibold text-primary mb-1">Phase Countdown</h3>
-                        <div id="home-restriction-countdown" class="text-sm text-secondary"></div>
+                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h3 class="font-semibold text-primary mb-2 text-center">Phase Countdown</h3>
+                        <div id="home-restriction-countdown-text" class="text-sm text-secondary text-center mb-2"></div>
+                        <div id="home-restriction-progress-container" class="hidden w-full bg-slate-200 rounded-full h-3.5 relative">
+                            <div id="home-restriction-progress-bar" class="bg-primary h-3.5 rounded-full flex items-center justify-center">
+                                <span id="home-restriction-progress-text" class="progress-bar-text"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -266,8 +271,41 @@
                                 <input type="password" id="profile-api-key" placeholder="Enter your Google AI API Key" class="w-full p-2 border border-slate-300 rounded-xl"> 
                             </div>
                         </div>
+
+                        <!-- NEW: Phase Countdown Settings -->
+                        <div id="profile-phase-settings-card" class="api-key-accordion hidden">
+                            <div class="api-key-header">
+                                <h3 id="profile-phase-settings-title" class="font-semibold text-secondary">Phase Settings</h3>
+                                <i class="fas fa-chevron-down api-key-icon"></i>
+                            </div>
+                            <div class="api-key-body">
+                                <div class="space-y-3"> <!-- Added this wrapper for correct padding -->
+                                    <div>
+                                        <label for="profile-phase-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Phase Start Date</label>
+                                        <input type="date" id="profile-phase-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                                    </div>
+                                    <div>
+                                        <label class="block mb-1.5 text-sm font-medium text-secondary">Phase Duration</label>
+                                        <div class="flex gap-2">
+                                            <input type="number" id="profile-phase-duration-num" placeholder="e.g., 4" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
+                                            <select id="profile-phase-duration-unit" class="w-1/2 p-2.5 border border-slate-300 rounded-xl bg-white">
+                                                <option value="days">Days</option>
+                                                <option value="weeks" selected>Weeks</option>
+                                                <option value="months">Months</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id="profile-pretreatment-rules-container" class="hidden">
+                                        <label for="profile-pretreatment-rules" class="block mb-1.5 text-sm font-medium text-secondary">Pre-Treatment Diet Rules</label>
+                                        <textarea id="profile-pretreatment-rules" rows="4" class="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="List your rules, one per line..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- END: Phase Countdown Settings -->
                         <div>
-                            <h3 class="font-semibold text-secondary mb-1.5">Health Conditions</h3> 
+                            <h3 class="font-semibold text-secondary mb-1.5">Health Conditions</h3>
                             <div id="profile-diagnoses" class="flex flex-wrap gap-2"> 
                             </div>
                         </div>
