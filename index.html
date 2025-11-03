@@ -744,10 +744,16 @@
                         </div>
 
                         <div>
-                            <label class="block mb-1.5 text-sm font-medium text-secondary">Add Custom Symptom</label>
-                            <div class="flex gap-2">
-                                <input type="text" id="custom-symptom-input" placeholder="e.g., Nausea" class="w-full p-2.5 border border-slate-300 rounded-xl">
-                                <button type="button" id="add-custom-symptom-btn" class="bg-primary  font-semibold py-2 px-4 rounded-full hover:bg-primary-dark transition-colors duration-300 shadow">Add</button>
+                            <!-- This label is now the trigger -->
+                            <label id="custom-symptom-trigger" class="block mb-1.5 text-sm font-medium text-secondary cursor-pointer hover:text-primary">
+                                Add Custom Symptom <i class="fas fa-plus-circle text-xs ml-1 opacity-70"></i>
+                            </label>
+                            <!-- This div is hidden by default -->
+                            <div id="custom-symptom-body" class="hidden space-y-2">
+                                <div class="flex gap-2">
+                                    <input type="text" id="custom-symptom-input" placeholder="e.g., Nausea" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                                    <button type="button" id="add-custom-symptom-btn" class="bg-primary font-semibold py-2 px-4 rounded-full hover:bg-primary-dark transition-colors duration-300 shadow">Add</button>
+                                </div>
                             </div>
                             <div id="custom-symptom-tags-container" class="flex flex-wrap mt-2">
                                 <!-- Custom symptom tags will be injected here -->
@@ -945,8 +951,8 @@
             const installAppLi = document.getElementById('install-app-li');
             const installAppBtn = document.getElementById('install-app-btn');
 
-             const FODMAP_GROUP_DATA = [ { value: "Fructose", name: "Fructose", examples: "(e.g., Honey, Mango)" }, { value: "Lactose", name: "Lactose", examples: "(e.g., Milk, Yogurt)" }, { value: "Fructans (Grains)", name: "Fructans - Grains", examples: "(e.g., Wheat, Rye)" }, { value: "Fructans (Veg & Fruit)", name: "Fructans - Veg & Fruit", examples: "(e.g., Onion, Garlic)" }, { value: "GOS", name: "Galactans (GOS)", examples: "(e.g., Beans, Lentils)" }, { value: "Polyols (Sorbitol)", name: "Polyols - Sorbitol", examples: "(e.g., Avocado, Blackberry)" }, { value: "Polyols (Mannitol)", name: "Polyols - Mannitol", examples: "(e.g., Cauliflower, Mushroom)" } ];
-             const FODMAP_STYLES = { "Fructose": { color: "bg-yellow-100 text-yellow-800", icon: "🍎" }, "Lactose": { color: "bg-blue-100 text-blue-800", icon: "🥛" }, "Fructans (Grains)": { color: "bg-orange-100 text-orange-800", icon: "🍞" }, "Fructans (Veg & Fruit)": { color: "bg-purple-100 text-purple-800", icon: "🧅" }, "GOS": { color: "bg-teal-100 text-teal-800", icon: "🫘" }, "Polyols (Sorbitol)": { color: "bg-green-100 text-green-800", icon: "🥑" }, "Polyols (Mannitol)": { color: "bg-indigo-100 text-indigo-800", icon: "🍄" } };
+             const FODMAP_GROUP_DATA = [ { value: "Fructose", name: "Fructose", examples: "(e.g., Honey, Mango)" }, { value: "Lactose", name: "Lactose", examples: "(e.g., Milk, Yogurt)" }, { value: "Fructans (Grains)", name: "Fructans - Grains", examples: "(e.g., Wheat, Rye)" }, { value: "Fructans (Veg & Fruit)", name: "Fructans - Veg & Fruit", examples: "(e.g., Onion, Garlic)" }, { value: "GOS", name: "Galactans (GOS)", examples: "(e.g., Beans, Lentils)" }, { value: "Polyols (Sorbitol)", name: "Polyols - Sorbitol", examples: "(e.g., Avocado, Blackberry)" }, { value: "Polyols (Mannitol)", name: "Polyols - Mannitol", examples: "(e.g., Cauliflower, Mushroom)" }, { value: "Restriction", name: "Daily Log", examples: "(A non-challenge or safe meal)" } ];
+             const FODMAP_STYLES = { "Fructose": { color: "bg-yellow-100 text-yellow-800", icon: "🍎" }, "Lactose": { color: "bg-blue-100 text-blue-800", icon: "🥛" }, "Fructans (Grains)": { color: "bg-orange-100 text-orange-800", icon: "🍞" }, "Fructans (Veg & Fruit)": { color: "bg-purple-100 text-purple-800", icon: "🧅" }, "GOS": { color: "bg-teal-100 text-teal-800", icon: "🫘" }, "Polyols (Sorbitol)": { color: "bg-green-100 text-green-800", icon: "🥑" }, "Polyols (Mannitol)": { color: "bg-indigo-100 text-indigo-800", icon: "🍄" }, "Restriction": { color: "bg-slate-100 text-slate-800", icon: "🍴" } };
              const PROFILE_OPTIONS = { diagnoses: ["IMO", "SIBO", "IBS-D", "IBS-C", "IBS-M"], intolerances: ["Sorbitol", "Mannitol", "Lactose", "Fructose", "Gluten"], preferences: ["Vegetarian", "Vegan", "Pescatarian"] };
              const SYMPTOM_OPTIONS = ["Bloating", "Gas", "Abdominal pain", "Diarrhea", "Constipation", "Fatigue", "Headache"];
 
@@ -1267,6 +1273,7 @@
                 let itemsAdded = 0; 
 
                 FODMAP_GROUP_DATA.forEach(groupData => {
+                    if (groupData.value === "Restriction") return; // Skip this group
                     const entries = logEntries.filter(entry => entry.group === groupData.value); 
                     const count = entries.length;
                     
@@ -1410,6 +1417,8 @@
                 const customSymptomInput = document.getElementById('custom-symptom-input');
                 const addCustomSymptomBtn = document.getElementById('add-custom-symptom-btn');
                 const customSymptomTagsContainer = document.getElementById('custom-symptom-tags-container');
+                const customSymptomTrigger = document.getElementById('custom-symptom-trigger');
+                const customSymptomBody = document.getElementById('custom-symptom-body');
 
                 const addCustomTag = () => {
                     const symptom = customSymptomInput.value.trim();
@@ -1429,6 +1438,14 @@
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         addCustomTag();
+                    }
+                });
+
+                customSymptomTrigger.addEventListener('click', () => {
+                    customSymptomBody.classList.toggle('hidden');
+                    // Automatically focus the input field when shown
+                    if (!customSymptomBody.classList.contains('hidden')) {
+                        customSymptomInput.focus();
                     }
                 });
 
@@ -1456,7 +1473,9 @@
                         });
                         // Clear custom tags
                         customSymptomTagsContainer.innerHTML = '';
+                        customSymptomBody.classList.add('hidden'); // Also hide the custom input
                     } 
+                    
                     // If another tag is checked, uncheck "None"
                     else if (e.target.value !== 'None' && e.target.checked) {
                         noneCheckbox.checked = false;
@@ -1643,6 +1662,7 @@
                 document.getElementById('log-fodmap-group').value = '';
 
                 document.getElementById('custom-symptom-tags-container').innerHTML = '';
+                document.getElementById('custom-symptom-body').classList.add('hidden'); // Collapse the custom input
                 document.querySelectorAll('input[name="symptoms"]').forEach(cb => cb.checked = false);
                 document.getElementById('severity-section').classList.add('hidden'); 
                 document.getElementById('log-form').querySelector('button[type="submit"]').textContent = 'Add Entry'; // Reset button text
