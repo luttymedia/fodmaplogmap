@@ -10,6 +10,13 @@ document.addEventListener('DOMContentLoaded', () => {
      const PROFILE_OPTIONS = { diagnoses: ["IMO", "SIBO", "IBS-D", "IBS-C", "IBS-M"], intolerances: ["Sorbitol", "Mannitol", "Lactose", "Fructose", "Gluten"], preferences: ["Vegetarian", "Vegan", "Pescatarian"] };
      const SYMPTOM_OPTIONS = ["Bloating", "Gas", "Abdominal pain", "Diarrhea", "Constipation", "Fatigue", "Headache"];
 
+    const PHASE_STYLES = {
+            "pre-treatment": { label: "Pre-Treatment", colorClass: "phase-pre-treatment" },
+            "restriction": { label: "Restriction", colorClass: "phase-restriction" },
+            "reintroduction": { label: "Reintroduction", colorClass: "phase-reintroduction" },
+            "personalization": { label: "Personalization", colorClass: "phase-personalization" }
+        };
+
     // --- DOM Elements (mostly constant) ---
     const pages = document.querySelectorAll('.page');
     const navItems = document.querySelectorAll('.nav-item');
@@ -54,39 +61,61 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateUiForPhase(phase) {
         console.log(`[Inference] Updating UI for phase: ${phase}`);
 
+        // --- NEW: Update Phase Bar ---
+        const phaseBar = document.getElementById('phase-bar');
+        const phaseBarText = document.getElementById('phase-bar-text');
+        const style = PHASE_STYLES[phase] || PHASE_STYLES['restriction']; // Default to restriction
+
+        if (phaseBar && phaseBarText) {
+            phaseBarText.textContent = style.label;
+            // Remove all other phase classes
+            phaseBar.classList.remove('phase-pre-treatment', 'phase-restriction', 'phase-reintroduction', 'phase-personalization');
+            // Add the correct one
+            phaseBar.classList.add(style.colorClass);
+        }
+
         // Default to 'reintroduction' behavior if phase is unknown
         const isReintro = (phase === 'reintroduction' || phase === 'personalization');
 
         // --- 1. Home Page ---
-        // Show/hide the "Reintroduction Progress" card
         if (progressCard) {
             progressCard.classList.toggle('hidden', !isReintro);
         }
-        // Show/hide the "AI Insights" card (Summarize Journey)
         if (insightsCard) {
             insightsCard.classList.toggle('hidden', !isReintro);
         }
 
         // --- 2. Reintro Log Page ---
-        // Show/hide the "Plan My Challenge" button
         if (planChallengeBtn) {
             planChallengeBtn.classList.toggle('hidden', !isReintro);
         }
-        // Show/hide the FODMAP Group dropdown
         if (fodmapSelectContainer) {
             fodmapSelectContainer.classList.toggle('hidden', !isReintro);
         }
 
         // --- 3. Update Log Form Defaults ---
         if (!isReintro) {
-            // If we're *not* in reintroduction, force the log group to "Restriction"
             if (fodmapHiddenInput) {
                 fodmapHiddenInput.value = 'Restriction';
             }
         }
+        
+        // --- NEW: Update Nav Tab Label ---
+        const reintroTab = document.querySelector('button[data-page="reintroduction-log"]');
+        if (reintroTab) {
+            const reintroTabText = reintroTab.querySelector('span');
+            const reintroTabIcon = reintroTab.querySelector('i');
+            
+            if (isReintro) {
+                if (reintroTabText) reintroTabText.textContent = 'Reintro Log';
+                if (reintroTabIcon) reintroTabIcon.className = 'fas fa-clipboard-list sm:mr-2'; // Original icon
+            } else {
+                if (reintroTabText) reintroTabText.textContent = 'Daily Log';
+                if (reintroTabIcon) reintroTabIcon.className = 'fas fa-book-medical sm:mr-2'; // New icon for daily log
+            }
+        }
 
         // --- 4. Re-render components ---
-        // (This is good practice to apply any other logic that might depend on phase)
         renderHomePage();
         renderLogEntries();
     }
@@ -1191,18 +1220,28 @@ Use this exact template:
 
     // Dynamically set nav top and body padding
     const calculatePadding = () => { 
-        const h = document.querySelector('header'); 
+        const h = document.querySelector('header');
+        const pb = document.getElementById('phase-bar'); // Get new phase bar
         const n = document.getElementById('main-nav'); 
-        if (h && n) { 
+        
+        if (h && pb && n) { 
             const headerHeight = h.offsetHeight;
             const navHeight = n.offsetHeight;
+
+            // --- NEW LOGIC ---
+            // Position the phase bar right below the header
+            pb.style.top = `${headerHeight}px`; 
             
-            // Set padding for header and bottom nav
-            document.body.style.paddingTop = `${headerHeight}px`;
+            // Get phase bar height AFTER setting its position
+            const phaseBarHeight = pb.offsetHeight; 
+            const totalTopHeight = headerHeight + phaseBarHeight;
+
+            // Set padding for header, phase bar, and bottom nav
+            document.body.style.paddingTop = `${totalTopHeight}px`;
             document.body.style.paddingBottom = `${navHeight}px`;
 
-            // Set CSS variable for sticky elements (like timeline header)
-            document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+            // Set CSS variable to the TOTAL sticky height
+            document.documentElement.style.setProperty('--header-height', `${totalTopHeight}px`);
         } 
     };
     navigateTo('home');

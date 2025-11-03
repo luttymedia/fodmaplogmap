@@ -27,6 +27,12 @@
   --color-text-base: #283b6c; 
   --color-text-muted: #475569;
   --color-text-subtle: #64748b;
+
+  /* New Phase Colors */
+  --phase-color-pre: #a9a9a9; /* A neutral grey */
+  --phase-color-restriction: #8bb744; /* Your original accent green */
+  --phase-color-reintro: #2d61a0; /* Your original primary blue */
+  --phase-color-personal: #4a0076; /* A deep purple */
 }
 
 body {
@@ -656,3 +662,28 @@ body {
     padding: 0.5rem 1rem; /* p-2 sm:p-4 */
     margin-top: 0.75rem; /* space-y-3 */
 }
+
+/* New Phase Bar Styles */
+#phase-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 15; /* Below header (z-20) but above content */
+    padding: 0.25rem 1rem; /* 4px vertical, 16px horizontal */
+    text-align: center;
+    transition: background-color 0.3s ease-in-out, top 0.3s ease-in-out;
+}
+
+#phase-bar-text {
+    color: white;
+    font-weight: 700; /* bold */
+    font-size: 0.875rem; /* text-sm */
+    text-transform: uppercase;
+    letter-spacing: 0.05em; /* slightly wider */
+}
+
+/* Dynamic Phase Background Colors */
+.phase-pre-treatment { background-color: var(--phase-color-pre); }
+.phase-restriction { background-color: var(--phase-color-restriction); }
+.phase-reintroduction { background-color: var(--phase-color-reintro); }
+.phase-personalization { background-color: var(--phase-color-personal); }
