@@ -392,7 +392,7 @@ main section > div { margin-bottom: 1rem; }
     padding: 0 1rem; /* ONLY horizontal padding when collapsed */
 }
 .api-key-accordion.expanded .api-key-body {
-    max-height: 500px; /* Adjust as needed */
+    max-height: 2000px; /* Adjust as needed */
     padding-top: 0.5rem; /* Increased top padding */
     padding-bottom: 0.75rem; /* Add vertical padding ONLY when expanded */
 }
@@ -719,4 +719,230 @@ body {
     white-space: nowrap; 
     /* Hide text if bar is too small */
     overflow: hidden; 
+}
+
+/* New Personalization Home Page Styles */
+.p13n-food-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem; /* text-sm */
+    padding: 0.25rem 0.5rem; /* py-1 px-2 */
+}
+.p13n-food-item .icon {
+    width: 20px; /* w-5 */
+    flex-shrink: 0;
+    text-align: center;
+}
+.p13n-food-tolerated {
+    color: var(--color-accent-text); /* Green */
+}
+.p13n-food-trigger {
+    color: var(--color-error); /* Red */
+}
+.p13n-food-unknown {
+    color: var(--color-text-muted); /* Grey */
+}
+.p13n-food-item .notes {
+    font-size: 0.75rem; /* text-xs */
+    color: var(--color-text-subtle);
+    margin-left: 0.25rem;
+    font-style: italic;
+}
+
+/* New Personalization Profile Editor Styles */
+
+/* Centered "Overall Status" container */
+.p13n-overall-status-container {
+    display: flex;
+    justify-content: center;
+    padding: 0.25rem 0 0.75rem 0; /* py-1 pb-3 */
+    border-bottom: 1px solid #e2e8f0;
+    margin: 0.5rem 1rem 0 1rem;
+}
+.p13n-overall-status-container .p13n-editor-btn-group {
+    transform: scale(1.0); /* Reset scale */
+}
+
+/* Smaller toggles for food items */
+.p13n-editor-food-item .p13n-editor-btn-group {
+    transform: scale(0.9); /* Keep these smaller */
+}
+
+.p13n-editor-btn-group {
+    display: flex;
+    border-radius: 9999px; /* rounded-full */
+    overflow: hidden;
+    border: 1px solid #cbd5e1; /* border-slate-300 */
+}
+
+.p13n-editor-btn {
+    padding: 0.25rem 0.625rem; /* py-1 px-2.5 */
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 600;
+    background-color: #f1f5f9; /* bg-slate-100 */
+    color: var(--color-text-muted);
+    border-right: 1px solid #cbd5e1;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+.p13n-editor-btn:last-child { border-right: none; }
+.p13n-editor-btn:hover { background-color: #e2e8f0; }
+
+.p13n-editor-btn.tolerated.selected {
+    background-color: var(--color-pastel-green);
+    color: var(--color-text-on-pastel);
+    border-color: var(--color-pastel-green-dark);
+}
+.p13n-editor-btn.trigger.selected {
+    background-color: #fecaca; /* bg-red-200 */
+    color: #991b1b; /* text-red-800 */
+    border-color: #fca5a5; /* bg-red-300 */
+}
+.p13n-editor-btn.unknown.selected {
+    background-color: #e2e8f0; /* bg-slate-200 */
+    color: var(--color-text-base);
+    border-color: #cbd5e1; /* border-slate-300 */
+}
+
+.p13n-editor-food-list {
+    padding: 0 0.5rem 0.5rem 0.5rem; /* p-2 */
+}
+
+.p13n-editor-food-item {
+    padding: 0.5rem 0.25rem; /* py-2 px-1 */
+    border-bottom: 1px solid #f1f5f9; /* border-slate-100 */
+}
+.p13n-editor-food-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.p13n-food-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem; /* mb-2 */
+}
+
+.p13n-food-header .food-name {
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600;
+    color: var(--color-text-base);
+}
+
+.p13n-food-notes {
+    width: 100%;
+    font-size: 0.875rem; /* text-sm */
+    padding: 0.5rem 0.75rem; /* p-2 px-3 */
+    border-radius: 0.5rem; /* rounded-lg */
+    border: 1px solid #cbd5e1; /* border-slate-300 */
+}
+.p13n-food-notes:focus {
+    outline: none;
+    border-color: var(--color-primary-text);
+    box-shadow: 0 0 0 2px var(--color-pastel-blue);
+}
+
+.p13n-food-delete-btn {
+    background: none;
+    border: none;
+    color: var(--color-text-subtle);
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.25rem;
+}
+.p13n-food-delete-btn:hover {
+    color: var(--color-error);
+}
+
+.p13n-add-food-btn {
+    display: block;
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600;
+    color: var(--color-primary-text);
+    background-color: #fff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.p13n-add-food-btn:hover {
+    background-color: #f8fafc;
+    border-color: var(--color-primary-text);
+}
+
+/* Home Tab Personalization Styles */
+.p13n-home-item-header h3 {
+    font-size: 1rem; /* text-base */
+    font-weight: 600;
+    color: var(--color-secondary);
+}
+.p13n-home-item-header .status-text {
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 600;
+}
+
+.p13n-food-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem; /* text-sm */
+    padding: 0.25rem 0.5rem; /* py-1 px-2 */
+}
+.p13n-food-item .icon {
+    width: 20px; /* w-5 */
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 0.75rem; /* text-xs */
+}
+.p13n-food-tolerated {
+    color: var(--color-text-base); /* Use base text color for tolerated */
+}
+.p13n-food-trigger {
+    color: var(--color-error); /* Red */
+}
+.p13n-food-item .food-name {
+    font-weight: 600;
+}
+.p13n-food-item .notes {
+    font-size: 0.75rem; /* text-xs */
+    color: var(--color-text-subtle);
+    margin-left: 0.25rem;
+    font-style: italic;
+}
+
+/* New Personalization Tolerance View Styles */
+.p13n-tolerance-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem; /* text-sm */
+    padding: 0.25rem 0.5rem; /* py-1 px-2 */
+}
+.p13n-tolerance-item .icon {
+    width: 20px; /* w-5 */
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 0.75rem; /* text-xs */
+}
+.p13n-tolerance-item.tolerated {
+    color: var(--color-text-base);
+}
+.p13n-tolerance-item.tolerated .food-name {
+    font-weight: 600;
+}
+
+.p13n-tolerance-item.trigger {
+    color: var(--color-error); /* Red text */
+}
+.p13n-tolerance-item.trigger .food-name {
+    font-weight: 600;
+}
+.p13n-tolerance-item .notes {
+    font-size: 0.75rem; /* text-xs */
+    color: var(--color-text-subtle);
+    margin-left: 0.25rem;
+    font-style: italic;
 }

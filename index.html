@@ -100,20 +100,28 @@
                     </div>
                 </div>
 
-                <div id="home-personalization-card" class="hidden bg-white p-4 sm:p-6 rounded-2xl shadow-md space-y-4">
-                    <h2 class="text-xl sm:text-2xl font-semibold text-secondary">Your Long-Term Diet</h2>
-                    <p class="text-sm text-subtle">Based on your log, here's a summary of your journey. Continue to log new foods to refine this list.</p>
-                    <div class="space-y-3">
-                        <div>
-                            <h3 class="font-semibold text-accent mb-2 flex items-center gap-2"><i class="fas fa-check-circle"></i> Tolerated Groups</h3>
-                            <div id="summary-tolerated" class="flex flex-wrap gap-2">
-                                </div>
+                <div id="home-personalization-card" class="hidden">
+                    <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
+                        <div class="flex justify-between items-center mb-3">
+                            <div>
+                                <h2 class="text-xl sm:text-2xl font-semibold text-secondary">Your Final Diet</h2>
+                                <p class="text-sm text-subtle mt-1">Your personalized summary. Edit in Profile.</p>
+                            </div>
+                            <div class="log-view-toggle">
+                                <button class="log-view-toggle-btn active" id="p13n-view-group-btn" data-view="group" title="Group by FODMAP">
+                                    <i class="fas fa-layer-group"></i>
+                                </button>
+                                <button class="log-view-toggle-btn" id="p13n-view-tolerance-btn" data-view="tolerance" title="View by Tolerance">
+                                    <i class="fas fa-tasks"></i>
+                                </button>
+                            </div>
                         </div>
-                         <div>
-                            <h3 class="font-semibold text-error mb-2 flex items-center gap-2"><i class="fas fa-exclamation-triangle"></i> Potential Triggers</h3>
-                            <div id="summary-triggers" class="flex flex-wrap gap-2">
-                                 </div>
-                        </div>
+
+                        <div id="personalization-group-view" class="space-y-3">
+                            </div>
+
+                        <div id="personalization-tolerance-view" class="hidden space-y-3">
+                            </div>
                     </div>
                 </div>
                 </section>
@@ -304,6 +312,20 @@
                         </div>
                         
                         <!-- END: Phase Countdown Settings -->
+
+                        <div id="profile-personalization-card" class="api-key-accordion hidden"> <div class="api-key-header"> <h3 class="font-semibold text-secondary">My Final Diet</h3>
+                                <i class="fas fa-chevron-down api-key-icon"></i> </div>
+                            <div class="api-key-body"> <div class="space-y-4"> <p class="text-subtle text-sm">Use the auto-scan to get a suggestion, then manually adjust the status for each group and food to build your long-term diet.</p>
+                                    
+                                    <button type="button" id="auto-scan-log-btn" class="w-full bg-accent  font-semibold py-2.5 px-4 rounded-full hover:bg-accent-dark transition-colors duration-300 shadow flex items-center justify-center gap-2"> 
+                                        <i class="fas fa-magic-wand-sparkles"></i> Auto-Scan My Log
+                                    </button>
+
+                                    <div id="personalization-editor-container" class="space-y-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
                         <div>
                             <h3 class="font-semibold text-secondary mb-1.5">Health Conditions</h3>
                             <div id="profile-diagnoses" class="flex flex-wrap gap-2"> 
@@ -323,7 +345,7 @@
                             </div>
                         </div>
                         
-                        <button type="submit" class="w-full bg-primary  font-semibold py-2.5 px-4 rounded-full hover:bg-primary-dark transition-colors duration-300 shadow">Save Profile</button> 
+                        <button type="submit" class="w-full bg-primary  font-semibold py-2.5 px-4 rounded-full hover:bg-primary-dark transition-colors duration-300 shadow mt-4">Save Profile</button> 
                     </form>
                 </div>
             </section>
