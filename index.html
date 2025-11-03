@@ -315,7 +315,7 @@
             font-size: 0.75rem; /* text-xs */
             color: var(--color-text-subtle);
         }
-        .accordion-entry .entry-details {
+        .entry-details {
             font-size: 0.75rem; /* CHANGED: Was text-sm */
             color: var(--color-text-muted);
             line-height: 1.5;
@@ -585,6 +585,71 @@
             max-height: 1000px; /* arbitrary large */
             padding-top: 0.75rem; /* This is the original space-y-3 */
         }
+
+        /* Styles for Log View Toggle */
+        .log-view-toggle {
+            display: flex;
+            align-items: center;
+            background-color: #f1f5f9; /* bg-slate-100 */
+            border-radius: 9999px; /* rounded-full */
+            padding: 0.25rem; /* p-1 */
+        }
+        .log-view-toggle-btn {
+            padding: 0.375rem 0.75rem; /* py-1.5 px-3 */
+            border-radius: 9999px; /* rounded-full */
+            border: none;
+            background-color: transparent;
+            color: var(--color-text-muted);
+            font-size: 0.875rem; /* text-sm */
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .log-view-toggle-btn.active {
+            background-color: #fff;
+            color: var(--color-primary-text);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+        }
+        .log-sort-btn {
+            background-color: #f1f5f9; /* bg-slate-100 */
+            border-radius: 9999px; /* rounded-full */
+            padding: 0.25rem 0.75rem; /* py-1 px-3 */
+            border: none;
+            color: var(--color-text-muted);
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 600;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            transition: all 0.2s ease-in-out;
+        }
+        .log-sort-btn:hover {
+            background-color: #e2e8f0; /* bg-slate-200 */
+            color: var(--color-primary-text);
+        }
+
+        /* Styles for Date Timeline View */
+        .timeline-date-header {
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 700;
+            color: var(--color-secondary-text);
+            padding: 1rem 0 0.5rem 0.25rem; /* pt-4 pb-2 px-1 */
+            position: sticky;
+            top: 100px; /* Adjust based on your sticky header height */
+            background-color: var(--color-page-bg, #f8fafc); /* bg-slate-50 */
+            z-index: 5;
+            border-bottom: 1px solid #e2e8f0; /* border-slate-200 */
+        }
+        body {
+             /* Define a variable for the page background */
+            --color-page-bg: #f8fafc; /* bg-slate-50 */
+            background-color: var(--color-page-bg);
+        }
+        .timeline-entry-card {
+            background-color: #fff;
+            border-radius: 1rem; /* rounded-2xl */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+            padding: 0.5rem 1rem; /* p-2 sm:p-4 */
+            margin-top: 0.75rem; /* space-y-3 */
+        }
     </style>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2d61a0">
@@ -776,13 +841,36 @@
                     </div> <!-- closes #log-form-body -->
                 </div>
                  <div class="space-y-3 max-w-3xl mx-auto"> 
-                    <div class="px-2">
-                        <h2 class="text-xl sm:text-2xl font-semibold text-secondary">🧾 Reintroduction Log</h2>
-                        <p class="text-sm text-subtle">Tap a group to see entries.</p>
+                    <!-- Updated Header with Toggles -->
+                    <div class="px-2 space-y-2"> <!-- Added space-y-2 -->
+                        <div class="flex justify-between items-center"> <!-- Row 1: Title and View Toggle -->
+                            <div>
+                                <h2 class="text-xl sm:text-2xl font-semibold text-secondary">🧾 Reintroduction Log</h2>
+                                <p id="log-subtitle" class="text-sm text-subtle">Tap a group to see entries.</p>
+                            </div>
+                            <div class="log-view-toggle">
+                                <button class="log-view-toggle-btn active" id="log-view-group-btn" data-view="group" title="Group by FODMAP">
+                                    <i class="fas fa-layer-group"></i>
+                                </button>
+                                <button class="log-view-toggle-btn" id="log-view-date-btn" data-view="date" title="View by Date">
+                                    <i class="fas fa-calendar-days"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="log-sort-container" class="flex justify-end hidden"> <!-- Row 2: Sort Button -->
+                            <button id="log-sort-btn" class="log-sort-btn">
+                                <!-- JS will fill this -->
+                            </button>
+                        </div>
                     </div>
-                    <!-- This is the new container for the accordions -->
+                    
+                    <!-- View 1: Group Container -->
                     <div id="log-accordion-container" class="space-y-3">
                         <!-- Accordion groups will be injected here -->
+                    </div>
+                    <!-- View 2: Date Container -->
+                    <div id="log-date-container" class="hidden">
+                        <!-- Date timeline entries will be injected here -->
                     </div>
                  </div>
             </section>
@@ -964,6 +1052,8 @@
             let currentPageIndex = 0;
             let currentlyEditingId = null;
             let stagedImageData = null; // To hold the base64 image data
+            let currentLogView = 'group'; // 'group' or 'date'
+            let currentDateSort = 'newest'; // 'newest' or 'oldest'
             let openLogFormOnLoad = false; // Flag to auto-open the form
 
             function navigateTo(pageId) {
@@ -1309,7 +1399,7 @@
                             }
                             
                             // Format date as "Oct 31, 25"
-                            const formattedDate = new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+                            const formattedDate = new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
                             // Return the new format
                             return `<p><strong>${formattedDate}:</strong> ${e.food}, ${e.dose} - <em>${symptomDisplay}</em></p>`
@@ -1484,7 +1574,8 @@
                 });
             };
             
-            const renderLogEntries = () => {
+            // --- Renders the "Group by FODMAP" view (Your old renderLogEntries function) ---
+            const renderLogByGroup = () => {
                 const accordionContainer = document.getElementById('log-accordion-container');
                 accordionContainer.innerHTML = '';
                 let groupsWithEntries = 0;
@@ -1497,7 +1588,6 @@
                     if (entriesForGroup.length > 0) {
                         groupsWithEntries++;
                         const style = FODMAP_STYLES[groupData.value] || { icon: '❓' };
-                        
                         const groupDiv = document.createElement('div');
                         groupDiv.className = 'accordion-group';
                         
@@ -1515,47 +1605,31 @@
                             let symptomText;
                             let severityText = '';
                             let noteText = ''; 
-
-                            // --- NEW LOGIC for symptoms array ---
-                            const symptoms = entry.symptoms || ['None']; // Fallback for old data
+                            const symptoms = entry.symptoms || ['None'];
                             const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
-
                             if (hasSymptoms) {
                                 symptomText = `Symptoms: <strong>${symptoms.join(', ')}</strong>`;
                                 severityText = `<div>Severity: <strong>${entry.severity}/5</strong></div>`;
                             } else {
                                 symptomText = 'Symptoms: <strong>None</strong>';
                             }
-                            // --- END NEW LOGIC ---
-
                             const trimmedNote = entry.notes ? entry.notes.trim() : '';
                             if (trimmedNote !== '' && trimmedNote.toLowerCase() !== 'no notes') {
                                 noteText = `<div style="margin-top: 0.25rem;">Note: <em>${entry.notes.replace(/\n/g, '<br>')}</em></div>`;
                             }
-
                             const entryDiv = document.createElement('div');
                             entryDiv.className = 'accordion-entry';
-                            
                             entryDiv.innerHTML = `
                                 <div class="entry-header flex justify-between items-start">
-                                    <!-- Left Side: Food/Dose -->
                                     <p class="font-semibold text-secondary text-sm">${entry.food}, ${entry.dose}</p>
-                                    
-                                    <!-- Right Side: Date -->
                                     <span class="text-xs text-subtle flex-shrink-0 ml-2">${new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                                 </div>
-
-                                <!-- Flex container to align details and actions -->
-                                <!-- We removed all padding-top to kill the extra line -->
                                 <div class="flex justify-between items-end">
-                                    <!-- Details: Symptoms and Notes -->
                                     <div class="entry-details">
                                         <div>${symptomText}</div>
                                         ${severityText}
                                         ${noteText}
                                     </div>
-
-                                    <!-- Actions: Edit and Delete Icons -->
                                     <div class="entry-actions text-right flex-shrink-0 ml-2">
                                         <button class="edit-entry-btn text-accent hover:text-accent-dark text-xs p-1 rounded" data-id="${entry.id}">
                                             <i class="fas fa-pen-to-square"></i>
@@ -1568,20 +1642,113 @@
                             `;
                             body.appendChild(entryDiv);
                         });
-
                         groupDiv.appendChild(header);
                         groupDiv.appendChild(body);
                         accordionContainer.appendChild(groupDiv);
                     }
                 });
-
                 if (groupsWithEntries === 0) {
                     accordionContainer.innerHTML = `<p class="text-subtle text-center py-6 bg-white rounded-lg shadow-sm col-span-full text-sm">No log entries yet. Add one above!</p>`;
                 }
             };
 
-            // Event listener for accordion (Expand, Edit, Delete)
-            document.getElementById('log-accordion-container').addEventListener('click', (e) => {
+            // --- Renders the new "View by Date" timeline ---
+            const renderLogByDate = () => {
+                const dateContainer = document.getElementById('log-date-container');
+                dateContainer.innerHTML = '';
+                
+                if (logEntries.length === 0) {
+                    dateContainer.innerHTML = `<p class="text-subtle text-center py-6 bg-white rounded-lg shadow-sm col-span-full text-sm">No log entries yet. Add one above!</p>`;
+                    return;
+                }
+
+                // 1. Sort entries based on the global sort variable
+                const sortedEntries = [...logEntries].sort((a, b) => {
+                    const dateA = new Date(a.date);
+                    const dateB = new Date(b.date);
+                    return currentDateSort === 'newest' ? dateB - dateA : dateA - dateB;
+                });
+
+                let currentHeaderDate = null;
+                const today = new Date().toLocaleDateString('en-CA');
+                const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA');
+
+                // 2. Loop and build timeline
+                sortedEntries.forEach(entry => {
+                    const entryDate = new Date(entry.date).toLocaleDateString('en-CA');
+                    
+                    // 3. Add date header if it's a new day
+                    if (entryDate !== currentHeaderDate) {
+                        let dateHeaderText = new Date(entry.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                        if (entryDate === today) dateHeaderText = 'Today';
+                        else if (entryDate === yesterday) dateHeaderText = 'Yesterday';
+                        
+                        const headerDiv = document.createElement('div');
+                        headerDiv.className = 'timeline-date-header';
+                        headerDiv.textContent = dateHeaderText;
+                        dateContainer.appendChild(headerDiv);
+                        currentHeaderDate = entryDate;
+                    }
+
+                    // 4. Build the entry card (similar to accordion, but as a standalone card)
+                    const style = FODMAP_STYLES[entry.group] || { icon: '❓' };
+                    const groupInfo = FODMAP_GROUP_DATA.find(g => g.value === entry.group);
+                    const groupName = groupInfo ? groupInfo.name : entry.group;
+                    
+                    let symptomText;
+                    let severityText = '';
+                    let noteText = ''; 
+                    const symptoms = entry.symptoms || ['None'];
+                    const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
+                    if (hasSymptoms) {
+                        symptomText = `Symptoms: <strong>${symptoms.join(', ')}</strong>`;
+                        severityText = `<div>Severity: <strong>${entry.severity}/5</strong></div>`;
+                    } else {
+                        symptomText = 'Symptoms: <strong>None</strong>';
+                    }
+                    const trimmedNote = entry.notes ? entry.notes.trim() : '';
+                    if (trimmedNote !== '' && trimmedNote.toLowerCase() !== 'no notes') {
+                        noteText = `<div style="margin-top: 0.25rem;">Note: <em>${entry.notes.replace(/\n/g, '<br>')}</em></div>`;
+                    }
+
+                    const entryDiv = document.createElement('div');
+                    entryDiv.className = 'timeline-entry-card'; // Use new card style
+                    entryDiv.innerHTML = `
+                        <div class="entry-header flex justify-between items-start">
+                            <p class="font-semibold text-secondary text-sm">${entry.food}, ${entry.dose}</p>
+                            <span class="text-xs font-semibold px-1.5 py-0.5 rounded-full ${style.color}">${style.icon} ${groupName.split(' ')[0]}</span>
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <div class="entry-details">
+                                <div>${symptomText}</div>
+                                ${severityText}
+                                ${noteText}
+                            </div>
+                            <div class="entry-actions text-right flex-shrink-0 ml-2">
+                                <button class="edit-entry-btn text-accent hover:text-accent-dark text-xs p-1 rounded" data-id="${entry.id}">
+                                    <i class="fas fa-pen-to-square"></i>
+                                </button>
+                                <button class="delete-entry-btn text-error hover:text-error-dark text-xs p-1 rounded" data-id="${entry.id}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    dateContainer.appendChild(entryDiv);
+                });
+            };
+
+            // --- This is the new MAIN render function ---
+            const renderLogEntries = () => {
+                if (currentLogView === 'group') {
+                    renderLogByGroup();
+                } else {
+                    renderLogByDate();
+                }
+            };
+
+            // --- Reusable Log Click Handler for Edit/Delete/Expand ---
+            const handleLogClick = (e) => {
                 const header = e.target.closest('.accordion-header');
                 const deleteBtn = e.target.closest('.delete-entry-btn');
                 const editBtn = e.target.closest('.edit-entry-btn');
@@ -1593,6 +1760,8 @@
                     if (entryToEdit) {
                         currentlyEditingId = entryId; // Set global edit state
                         populateFormForEdit(entryToEdit);
+                        // Ensure form is expanded
+                        document.getElementById('add-log-entry-wrapper').classList.add('expanded');
                     }
                 } else if (deleteBtn) {
                     // --- HANDLE DELETE ---
@@ -1604,6 +1773,60 @@
                     // --- HANDLE EXPAND ---
                     header.parentElement.classList.toggle('expanded');
                 }
+            };
+
+            // Attach listener to both containers
+            document.getElementById('log-accordion-container').addEventListener('click', handleLogClick);
+            document.getElementById('log-date-container').addEventListener('click', handleLogClick);
+
+            // --- New View Toggle Listeners ---
+            const logViewToggleBtns = document.querySelectorAll('.log-view-toggle-btn');
+            const logSortBtn = document.getElementById('log-sort-btn');
+            // Set initial text for the sort button
+            logSortBtn.innerHTML = `<i class="fas fa-arrow-down-wide-short"></i> <span class="text-sm ml-1">Sort: Newest</span>`;
+            const logSubtitle = document.getElementById('log-subtitle');
+            const groupContainer = document.getElementById('log-accordion-container');
+            const dateContainer = document.getElementById('log-date-container');
+
+            logViewToggleBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Set active button
+                    logViewToggleBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    // Update state
+                    currentLogView = btn.dataset.view;
+
+                    // Get the new sort container
+                    const logSortContainer = document.getElementById('log-sort-container');
+
+                    // Toggle containers and sort button
+                    if (currentLogView === 'group') {
+                        groupContainer.classList.remove('hidden');
+                        dateContainer.classList.add('hidden');
+                        logSortContainer.classList.add('hidden'); // Hide the container
+                        logSubtitle.textContent = 'Tap a group to see entries.';
+                    } else {
+                        groupContainer.classList.add('hidden');
+                        dateContainer.classList.remove('hidden');
+                        logSortContainer.classList.remove('hidden'); // Show the container
+                        logSubtitle.textContent = 'Showing all entries by date.';
+                    }
+                    // Re-render the log
+                    renderLogEntries();
+                });
+            });
+
+            logSortBtn.addEventListener('click', () => {
+                // Flip the sort order
+                currentDateSort = (currentDateSort === 'newest') ? 'oldest' : 'newest';
+                
+                // Update the icon and text
+                logSortBtn.innerHTML = `<i class="fas ${currentDateSort === 'newest' ? 'fa-arrow-down-wide-short' : 'fa-arrow-up-wide-short'}"></i>
+                <span class="text-sm ml-1">Sort: ${currentDateSort === 'newest' ? 'Newest' : 'Oldest'}</span>`;
+                
+                // Re-render the date list
+                renderLogByDate();
             });
 
             const saveLogEntries = () => { localStorage.setItem('fodmapLogEntries', JSON.stringify(logEntries)); renderLogEntries(); renderHomePage(); };
