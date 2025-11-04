@@ -70,7 +70,10 @@
                         <ul id="home-pretreatment-rules-list" class="list-disc list-inside text-muted space-y-1 text-sm">
                             </ul>
                     </div>
-                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="relative p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <button id="pretreatment-settings-btn" class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-primary hover:bg-blue-100" title="Edit Settings">
+                            <i class="fas fa-cog text-sm"></i>
+                        </button>
                         <h3 class="font-semibold text-primary mb-2 text-center">Phase Countdown</h3>
                         <div id="home-pre-treatment-countdown-text" class="text-sm text-secondary text-center mb-2"></div>
                         <div id="home-pre-treatment-progress-container" class="hidden w-full bg-slate-200 rounded-full h-3.5 relative">
@@ -460,6 +463,43 @@
                     <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl">
                         <button type="button" id="food-modal-cancel-btn" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button>
                         <button type="submit" id="food-modal-save-btn" class="bg-primary font-semibold py-1.5 px-4 rounded-full hover:bg-primary-dark transition-colors text-sm">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div id="pretreatment-settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[80] hidden">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                    <h3 id="pretreatment-modal-title" class="text-lg font-semibold text-secondary">Pre-Treatment Settings</h3>
+                    <button id="pretreatment-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+                </div>
+
+                <form id="pretreatment-modal-form">
+                    <div class="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+                        <div>
+                            <label for="pretreatment-modal-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Phase Start Date</label>
+                            <input type="date" id="pretreatment-modal-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="block mb-1.5 text-sm font-medium text-secondary">Phase Duration</label>
+                            <div class="flex gap-2">
+                                <input type="number" id="pretreatment-modal-duration-num" placeholder="e.g., 4" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
+                                <select id="pretreatment-modal-duration-unit" class="w-1/2 p-2.5 border border-slate-300 rounded-xl bg-white">
+                                    <option value="days">Days</option>
+                                    <option value="weeks" selected>Weeks</option>
+                                    <option value="months">Months</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="pretreatment-modal-rules" class="block mb-1.5 text-sm font-medium text-secondary">Pre-Treatment Diet Rules</label>
+                            <textarea id="pretreatment-modal-rules" rows="4" class="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="List your rules, one per line..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl">
+                        <button type="button" id="pretreatment-modal-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button>
+                        <button type="submit" id="pretreatment-modal-save-btn" class="bg-primary font-semibold py-1.5 px-4 rounded-full hover:bg-primary-dark transition-colors text-sm">Save</button>
                     </div>
                 </form>
             </div>

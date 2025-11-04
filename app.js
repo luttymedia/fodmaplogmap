@@ -113,9 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // --- Profile Page ---
         if (phaseSettingsCard) {
-            if (isPretreat || isRestrict) {
+            if (isRestrict) {
                 phaseSettingsCard.classList.remove('hidden');
-                const titleText = (isPretreat) ? 'Pre-Treatment Phase Settings' : 'Restriction Phase Settings';
+                const titleText = 'Restriction Phase Settings';
                 phaseSettingsTitle.textContent = titleText;
                 setupProfilePage(); 
             } else {
@@ -1495,13 +1495,13 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('profile-phase-duration-unit').value = settings.durationUnit || 'weeks';
         }
 
-        // --- NEW: Load Pre-treatment Rules ---
+/*         // --- NEW: Load Pre-treatment Rules ---
         if (phase === 'pre-treatment' && rulesContainer) {
             rulesContainer.classList.remove('hidden'); // Show the textarea
             document.getElementById('profile-pretreatment-rules').value = appState.userProfile.phaseSettings["pre-treatment"].rules || '';
         } else if (rulesContainer) {
             rulesContainer.classList.add('hidden'); // Hide it for all other phases
-        }
+        } */
     };
 
     profileForm.addEventListener('submit', (e) => {
@@ -1523,10 +1523,10 @@ document.addEventListener('DOMContentLoaded', () => {
             settings.durationUnit = document.getElementById('profile-phase-duration-unit').value;
             renderCountdown(phase); // Re-render home countdown
         }
-        if (phase === 'pre-treatment') {
+/*         if (phase === 'pre-treatment') {
             appState.userProfile.phaseSettings["pre-treatment"].rules = document.getElementById('profile-pretreatment-rules').value;
             renderPreTreatmentCard(); // Re-render home card
-        }
+        } */
 
         // --- 3. Personalization Map logic REMOVED ---
         // (This will be handled by the new modal's save button later)
@@ -1672,6 +1672,18 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- END: Food Edit Modal Elements ---
 
+    // --- NEW: Pre-Treatment Settings Modal Elements ---
+    const ptModal = document.getElementById('pretreatment-settings-modal');
+    const ptModalClose = document.getElementById('pretreatment-modal-close');
+    const ptModalForm = document.getElementById('pretreatment-modal-form');
+    const ptModalStartDate = document.getElementById('pretreatment-modal-start-date');
+    const ptModalDurationNum = document.getElementById('pretreatment-modal-duration-num');
+    const ptModalDurationUnit = document.getElementById('pretreatment-modal-duration-unit');
+    const ptModalRules = document.getElementById('pretreatment-modal-rules');
+    const ptModalCancel = document.getElementById('pretreatment-modal-cancel');
+    const ptModalSaveBtn = document.getElementById('pretreatment-modal-save-btn');
+    // --- END: Pre-Treatment Settings Modal Elements ---
+
     // --- NEW: Symptom Check Helper ---
     const hasSymptoms = (entry) => {
         const symptoms = entry.symptoms || ['None'];
@@ -1739,6 +1751,52 @@ document.addEventListener('DOMContentLoaded', () => {
         actionModalBtnConfirm.addEventListener('click', handleConfirm);
         actionModalBtnCancel.addEventListener('click', handleCancel);
         actionModalClose.addEventListener('click', handleCancel);
+    }
+
+    // --- NEW: Pre-Treatment Settings Modal Functions ---
+    function showPreTreatmentModal() {
+        if (!ptModal) return; // Safety check
+        const settings = appState.userProfile.phaseSettings["pre-treatment"];
+        
+        ptModalStartDate.value = settings.startDate || '';
+        ptModalDurationNum.value = settings.durationNum || 4;
+        ptModalDurationUnit.value = settings.durationUnit || 'weeks';
+        ptModalRules.value = settings.rules || '';
+        
+        ptModal.classList.remove('hidden');
+    }
+
+    function closePreTreatmentModal() {
+        if (ptModal) ptModal.classList.add('hidden');
+    }
+
+    function savePreTreatmentSettings(e) {
+        e.preventDefault();
+        
+        const settings = appState.userProfile.phaseSettings["pre-treatment"];
+        settings.startDate = ptModalStartDate.value || null;
+        settings.durationNum = parseInt(ptModalDurationNum.value, 10) || 4;
+        settings.durationUnit = ptModalDurationUnit.value;
+        settings.rules = ptModalRules.value;
+
+        // Save to localStorage
+        localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+
+        // Re-render home page components
+        renderCountdown('pre-treatment');
+        renderPreTreatmentCard();
+
+        // Close modal and show toast
+        closePreTreatmentModal();
+        showToast("Pre-treatment settings saved!");
+    }
+
+    // --- NEW: Pre-Treatment Modal Listeners ---
+    if (ptModal) {
+        document.getElementById('pretreatment-settings-btn').addEventListener('click', showPreTreatmentModal);
+        ptModalClose.addEventListener('click', closePreTreatmentModal);
+        ptModalCancel.addEventListener('click', closePreTreatmentModal);
+        ptModalForm.addEventListener('submit', savePreTreatmentSettings);
     }
 
     // --- NEW: Food Edit Modal Controller ---
