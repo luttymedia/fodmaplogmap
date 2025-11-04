@@ -29,7 +29,7 @@
   --color-text-subtle: #64748b;
 
   /* New Phase Colors */
-  --phase-color-pre: #a9a9a9; /* A neutral grey */
+  --phase-color-pre: #f59e0b; /* A warm orange */
   --phase-color-restriction: #8bb744; /* Your original accent green */
   --phase-color-reintro: #2d61a0; /* Your original primary blue */
   --phase-color-personal: #4a0076; /* A deep purple */

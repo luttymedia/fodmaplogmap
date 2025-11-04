@@ -12,10 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
      const SYMPTOM_OPTIONS = ["Bloating", "Gas", "Abdominal pain", "Diarrhea", "Constipation", "Fatigue", "Headache"];
 
     const PHASE_STYLES = {
-            "pre-treatment": { label: "Pre-Treatment", colorClass: "phase-pre-treatment" },
-            "restriction": { label: "Restriction", colorClass: "phase-restriction" },
-            "reintroduction": { label: "Reintroduction", colorClass: "phase-reintroduction" },
-            "personalization": { label: "Personalization", colorClass: "phase-personalization" }
+            "pre-treatment": { label: "Pre-Treatment", colorClass: "phase-pre-treatment", colorHex: "#f59e0b" },
+            "restriction": { label: "Restriction", colorClass: "phase-restriction", colorHex: "#8bb744" },
+            "reintroduction": { label: "Reintroduction", colorClass: "phase-reintroduction", colorHex: "#2d61a0" },
+            "personalization": { label: "Personalization", colorClass: "phase-personalization", colorHex: "#4a0076" }
         };
 
     // --- DOM Elements (mostly constant) ---
@@ -106,6 +106,11 @@ document.addEventListener('DOMContentLoaded', () => {
             phaseBar.classList.remove('phase-pre-treatment', 'phase-restriction', 'phase-reintroduction', 'phase-personalization');
             // Add the correct one
             phaseBar.classList.add(style.colorClass);
+        }
+
+        // --- Update FAB Color ---
+        if (addEntryFab) { // addEntryFab is defined in the global scope
+            addEntryFab.style.backgroundColor = style.colorHex;
         }
 
         // --- Define Phase Booleans ---
