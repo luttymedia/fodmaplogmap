@@ -104,8 +104,8 @@
                     <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
                         <div class="flex justify-between items-center mb-3">
                             <div>
-                                <h2 class="text-xl sm:text-2xl font-semibold text-secondary">Your Final Diet</h2>
-                                <p class="text-sm text-subtle mt-1">Your personalized summary. Edit in Profile.</p>
+                                <h2 class="text-xl sm:text-2xl font-semibold text-secondary">My Final Diet</h2>
+                                <p class="text-sm text-subtle mt-1">Tap a food to view or edit.</p>
                             </div>
                             <div class="log-view-toggle">
                                 <button class="log-view-toggle-btn active" id="p13n-view-group-btn" data-view="group" title="Group by FODMAP">
@@ -117,6 +117,16 @@
                             </div>
                         </div>
 
+                        <div class="flex gap-2 mb-3">
+                            <input type="text" id="p13n-search-input" class="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="Search foods...">
+                            <button id="p13n-autoscan-btn" class="log-sort-btn flex-shrink-0" title="Auto-Scan Log">
+                                <i class="fas fa-magic-wand-sparkles"></i>
+                            </button>
+                            <button id="p13n-add-food-btn" class="log-sort-btn flex-shrink-0" title="Add New Food">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        
                         <div id="personalization-group-view" class="space-y-3">
                             </div>
 
@@ -313,18 +323,6 @@
                         
                         <!-- END: Phase Countdown Settings -->
 
-                        <div id="profile-personalization-card" class="api-key-accordion hidden"> <div class="api-key-header"> <h3 class="font-semibold text-secondary">My Final Diet</h3>
-                                <i class="fas fa-chevron-down api-key-icon"></i> </div>
-                            <div class="api-key-body"> <div class="space-y-4"> <p class="text-subtle text-sm">Use the auto-scan to get a suggestion, then manually adjust the status for each group and food to build your long-term diet.</p>
-                                    
-                                    <button type="button" id="auto-scan-log-btn" class="w-full bg-accent  font-semibold py-2.5 px-4 rounded-full hover:bg-accent-dark transition-colors duration-300 shadow flex items-center justify-center gap-2"> 
-                                        <i class="fas fa-magic-wand-sparkles"></i> Auto-Scan My Log
-                                    </button>
-
-                                    <div id="personalization-editor-container" class="space-y-3"></div>
-                                </div>
-                            </div>
-                        </div>
                         <div>
                         <div>
                             <h3 class="font-semibold text-secondary mb-1.5">Health Conditions</h3>
@@ -376,7 +374,7 @@
             </div>
         </div>
 
-        <div id="action-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[70] hidden"> 
+        <div id="action-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[90] hidden"> 
             <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
                 <div class="p-4 border-b border-slate-200 flex justify-between items-center"> 
                     <h3 id="action-modal-title" class="text-lg font-semibold text-secondary">Action</h3> 
@@ -392,6 +390,78 @@
                     <button id="action-modal-btn-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button> 
                     <button id="action-modal-btn-confirm" class="bg-primary font-semibold py-1.5 px-4 rounded-full hover:bg-primary-dark transition-colors text-sm">Confirm</button> 
                 </div>
+            </div>
+        </div>
+
+        <div id="food-edit-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[80] hidden">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                    <h3 id="food-modal-title" class="text-lg font-semibold text-secondary">View Food</h3>
+                    <button id="food-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+                </div>
+
+                <div id="food-modal-view" class="p-4 space-y-3">
+                    <div id="food-modal-view-content">
+                        </div>
+                    <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                        <button id="food-modal-delete-btn" class="bg-error text-white font-semibold py-1.5 px-4 rounded-full hover:bg-error-dark transition-colors text-sm">Delete</button>
+                        <button id="food-modal-edit-btn" class="bg-primary font-semibold py-1.5 px-4 rounded-full hover:bg-primary-dark transition-colors text-sm">Edit</button>
+                    </div>
+                </div>
+
+                <form id="food-modal-edit" class="hidden">
+                    <div class="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+                        <div>
+                            <label for="food-modal-name" class="block mb-1 text-sm font-medium text-secondary">Food Name*</label>
+                            <input type="text" id="food-modal-name" class="w-full p-2.5 border border-slate-300 rounded-xl" required>
+                        </div>
+                        
+                        <div>
+                            <label for="food-modal-group" class="block mb-1 text-sm font-medium text-secondary">Food Group*</label>
+                            <select id="food-modal-group" class="w-full p-2.5 border border-slate-300 rounded-xl bg-white">
+                                </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-1 text-sm font-medium text-secondary">Status*</label>
+                            <div class="flex gap-2">
+                                <button type="button" id="food-modal-btn-tolerated" class="flex-1 p-2.5 rounded-xl border-2 font-semibold text-sm">✅ Tolerated</button>
+                                <button type="button" id="food-modal-btn-trigger" class="flex-1 p-2.5 rounded-xl border-2 font-semibold text-sm">⚠️ Trigger</button>
+                                <input type="hidden" id="food-modal-status" value="">
+                            </div>
+                        </div>
+
+                        <div id="food-modal-dose-logic-container" class="hidden space-y-2 p-3 bg-slate-50 rounded-lg">
+                            <label class="block text-sm font-medium text-secondary">Dose Logic (Optional)</label>
+                            
+                            <button type="button" id="food-modal-dose-trigger-tolerated" class="p13n-dose-trigger-btn tolerated hidden">
+                                + Tolerated up to...
+                            </button>
+                            <button type="button" id="food-modal-dose-trigger-trigger" class="p13n-dose-trigger-btn trigger hidden">
+                                + Trigger starting at...
+                            </button>
+                            
+                            <div id="food-modal-dose-wrapper">
+                                <input type="text" id="food-modal-dose" class="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="e.g., 1/2 cup">
+                                <button type="button" id="food-modal-dose-clear-btn" title="Clear dose">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            
+                            <input type="hidden" id="food-modal-doselogic" value="">
+                        </div>
+
+                        <div>
+                            <label for="food-modal-notes" class="block mb-1 text-sm font-medium text-secondary">Notes (Optional)</label>
+                            <textarea id="food-modal-notes" rows="2" class="w-full p-2.5 border border-slate-300 rounded-xl"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl">
+                        <button type="button" id="food-modal-cancel-btn" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button>
+                        <button type="submit" id="food-modal-save-btn" class="bg-primary font-semibold py-1.5 px-4 rounded-full hover:bg-primary-dark transition-colors text-sm">Save</button>
+                    </div>
+                </form>
             </div>
         </div>
         <div id="info-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60] hidden"> 

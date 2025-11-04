@@ -35,17 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- Application State Object ---
 
-    // --- NEW: Dynamically build the personalization map ---
-    const defaultPersonalizationMap = {};
-    FODMAP_GROUP_DATA.forEach(group => {
-        if (group.value !== "Restriction") {
-            defaultPersonalizationMap[group.value] = {
-                groupStatus: 'unknown', // 'tolerated', 'trigger', 'unknown'
-                foods: [] // { name: 'Milk', status: 'trigger', notes: '...' }
-            };
-        }
-    });
-
     // Define the default profile structure
     const defaultProfile = { 
         diagnoses: [], 
@@ -67,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 durationUnit: 'weeks'
             }
         },
-        personalizationMap: defaultPersonalizationMap // Add the new map
+        personalizationFoods: []
     };
 
     const savedProfile = localStorage.getItem('fodmapUserProfile') ? JSON.parse(localStorage.getItem('fodmapUserProfile')) : {};
@@ -76,9 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
         logEntries: JSON.parse(localStorage.getItem('fodmapLogEntries')) || [],
         // Merge saved profile over defaults
         userProfile: { 
-            ...defaultProfile, // 1. Load defaults (has full map)
-            ...savedProfile, // 2. Load saved (overwrites with incomplete map)
+            ...defaultProfile, 
+            ...savedProfile 
         },
+        // personalizationFoods will be populated from userProfile after
+        
         currentPageIndex: 0,
         currentlyEditingId: null,
         stagedImageData: null,
@@ -88,12 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
         openLogFormOnLoad: false
     };
 
-    // --- NEW: Deep merge personalizationMap AFTER load ---
-    // This ensures new groups (like "Other") are added to saved profiles
-    appState.userProfile.personalizationMap = {
-        ...defaultProfile.personalizationMap, // Start with all default groups (including "Other")
-        ...(appState.userProfile.personalizationMap || {}) // Overwrite with user's saved data
-    };
+    // --- NEW: Deep merge/ensure personalizationFoods exists ---
+    appState.userProfile.personalizationFoods = appState.userProfile.personalizationFoods || [];
 
     /**
      * Updates the UI contextually based on the user's current phase.
@@ -125,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const isPersonal = (phase === 'personalization');
         
         // --- Profile Page ---
-        const p13nCard = document.getElementById('profile-personalization-card');
         if (phaseSettingsCard) {
             if (isPretreat || isRestrict) {
                 phaseSettingsCard.classList.remove('hidden');
@@ -134,13 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 setupProfilePage(); 
             } else {
                 phaseSettingsCard.classList.add('hidden');
-            }
-        }
-        // --- NEW: Show Personalization Editor ---
-        if (p13nCard) {
-            p13nCard.classList.toggle('hidden', !isPersonal);
-            if (isPersonal) {
-                renderPersonalizationEditor(); // Render the editor
             }
         }
 
@@ -159,8 +138,8 @@ document.addEventListener('DOMContentLoaded', () => {
             renderPreTreatmentCard(); // Add this call
         }
         if (isRestrict) renderCountdown('restriction');
-        if (isPersonal) renderPersonalizationSummary();
         if (isReintro) renderHomePage(); // This is the reintro progress list
+        if (isPersonal) renderPersonalizationSummary();
 
         // --- 2. Reintro Log Page (Form) ---
         // Plan button: Show for Reintro ONLY
@@ -702,367 +681,84 @@ document.addEventListener('DOMContentLoaded', () => {
             .join('');
     }
 
-    // --- NEW: Builds and renders the Personalization Editor in Profile ---
-    function renderPersonalizationEditor() {
-        const container = document.getElementById('personalization-editor-container');
-        if (!container) return;
-
-        container.innerHTML = ''; // Clear old content
-        const map = appState.userProfile.personalizationMap;
-
-        Object.keys(map).forEach(groupName => {
-            const groupData = map[groupName];
-            const groupInfo = FODMAP_GROUP_DATA.find(g => g.value === groupName) || { name: groupName };
-            const style = FODMAP_STYLES[groupName] || { icon: '❓' };
-            
-            const groupCard = document.createElement('div');
-            // Re-use the log's accordion style
-            groupCard.className = 'accordion-group'; 
-            groupCard.dataset.group = groupName; // Store group name
-
-            // 1. Build Group Header (log style)
-            const header = document.createElement('div');
-            header.className = 'accordion-header';
-            header.innerHTML = `
-                <h3>${style.icon} ${groupInfo.name}</h3>
-                <i class="fas fa-chevron-down accordion-icon"></i>
-            `;
-            
-            // 2. Build Group Body
-            const body = document.createElement('div');
-            body.className = 'accordion-body';
-
-            // 3. Build Centered "Overall Status" Toggles
-            const overallStatus = `
-                <div class="p13n-overall-status-container">
-                    <div class="p13n-editor-btn-group" data-target="group">
-                        <button type="button" class="p13n-editor-btn tolerated ${groupData.groupStatus === 'tolerated' ? 'selected' : ''}" data-status="tolerated">Tolerated</button>
-                        <button type="button" class="p13n-editor-btn trigger ${groupData.groupStatus === 'trigger' ? 'selected' : ''}" data-status="trigger">Trigger</button>
-                        <button type="button" class="p13n-editor-btn mixed ${groupData.groupStatus === 'mixed' ? 'selected' : ''}" data-status="mixed">Mixed</button>
-                    </div>
-                </div>
-            `;
-
-            // 4. Build Food List
-            const foodList = groupData.foods.map((food, index) => {
-                return `
-                    <div class="p13n-editor-food-item" data-index="${index}">
-                        <div class="p13n-food-header">
-                            <span class="food-name">${food.name}</span>
-                            <div class="p13n-editor-btn-group" data-target="food">
-                                <button type="button" class="p13n-editor-btn tolerated ${food.status === 'tolerated' ? 'selected' : ''}" data-status="tolerated">Tolerated</button>
-                                <button type="button" class="p13n-editor-btn trigger ${food.status === 'trigger' ? 'selected' : ''}" data-status="trigger">Trigger</button>
-                            </div>
-                        </div>
-                        <textarea class="p13n-food-notes" rows="1" placeholder="Add portion or notes...">${food.notes}</textarea>
-                        <div class="p13n-food-actions">
-                            <button type="button" class="p13n-food-delete-btn"><i class="fas fa-trash-alt"></i> Remove</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            // 5. Build "Add Food" Button
-            const addFoodBtn = `<button type="button" class="p13n-add-food-btn"><i class="fas fa-plus-circle text-xs"></i> Add Food Item</button>`;
-
-            // 6. Combine Body Parts
-            body.innerHTML = overallStatus + `<div class="p13n-editor-food-list">${foodList}${addFoodBtn}</div>`;
-            
-            groupCard.appendChild(header);
-            groupCard.appendChild(body);
-            container.appendChild(groupCard);
-        });
-    }
-
-    // --- NEW: Runs the Auto-Scan logic (MERGE NON-DESTRUCTIVE) ---
+    // --- NEW: "SMART" Auto-Scan (OVERWRITE) ---
     function runAutoScan() {
-        // --- 1. NEW: Use custom action modal ---
+        // 1. Show confirmation modal (this is now a destructive action)
         showActionModal({
-            title: 'Confirm Scan',
-            message: "This will scan your log for NEWLY logged foods and add them to your diet list. It will NOT overwrite any changes you have already made.",
-            confirmText: 'Continue',
+            title: 'Confirm Auto-Scan',
+            message: "This will ERASE your current diet list and replace it with a new summary generated from your log. Are you sure?",
+            confirmText: 'Erase & Scan',
             onConfirm: () => {
-                // --- All of the original scan logic now goes inside onConfirm ---
-                const scanMap = {}; // This is a temporary map to hold the scan results
-                const allFoodsByGroup = {};
+                const newFoodsArray = [];
+                const allFoodsByName = {}; // { milk: [...], apple: [...] }
+                let foodIdCounter = Date.now();
 
-                // 2. Group all log entries by group and then by food name
+                // 2. Group all log entries by food name
                 appState.logEntries.forEach(entry => {
                     if (entry.group === 'Restriction' || !entry.group) return;
 
-                    if (!allFoodsByGroup[entry.group]) {
-                        allFoodsByGroup[entry.group] = {};
-                    }
                     const foodName = entry.food.trim().toLowerCase();
-                    if (!allFoodsByGroup[entry.group][foodName]) {
-                        allFoodsByGroup[entry.group][foodName] = [];
+                    if (!allFoodsByName[foodName]) {
+                        allFoodsByName[foodName] = [];
                     }
-                    allFoodsByGroup[entry.group][foodName].push(entry);
+                    allFoodsByName[foodName].push(entry);
                 });
 
-                // 3. Process each group in the scan
-                Object.keys(defaultPersonalizationMap).forEach(groupName => { // Use default map to get all groups
-                    const groupEntries = allFoodsByGroup[groupName];
-                    scanMap[groupName] = { foods: [], isGroupATrigger: false }; // Init temp scan object
+                // 3. Process each unique food
+                for (const foodName in allFoodsByName) {
+                    const entries = allFoodsByName[foodName];
+                    const mostRecentEntry = entries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                    const group = mostRecentEntry.group; // Get group from most recent log
 
-                    if (groupEntries) {
-                        // 4. Process each food within the group
-                        Object.keys(groupEntries).forEach(foodName => {
-                            const foodEntries = groupEntries[foodName];
-                            let isFoodATrigger = false;
-                            let notes = new Set(); 
+                    const allTolerated = entries.every(e => !hasSymptoms(e));
+                    const triggerEntries = entries.filter(e => hasSymptoms(e));
+                    // --- NEW LOGIC: Find severe triggers ---
+                    const severeTriggerEntries = triggerEntries.filter(e => parseInt(e.severity, 10) >= 4);
 
-                            foodEntries.forEach(entry => {
-                                const symptoms = entry.symptoms || ['None'];
-                                const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
-                                const severity = parseInt(entry.severity, 10) || 0;
+                    let newFoodObject = {
+                        id: foodIdCounter++,
+                        name: foodName.charAt(0).toUpperCase() + foodName.slice(1), // Capitalize
+                        group: group,
+                        status: 'tolerated', // Default
+                        doseLogic: null,
+                        dose: '',
+                        notes: ''
+                    };
 
-                                if (hasSymptoms || severity > 2) {
-                                    isFoodATrigger = true;
-                                    scanMap[groupName].isGroupATrigger = true;
-                                    notes.add(`${entry.dose} = ${severity}/5 severity`);
-                                } else {
-                                    notes.add(`${entry.dose} = tolerated`);
-                                }
-                            });
-
-                            // 5. Add the food object to the SCAN map
-                            scanMap[groupName].foods.push({
-                                name: foodName.charAt(0).toUpperCase() + foodName.slice(1), // Capitalize
-                                status: isFoodATrigger ? 'trigger' : 'tolerated',
-                                notes: Array.from(notes).join('; ')
-                            });
-                        });
+                    if (allTolerated) {
+                        // All entries were fine.
+                        newFoodObject.notes = "All logged portions tolerated.";
+                    } else if (severeTriggerEntries.length > 0) {
+                        // --- NEW: Has a SEVERE trigger (4 or 5) ---
+                        const latestSevereTrigger = severeTriggerEntries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                        newFoodObject.status = 'trigger';
+                        newFoodObject.doseLogic = null; // This makes it a hard trigger
+                        newFoodObject.dose = '';
+                        newFoodObject.notes = `Severe trigger (Severity: ${latestSevereTrigger.severity}/5) at ${latestSevereTrigger.dose}.`;
+                    } else if (triggerEntries.length > 0) {
+                        // --- UPDATED: Has only MILD triggers (1-3) ---
+                        const latestMildTrigger = triggerEntries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                        newFoodObject.status = 'trigger'; // Base status is trigger
+                        newFoodObject.doseLogic = 'starting at'; // This makes it "mixed"
+                        newFoodObject.dose = latestMildTrigger.dose;
+                        newFoodObject.notes = `Mild symptoms (Severity: ${latestMildTrigger.severity}/5) at this dose.`;
                     }
-                });
+                    // Else: allTolerated is true, handled above.
 
-                // --- 6. NEW: Non-destructive MERGE logic ---
-                const userMap = appState.userProfile.personalizationMap;
-                let foodsAdded = 0;
-
-                Object.keys(scanMap).forEach(groupName => {
-                    const scannedGroup = scanMap[groupName];
-                    const userGroup = userMap[groupName];
-
-                    // Loop through scanned foods
-                    scannedGroup.foods.forEach(scannedFood => {
-                        // Check if this food *already exists* in the user's saved map
-                        const foodExists = userGroup.foods.some(
-                            userFood => userFood.name.toLowerCase() === scannedFood.name.toLowerCase()
-                        );
-
-                        // If it does NOT exist, add it.
-                        if (!foodExists) {
-                            userGroup.foods.push(scannedFood);
-                            foodsAdded++;
-                        }
-                        // If it *does* exist, we do nothing, preserving the user's edits.
-                    });
-
-                    // Update group status only if it's still 'unknown'
-                    if (userGroup.groupStatus === 'unknown' && scannedGroup.isGroupATrigger) {
-                        userGroup.groupStatus = 'trigger';
-                    }
-                });
-
-                // --- 7. Final Save & Re-render ---
-                appState.userProfile.personalizationMap = userMap;
-                localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile)); // Save
-                renderPersonalizationEditor(); // Re-render the editor with new data
-                renderPersonalizationSummary(); // Re-render the home page
-                
-                if (foodsAdded > 0) {
-                    showToast(`Scan complete! Added ${foodsAdded} new food(s).`);
-                } else {
-                    showToast("Scan complete! No new foods found in your log.");
+                    newFoodsArray.push(newFoodObject);
                 }
-                // --- End of original scan logic ---
+
+                // 4. Overwrite the old array in the app state
+                appState.userProfile.personalizationFoods = newFoodsArray;
+                
+                // 5. Save to localStorage
+                localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+
+                // 6. Re-render the personalization list and show toast
+                renderPersonalizationSummary(); 
+                showToast(`Scan complete! Found ${newFoodsArray.length} unique foods.`);
             }
         });
-    }
-
-    // --- Renders Personalization Home Tab (GROUP VIEW) ---
-    function renderPersonalizationByGroup() {
-        const container = document.getElementById('personalization-group-view');
-        if (!container) return;
-
-        container.innerHTML = ''; // Clear old content
-        const map = appState.userProfile.personalizationMap;
-        let groupsRendered = 0;
-
-        // Loop through the map
-        Object.keys(map).forEach(groupName => {
-            const groupData = map[groupName];
-            const groupInfo = FODMAP_GROUP_DATA.find(g => g.value === groupName) || { name: groupName };
-            const style = FODMAP_STYLES[groupName] || { icon: '❓' };
-            
-            // Only render if it has been personalized
-            if (groupData.groupStatus !== 'unknown' || groupData.foods.length > 0) {
-                groupsRendered++;
-                const groupDiv = document.createElement('div');
-                // RE-USE the log's accordion style for consistency
-                groupDiv.className = 'accordion-group'; 
-                groupDiv.style.backgroundColor = '#fff'; // Override default bg-slate-100
-
-                // --- 1. Create Header (using log's style) ---
-                let statusIcon = 'fa-question-circle text-subtle';
-                let statusText = 'Unknown';
-                if (groupData.groupStatus === 'tolerated') {
-                    statusIcon = 'fa-check-circle text-accent';
-                    statusText = 'Tolerated';
-                } else if (groupData.groupStatus === 'trigger') {
-                    statusIcon = 'fa-exclamation-triangle text-error';
-                    statusText = 'Potential Trigger';
-                } else if (groupData.groupStatus === 'mixed') {
-                    statusIcon = 'fa-circle-half-stroke text-warning'; // New icon
-                    statusText = 'Mixed'; // New text
-                }
-
-                const header = document.createElement('div');
-                header.className = 'accordion-header p13n-home-item-header'; // Use accordion header
-                header.innerHTML = `
-                    <h3 class="flex items-center gap-2">${style.icon} ${groupInfo.name}</h3>
-                    <div class="flex items-center gap-1.5 status-text">
-                        <i class="fas ${statusIcon}"></i> ${statusText}
-                    </div>
-                `;
-                
-                // --- 2. Create Body (using log's style) ---
-                const body = document.createElement('div');
-                body.className = 'accordion-body';
-                
-                if (groupData.foods.length > 0) {
-                    body.innerHTML = groupData.foods.map(food => {
-                        let foodIcon = '✅';
-                        let foodClass = 'p13n-food-tolerated';
-                        let notesHTML = ''; // Start empty
-
-                        if (food.status === 'trigger') {
-                            foodIcon = '⚠️';
-                            foodClass = 'p13n-food-trigger';
-                        }
-                        
-                        // Show notes if they exist, regardless of status
-                        if (food.notes) {
-                            notesHTML = `<span class="notes">(${food.notes})</span>`;
-                        }
-
-                        return `
-                            <div class="p13n-food-item ${foodClass}">
-                                <span class="icon">${foodIcon}</span>
-                                <span class="food-name">${food.name}</span>
-                                ${notesHTML}
-                            </div>
-                        `;
-                    }).join('');
-                } else {
-                    body.innerHTML = `<p class="p-3 text-xs text-subtle italic">No specific foods added for this group.</p>`;
-                }
-                
-                groupDiv.appendChild(header);
-                groupDiv.appendChild(body);
-                container.appendChild(groupDiv);
-            }
-        });
-
-        // --- 3. Handle Empty State ---
-        if (groupsRendered === 0) {
-            container.innerHTML = `
-                <div class="p-4 text-center bg-slate-50 rounded-lg">
-                    <p class="text-subtle text-sm">Your personalized diet is empty.</p>
-                    <p class="text-subtle text-sm mt-1">Go to the **Profile** tab to run the **"Auto-Scan My Log"** tool to get started!</p>
-                </div>
-            `;
-        }
-    }
-
-    // --- Renders Personalization Home Tab (TOLERANCE VIEW) ---
-    function renderPersonalizationByTolerance() {
-        const container = document.getElementById('personalization-tolerance-view');
-        if (!container) return;
-
-        const map = appState.userProfile.personalizationMap;
-        let toleratedFoods = [];
-        let triggerFoods = [];
-
-        // 1. Loop through the map and sort all foods
-        Object.keys(map).forEach(groupName => {
-            map[groupName].foods.forEach(food => {
-                if (food.status === 'tolerated') {
-                    toleratedFoods.push(food);
-                } else if (food.status === 'trigger') {
-                    triggerFoods.push(food);
-                }
-            });
-        });
-
-        // Sort alphabetically
-        toleratedFoods.sort((a, b) => a.name.localeCompare(b.name));
-        triggerFoods.sort((a, b) => a.name.localeCompare(b.name));
-
-        container.innerHTML = ''; // Clear container
-
-        // 2. Create "Tolerated" Accordion
-        const toleratedGroup = document.createElement('div');
-        toleratedGroup.className = 'accordion-group expanded'; // Default expanded
-        toleratedGroup.style.backgroundColor = '#fff';
-        
-        const toleratedHeader = document.createElement('div');
-        toleratedHeader.className = 'accordion-header p13n-home-item-header';
-        toleratedHeader.innerHTML = `
-            <h3 class="flex items-center gap-2"><i class="fas fa-check-circle text-accent"></i> Tolerated Foods</h3>
-            <div class="flex items-center gap-1.5 status-text text-accent">
-                ${toleratedFoods.length}
-            </div>
-        `;
-        
-        const toleratedBody = document.createElement('div');
-        toleratedBody.className = 'accordion-body';
-        if (toleratedFoods.length > 0) {
-            toleratedBody.innerHTML = toleratedFoods.map(food => `
-                <div class="p13n-tolerance-item tolerated">
-                    <span class="icon">✅</span>
-                    <span class="food-name">${food.name}</span>
-                    ${food.notes ? `<span class="notes">(${food.notes})</span>` : ''}
-                </div>
-            `).join('');
-        } else {
-            toleratedBody.innerHTML = `<p class="p-3 text-xs text-subtle italic">No tolerated foods added yet. Edit in your Profile.</p>`;
-        }
-        toleratedGroup.appendChild(toleratedHeader);
-        toleratedGroup.appendChild(toleratedBody);
-        container.appendChild(toleratedGroup);
-
-        // 3. Create "Triggers" Accordion
-        const triggerGroup = document.createElement('div');
-        triggerGroup.className = 'accordion-group expanded'; // Default expanded
-        triggerGroup.style.backgroundColor = '#fff';
-        
-        const triggerHeader = document.createElement('div');
-        triggerHeader.className = 'accordion-header p13n-home-item-header';
-        triggerHeader.innerHTML = `
-            <h3 class="flex items-center gap-2"><i class="fas fa-exclamation-triangle text-error"></i> Potential Triggers</h3>
-            <div class="flex items-center gap-1.5 status-text text-error">
-                ${triggerFoods.length}
-            </div>
-        `;
-        
-        const triggerBody = document.createElement('div');
-        triggerBody.className = 'accordion-body';
-        if (triggerFoods.length > 0) {
-            triggerBody.innerHTML = triggerFoods.map(food => `
-                <div class="p13n-tolerance-item trigger">
-                    <span class="icon">⚠️</span>
-                    <span class="food-name">${food.name}</span>
-                    ${food.notes ? `<span class="notes">(${food.notes})</span>` : ''}
-                </div>
-            `).join('');
-        } else {
-            triggerBody.innerHTML = `<p class="p-3 text-xs text-subtle italic">No triggers identified yet. Great news!</p>`;
-        }
-        triggerGroup.appendChild(triggerHeader);
-        triggerGroup.appendChild(triggerBody);
-        container.appendChild(triggerGroup);
     }
 
     // --- NEW: Main Controller for Personalization Home Tab ---
@@ -1070,16 +766,177 @@ document.addEventListener('DOMContentLoaded', () => {
         const groupView = document.getElementById('personalization-group-view');
         const toleranceView = document.getElementById('personalization-tolerance-view');
         if (!groupView || !toleranceView) return;
+        
+        // --- NEW: Get search filter text ---
+        const filterText = document.getElementById('p13n-search-input').value.toLowerCase().trim();
 
         if (appState.currentPersonalizationView === 'group') {
             groupView.classList.remove('hidden');
             toleranceView.classList.add('hidden');
-            renderPersonalizationByGroup();
+            renderPersonalizationByGroup(filterText); // Pass filter
         } else {
             groupView.classList.add('hidden');
             toleranceView.classList.remove('hidden');
-            renderPersonalizationByTolerance();
+            renderPersonalizationByTolerance(filterText); // Pass filter
         }
+    }
+
+    // --- Renders Personalization Home Tab (GROUP VIEW) ---
+    function renderPersonalizationByGroup(filterText = '') {
+        const container = document.getElementById('personalization-group-view');
+        if (!container) return;
+
+        container.innerHTML = ''; // Clear old content
+        const foods = appState.userProfile.personalizationFoods.filter(food => 
+            food.name.toLowerCase().includes(filterText)
+        );
+        const groups = {}; // { Lactose: [], Fructose: [] }
+
+        // 1. Group all foods
+        foods.forEach(food => {
+            if (!groups[food.group]) {
+                groups[food.group] = [];
+            }
+            groups[food.group].push(food);
+        });
+
+        // 2. Render each group accordion
+        let groupsRendered = 0;
+        FODMAP_GROUP_DATA.forEach(groupData => {
+            if (groupData.value === "Restriction") return;
+            
+            const groupName = groupData.value;
+            const foodsInGroup = groups[groupName] || [];
+            
+            if (foodsInGroup.length > 0) {
+                groupsRendered++;
+                const style = FODMAP_STYLES[groupName] || { icon: '❓' };
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'accordion-group';
+                groupDiv.style.backgroundColor = '#fff';
+
+                const header = document.createElement('div');
+                header.className = 'accordion-header p13n-home-item-header';
+                header.innerHTML = `
+                    <h3 class="flex items-center gap-2">${style.icon} ${groupData.name}</h3>
+                    <div class="flex items-center gap-1.5 status-text text-muted">
+                        ${foodsInGroup.length} food(s)
+                    </div>
+                `;
+                
+                const body = document.createElement('div');
+                body.className = 'accordion-body';
+                body.innerHTML = `<div class="p13n-food-list">
+                    ${foodsInGroup.map(food => renderFoodLink(food)).join('')}
+                </div>`;
+                
+                groupDiv.appendChild(header);
+                groupDiv.appendChild(body);
+                container.appendChild(groupDiv);
+            }
+        });
+
+        if (groupsRendered === 0) {
+            if (filterText) {
+                container.innerHTML = `<p class="text-subtle text-sm text-center p-4">No foods found matching "${filterText}".</p>`;
+            } else {
+                container.innerHTML = `<p class="text-subtle text-sm text-center p-4">Your diet list is empty. Use the Auto-Scan or Add button to start.</p>`;
+            }
+        }
+    }
+
+    // --- Renders Personalization Home Tab (TOLERANCE VIEW) ---
+    function renderPersonalizationByTolerance(filterText = '') {
+        const container = document.getElementById('personalization-tolerance-view');
+        if (!container) return;
+
+        const foods = appState.userProfile.personalizationFoods.filter(food => 
+            food.name.toLowerCase().includes(filterText)
+        );
+        const toleratedFoods = [];
+        const triggerFoods = [];
+        const mixedFoods = [];
+
+        foods.forEach(food => {
+            const status = getFoodStatus(food); // Use our new helper
+            if (status === 'tolerated') toleratedFoods.push(food);
+            else if (status === 'trigger') triggerFoods.push(food);
+            else mixedFoods.push(food);
+        });
+
+        container.innerHTML = ''; // Clear container
+
+        const emptyText = filterText 
+            ? `No foods found matching "${filterText}".` 
+            : 'No foods in this category yet.';
+
+        // 1. Create "Tolerated" Accordion
+        container.appendChild(createToleranceAccordion(
+            'Tolerated Foods', 'fa-check-circle text-accent',
+            toleratedFoods, 
+            filterText ? emptyText : 'No tolerated foods added yet.'
+        ));
+        
+        // 2. Create "Mixed" Accordion
+        container.appendChild(createToleranceAccordion(
+            'Mixed Tolerance', 'fa-circle-half-stroke text-warning',
+            mixedFoods, 
+            filterText ? emptyText : 'No dose-dependent foods added yet.'
+        ));
+        
+        // 3. Create "Triggers" Accordion
+        container.appendChild(createToleranceAccordion(
+            'Potential Triggers', 'fa-exclamation-triangle text-error',
+            triggerFoods, 
+            filterText ? emptyText : 'No triggers identified yet. Great news!'
+        ));
+    }
+
+    // --- NEW: Helper to get a food's true status ---
+    function getFoodStatus(food) {
+        if (food.doseLogic) return 'mixed';
+        return food.status; // 'tolerated' or 'trigger'
+    }
+
+    // --- NEW: Helper to render a food link ---
+    function renderFoodLink(food) {
+        const status = getFoodStatus(food);
+        let doseNote = '';
+        if (status === 'mixed') {
+            const logic = food.doseLogic === 'up to' ? 'Up to' : 'Starting at';
+            doseNote = `<span class="dose-note">(${logic} ${food.dose})</span>`;
+        }
+        return `<a class="p13n-food-link ${status}" data-food-id="${food.id}">${food.name}${doseNote}</a>`;
+    }
+
+    // --- NEW: Helper to build the Tolerance accordions ---
+    function createToleranceAccordion(title, icon, foods, emptyText) {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'accordion-group expanded'; // Default expanded
+        groupDiv.style.backgroundColor = '#fff';
+        
+        const header = document.createElement('div');
+        header.className = 'accordion-header p13n-home-item-header';
+        header.innerHTML = `
+            <h3 class="flex items-center gap-2"><i class="fas ${icon}"></i> ${title}</h3>
+            <div class="flex items-center gap-1.5 status-text text-muted">
+                ${foods.length}
+            </div>
+        `;
+        
+        const body = document.createElement('div');
+        body.className = 'accordion-body';
+        if (foods.length > 0) {
+            body.innerHTML = `<div class="p13n-food-list">
+                ${foods.sort((a,b) => a.name.localeCompare(b.name)).map(food => renderFoodLink(food)).join('')}
+            </div>`;
+        } else {
+            body.innerHTML = `<p class="p-3 text-xs text-subtle italic text-center">${emptyText}</p>`;
+        }
+        
+        groupDiv.appendChild(header);
+        groupDiv.appendChild(body);
+        return groupDiv;
     }
 
     const logForm = document.getElementById('log-form');
@@ -1443,15 +1300,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Attach listener to both containers
     document.getElementById('log-accordion-container').addEventListener('click', handleLogClick);
     document.getElementById('log-date-container').addEventListener('click', handleLogClick);
-
-    // Add listener for personalization 'group' accordion
-    document.getElementById('personalization-group-view').addEventListener('click', (e) => {
-        const header = e.target.closest('.accordion-header');
-        if (header) {
-            header.parentElement.classList.toggle('expanded');
-        }
-    });
-    
+  
     // --- AI Shortcut Button on Home Page ---
     const aiShortcutBtn = document.getElementById('home-ai-shortcut-btn');
     if (aiShortcutBtn) {
@@ -1679,135 +1528,90 @@ document.addEventListener('DOMContentLoaded', () => {
             renderPreTreatmentCard(); // Re-render home card
         }
 
-        // --- 3. NEW: Save Personalization Map (Personalization Phase) ---
-        if (phase === 'personalization') {
-            const editor = document.getElementById('personalization-editor-container');
-            const userMap = appState.userProfile.personalizationMap; // Reference the existing map
-
-            // Loop over all group cards in the editor
-            editor.querySelectorAll('.accordion-group').forEach(groupCard => {
-                const groupName = groupCard.dataset.group;
-                
-                // Read all food items from the DOM
-                const newFoodList = [];
-                groupCard.querySelectorAll('.p13n-editor-food-item').forEach(foodItem => {
-                    const foodName = foodItem.querySelector('.food-name').textContent;
-                    const foodStatus = foodItem.querySelector('.p13n-editor-btn.selected').dataset.status;
-                    const foodNotes = foodItem.querySelector('.p13n-food-notes').value;
-                    
-                    newFoodList.push({
-                        name: foodName,
-                        status: foodStatus,
-                        notes: foodNotes // Notes are correctly attached here
-                    });
-                });
-                
-                // Critical step: Update the foods array in the appState object directly.
-                userMap[groupName].foods = newFoodList;
-            });
-            
-            // The map is already a reference to appState.userProfile.personalizationMap
-            // Now we call the re-render function
-            renderPersonalizationSummary(); // This re-renders the Home tab with the new data
-        }
+        // --- 3. Personalization Map logic REMOVED ---
+        // (This will be handled by the new modal's save button later)
 
         // --- 4. Final Save to localStorage & Toast ---
         localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
         showToast("Profile Saved!");
     });
 
-    // Add listener for personalization 'tolerance' accordion
-    document.getElementById('personalization-tolerance-view').addEventListener('click', (e) => {
-        const header = e.target.closest('.accordion-header');
-        if (header) {
-            header.parentElement.classList.toggle('expanded');
-        }
-    });
-
-    // Add listeners for the personalization view toggle buttons
-    document.getElementById('p13n-view-group-btn').addEventListener('click', () => {
-        appState.currentPersonalizationView = 'group';
-        document.getElementById('p13n-view-group-btn').classList.add('active');
-        document.getElementById('p13n-view-tolerance-btn').classList.remove('active');
-        renderPersonalizationSummary();
-    });
-    document.getElementById('p13n-view-tolerance-btn').addEventListener('click', () => {
-        appState.currentPersonalizationView = 'tolerance';
-        document.getElementById('p13n-view-group-btn').classList.remove('active');
-        document.getElementById('p13n-view-tolerance-btn').classList.add('active');
-        renderPersonalizationSummary();
-    });
-
-    // --- NEW: Listener for Auto-Scan Button ---
-    document.getElementById('auto-scan-log-btn').addEventListener('click', () => {
-        // We can add a confirm() dialog here later if we want
-        runAutoScan();
-    });
-
-    // --- NEW: Click handler for the Personalization Editor ---
-    document.getElementById('personalization-editor-container').addEventListener('click', (e) => {
-        const target = e.target;
-        
-        // --- Handle Accordion Group Expand/Collapse ---
-        const header = target.closest('.accordion-header');
-        if (header) {
-            header.parentElement.classList.toggle('expanded');
-            return; // Stop processing
-        }
-
-        // --- Handle Add Food Button ---
-        if (target.classList.contains('p13n-add-food-btn')) {
-            showActionModal({
-                title: 'Add Food Item',
-                message: 'Enter the name of the food you want to add:',
-                type: 'prompt',
-                confirmText: 'Add',
-                onConfirm: (foodName) => {
-                    // onConfirm already checks for empty string, so we just proceed
-                    const groupName = target.closest('.accordion-group').dataset.group;
-                    appState.userProfile.personalizationMap[groupName].foods.push({
-                        name: foodName.trim(),
-                        status: 'tolerated',
-                        notes: 'Manually added'
-                    });
-                    renderPersonalizationEditor(); // Re-render to show new food
-                }
-            });
-        }
-
-        // --- Handle Delete Food Button ---
-        if (target.closest('.p13n-food-delete-btn')) {
-            const foodItem = target.closest('.p13n-editor-food-item');
-            const foodIndex = parseInt(foodItem.dataset.index, 10);
-            const groupName = target.closest('.accordion-group').dataset.group;
-            
-            // Remove from array
-            appState.userProfile.personalizationMap[groupName].foods.splice(foodIndex, 1);
-            renderPersonalizationEditor(); // Re-render
-        }
-
-        // --- Handle Status Toggle Button (Group or Food) ---
-        if (target.classList.contains('p13n-editor-btn')) {
-            const newStatus = target.dataset.status;
-            const btnGroup = target.parentElement;
-
-            // Remove 'selected' from siblings, add to clicked
-            btnGroup.querySelectorAll('.p13n-editor-btn').forEach(btn => btn.classList.remove('selected'));
-            target.classList.add('selected');
-
-            // Find out if we're changing a Group or a Food
-            if (btnGroup.dataset.target === 'group') {
-                const groupName = target.closest('.accordion-group').dataset.group;
-                appState.userProfile.personalizationMap[groupName].groupStatus = newStatus;
-            } else { // It's a food
-                const foodItem = target.closest('.p13n-editor-food-item');
-                const foodIndex = parseInt(foodItem.dataset.index, 10);
-                const groupName = target.closest('.accordion-group').dataset.group;
-                appState.userProfile.personalizationMap[groupName].foods[foodIndex].status = newStatus;
-            }
-        }
-    });
+    // --- Personalization Tab Listeners (with null checks) ---
     
+    // Add listeners for the personalization view toggle buttons
+    const p13nGroupBtn = document.getElementById('p13n-view-group-btn');
+    if (p13nGroupBtn) {
+        p13nGroupBtn.addEventListener('click', () => {
+            appState.currentPersonalizationView = 'group';
+            document.getElementById('p13n-view-group-btn').classList.add('active');
+            document.getElementById('p13n-view-tolerance-btn').classList.remove('active');
+            renderPersonalizationSummary();
+        });
+    }
+
+    const p13nToleranceBtn = document.getElementById('p13n-view-tolerance-btn');
+    if (p13nToleranceBtn) {
+        p13nToleranceBtn.addEventListener('click', () => {
+            appState.currentPersonalizationView = 'tolerance';
+            document.getElementById('p13n-view-group-btn').classList.remove('active');
+            document.getElementById('p13n-view-tolerance-btn').classList.add('active');
+            renderPersonalizationSummary();
+        });
+    }
+    
+    // Listeners for Personalization Action Buttons
+    const p13nAutoscanBtn = document.getElementById('p13n-autoscan-btn');
+    if (p13nAutoscanBtn) {
+        p13nAutoscanBtn.addEventListener('click', runAutoScan);
+    }
+    
+    const p13nAddFoodBtn = document.getElementById('p13n-add-food-btn');
+    if (p13nAddFoodBtn) {
+        p13nAddFoodBtn.addEventListener('click', () => {
+            showFoodModal(null, true); // Open modal in NEW/EDIT mode
+        });
+    }
+
+    // Add listener for personalization 'group' accordion
+    const p13nGroupView = document.getElementById('personalization-group-view');
+    if (p13nGroupView) {
+        p13nGroupView.addEventListener('click', (e) => {
+            const header = e.target.closest('.accordion-header');
+            const foodLink = e.target.closest('.p13n-food-link');
+
+            if (foodLink) {
+                const foodId = parseInt(foodLink.dataset.foodId, 10);
+                showFoodModal(foodId); // Open in VIEW mode
+            } else if (header) {
+                header.parentElement.classList.toggle('expanded');
+            }
+        });
+    }
+
+    // Add listener for personalization 'tolerance' accordion
+    const p13nToleranceView = document.getElementById('personalization-tolerance-view');
+    if (p13nToleranceView) {
+        p13nToleranceView.addEventListener('click', (e) => {
+            const header = e.target.closest('.accordion-header');
+            const foodLink = e.target.closest('.p13n-food-link');
+            
+            if (foodLink) {
+                const foodId = parseInt(foodLink.dataset.foodId, 10);
+                showFoodModal(foodId); // Open in VIEW mode
+            } else if (header) {
+                header.parentElement.classList.toggle('expanded');
+            }
+        });
+    }
+
+    // Add listener for personalization search input
+    const p13nSearchInput = document.getElementById('p13n-search-input');
+    if (p13nSearchInput) {
+        p13nSearchInput.addEventListener('input', () => {
+            renderPersonalizationSummary(); // Re-render the list on every key press
+        });
+    }
+
     const openSide = () => {
         // Set the active phase button *before* showing the menu
         const phaseToggleBtns = document.querySelectorAll('#side-menu-phases .log-view-toggle-btn');
@@ -1838,6 +1642,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const actionModalInput = document.getElementById('action-modal-input');
     const actionModalBtnCancel = document.getElementById('action-modal-btn-cancel');
     const actionModalBtnConfirm = document.getElementById('action-modal-btn-confirm');
+
+    // --- NEW: Food Edit Modal Elements ---
+    const foodModal = document.getElementById('food-edit-modal');
+    const foodModalTitle = document.getElementById('food-modal-title');
+    const foodModalClose = document.getElementById('food-modal-close');
+    
+    // View Mode
+    const foodModalView = document.getElementById('food-modal-view');
+    const foodModalViewContent = document.getElementById('food-modal-view-content');
+    const foodModalDeleteBtn = document.getElementById('food-modal-delete-btn');
+    const foodModalEditBtn = document.getElementById('food-modal-edit-btn');
+    
+    // Edit Mode
+    const foodModalEdit = document.getElementById('food-modal-edit');
+    const foodModalName = document.getElementById('food-modal-name');
+    const foodModalGroup = document.getElementById('food-modal-group');
+    const foodModalBtnTolerated = document.getElementById('food-modal-btn-tolerated');
+    const foodModalBtnTrigger = document.getElementById('food-modal-btn-trigger');
+    const foodModalStatus = document.getElementById('food-modal-status');
+    const foodModalDoseLogicContainer = document.getElementById('food-modal-dose-logic-container');
+    const foodModalBtnUpto = document.getElementById('food-modal-btn-upto');
+    const foodModalBtnStartingAt = document.getElementById('food-modal-btn-startingat');
+    const foodModalDoseLogic = document.getElementById('food-modal-doselogic');
+    const foodModalDose = document.getElementById('food-modal-dose');
+    const foodModalNotes = document.getElementById('food-modal-notes');
+    const foodModalCancelBtn = document.getElementById('food-modal-cancel-btn');
+    const foodModalSaveBtn = document.getElementById('food-modal-save-btn');
+    
+    // --- END: Food Edit Modal Elements ---
+
+    // --- NEW: Symptom Check Helper ---
+    const hasSymptoms = (entry) => {
+        const symptoms = entry.symptoms || ['None'];
+        return !symptoms.includes('None') && symptoms.length > 0;
+    };
     // --- END: Action Modal Elements ---
     /**
      * Shows a custom modal for confirmations (yes/no) or prompts (input).
@@ -1901,6 +1740,331 @@ document.addEventListener('DOMContentLoaded', () => {
         actionModalBtnCancel.addEventListener('click', handleCancel);
         actionModalClose.addEventListener('click', handleCancel);
     }
+
+    // --- NEW: Food Edit Modal Controller ---
+    let currentEditingFoodId = null; // State for the modal
+
+    /**
+     * Populates and shows the Food Edit Modal.
+     * @param {number | null} foodId - The ID of the food to edit, or null to create a new one.
+     * @param {boolean} [startInEditMode=false] - If true, opens directly to the edit form.
+     */
+    function showFoodModal(foodId = null, startInEditMode = false) {
+        currentEditingFoodId = foodId; // Set the state
+
+        // 1. Populate the Group Selector (we only need to do this once)
+        if (foodModalGroup.options.length === 0) {
+            // --- NEW: Add a blank "No Group" option ---
+            const defaultOption = new Option("Assign a group... (Optional)", "");
+            foodModalGroup.add(defaultOption);
+            
+            FODMAP_GROUP_DATA.forEach(group => {
+                if (group.value !== "Restriction") {
+                    const option = new Option(`${FODMAP_STYLES[group.value].icon} ${group.name}`, group.value);
+                    foodModalGroup.add(option);
+                }
+            });
+        }
+        
+        // --- Get new dose logic UI elements ---
+        const doseTriggerTolerated = document.getElementById('food-modal-dose-trigger-tolerated');
+        const doseTriggerTrigger = document.getElementById('food-modal-dose-trigger-trigger');
+        const doseWrapper = document.getElementById('food-modal-dose-wrapper');
+
+        if (foodId === null || startInEditMode) {
+            // --- MODE: NEW or EDIT ---
+            let foodData = {};
+            
+            if (foodId !== null) {
+                // Editing existing food
+                foodModalTitle.textContent = 'Edit Food';
+                foodData = appState.userProfile.personalizationFoods.find(f => f.id === foodId);
+            } else {
+                // Creating new food
+                foodModalTitle.textContent = 'Add New Food';
+                // --- UPDATED DEFAULTS ---
+                foodData = { name: '', group: '', status: '', doseLogic: null, dose: '', notes: '' };
+            }
+            
+            // Populate the form fields
+            foodModalName.value = foodData.name;
+            foodModalGroup.value = foodData.group || ''; // Handle null/undefined group
+            foodModalNotes.value = foodData.notes;
+            foodModalDose.value = foodData.dose;
+
+            // Set status toggles (Request #1)
+            foodModalBtnTolerated.classList.toggle('active', foodData.status === 'tolerated');
+            foodModalBtnTrigger.classList.toggle('active', foodData.status === 'trigger');
+            foodModalStatus.value = foodData.status;
+            
+            // --- NEW DOSE LOGIC (Request #3) ---
+            if (foodData.status) {
+                foodModalDoseLogicContainer.classList.remove('hidden');
+            } else {
+                foodModalDoseLogicContainer.classList.add('hidden');
+            }
+
+            // Set dose logic toggles/inputs
+            foodModalDoseLogic.value = foodData.doseLogic;
+            
+            if (foodData.doseLogic) {
+                // Dose logic exists, so show the input field
+                doseWrapper.style.display = 'block';
+                doseTriggerTolerated.classList.add('hidden');
+                doseTriggerTrigger.classList.add('hidden');
+            } else {
+                // No dose logic, show the correct trigger button
+                doseWrapper.style.display = 'none';
+                doseTriggerTolerated.classList.toggle('hidden', foodData.status !== 'tolerated');
+                doseTriggerTrigger.classList.toggle('hidden', foodData.status !== 'trigger');
+            }
+            // --- END NEW DOSE LOGIC ---
+
+            // Show/Hide panes
+            foodModalView.classList.add('hidden');
+            foodModalEdit.classList.remove('hidden');
+            
+        } else {
+            // --- MODE: VIEW ---
+            const foodData = appState.userProfile.personalizationFoods.find(f => f.id === foodId);
+            if (!foodData) return; // Safety check
+
+            foodModalTitle.textContent = 'View Food';
+            
+            // Build the view HTML
+            
+            // --- 1. Food Name ---
+            let foodHTML = `
+                <div class="food-modal-view-item">
+                    <span class="label"><b>Food:</b></span>
+                    <span class="value">${foodData.name}</span>
+                </div>`;
+
+            // --- 2. Group (Optional) ---
+            const groupInfo = FODMAP_GROUP_DATA.find(g => g.value === foodData.group);
+            let groupHTML = '';
+            if (groupInfo) {
+                const style = FODMAP_STYLES[foodData.group] || { icon: '❓' };
+                groupHTML = `
+                <div class="food-modal-view-item">
+                    <span class="label"><b>Group:</b></span>
+                    <span class="value">${style.icon} ${groupInfo.name}</span>
+                </div>`;
+            }
+            
+            // --- 3. Status (Exception: This one IS bold) ---
+            let statusHTML = '';
+            if (foodData.status === 'tolerated') {
+                statusHTML = `<strong class="text-accent">Tolerated</strong>`;
+            } else {
+                statusHTML = `<strong class="text-error">Trigger</strong>`;
+            }
+            let statusBlockHTML = `
+                <div class="food-modal-view-item">
+                    <span class="label"><b>Status:</b></span>
+                    ${statusHTML}
+                </div>`;
+            
+            // --- 4. Dose (Optional, Request #3, #4) ---
+            let doseHTML = '';
+            if (foodData.doseLogic) {
+                // Use "Up to" / "Starting at" (lowercase)
+                const logicText = foodData.doseLogic === 'up to' ? 'Up to' : 'Starting at';
+                doseHTML = `
+                <div class="food-modal-view-item">
+                    <span class="label"><b>Dose:</b></span>
+                    <span class="value">${logicText} ${foodData.dose}</span>
+                </div>`;
+            }
+
+            // --- 5. Notes (Optional) ---
+            let notesHTML = '';
+            if (foodData.notes) {
+                // Apply the .notes-item class to the parent div
+                notesHTML = `
+                <div class="food-modal-view-item notes-item">
+                    <span class="label"><b>Notes</b></span>
+                    <span class="value">${foodData.notes}</span>
+                </div>`;
+            }
+
+            // --- 6. Combine all blocks ---
+            foodModalViewContent.innerHTML = `
+                <div class="space-y-2">
+                    ${foodHTML}
+                    ${groupHTML}
+                    ${statusBlockHTML}
+                    ${doseHTML}
+                    ${notesHTML}
+                </div>
+            `;
+            
+            // Show/Hide panes
+            foodModalView.classList.remove('hidden');
+            foodModalEdit.classList.add('hidden');
+        }
+
+        // Finally, show the main modal
+        foodModal.classList.remove('hidden');
+    }
+
+    /**
+     * Closes the Food Edit Modal and resets its state.
+     */
+    function closeFoodModal() {
+        foodModal.classList.add('hidden');
+        currentEditingFoodId = null;
+        // Reset form to avoid showing old data
+        foodModalEdit.reset();
+        foodModalStatus.value = '';
+        foodModalDoseLogic.value = '';
+    }
+
+    // --- NEW: Food Edit Modal Listeners ---
+    foodModalClose.addEventListener('click', closeFoodModal);
+    foodModalCancelBtn.addEventListener('click', closeFoodModal);
+
+    // Switch from View to Edit mode
+    foodModalEditBtn.addEventListener('click', () => {
+        showFoodModal(currentEditingFoodId, true); // Re-open in edit mode
+    });
+    
+    // --- UPDATED: Status Toggles (Request #3) ---
+    foodModalBtnTolerated.addEventListener('click', () => {
+        foodModalStatus.value = 'tolerated';
+        foodModalBtnTolerated.classList.add('active'); // CSS handles color
+        foodModalBtnTrigger.classList.remove('active');
+        
+        // Show container and correct button
+        foodModalDoseLogicContainer.classList.remove('hidden');
+        document.getElementById('food-modal-dose-trigger-tolerated').classList.remove('hidden');
+        document.getElementById('food-modal-dose-trigger-trigger').classList.add('hidden');
+        
+        // Reset dose fields
+        document.getElementById('food-modal-dose-wrapper').style.display = 'none';
+        foodModalDoseLogic.value = '';
+        foodModalDose.value = '';
+    });
+    foodModalBtnTrigger.addEventListener('click', () => {
+        foodModalStatus.value = 'trigger';
+        foodModalBtnTolerated.classList.remove('active');
+        foodModalBtnTrigger.classList.add('active'); // CSS handles color
+
+        // Show container and correct button
+        foodModalDoseLogicContainer.classList.remove('hidden');
+        document.getElementById('food-modal-dose-trigger-tolerated').classList.add('hidden');
+        document.getElementById('food-modal-dose-trigger-trigger').classList.remove('hidden');
+
+        // Reset dose fields
+        document.getElementById('food-modal-dose-wrapper').style.display = 'none';
+        foodModalDoseLogic.value = '';
+        foodModalDose.value = '';
+    });
+
+    // --- NEW: Dose Logic Trigger Button Listeners (Request #3) ---
+    document.getElementById('food-modal-dose-trigger-tolerated').addEventListener('click', () => {
+        foodModalDoseLogic.value = 'up to';
+        document.getElementById('food-modal-dose-wrapper').style.display = 'block';
+        document.getElementById('food-modal-dose-trigger-tolerated').classList.add('hidden');
+        foodModalDose.focus();
+    });
+    
+    document.getElementById('food-modal-dose-trigger-trigger').addEventListener('click', () => {
+        foodModalDoseLogic.value = 'starting at';
+        document.getElementById('food-modal-dose-wrapper').style.display = 'block';
+        document.getElementById('food-modal-dose-trigger-trigger').classList.add('hidden');
+        foodModalDose.focus();
+    });
+
+    // --- NEW: Dose Clear Button Listener (Request #3) ---
+    document.getElementById('food-modal-dose-clear-btn').addEventListener('click', () => {
+        // Clear values
+        foodModalDoseLogic.value = '';
+        foodModalDose.value = '';
+        
+        // Hide input
+        document.getElementById('food-modal-dose-wrapper').style.display = 'none';
+
+        // Show the correct trigger button based on status
+        if (foodModalStatus.value === 'tolerated') {
+            document.getElementById('food-modal-dose-trigger-tolerated').classList.remove('hidden');
+        } else if (foodModalStatus.value === 'trigger') {
+            document.getElementById('food-modal-dose-trigger-trigger').classList.remove('hidden');
+        }
+    });
+
+    // --- NEW: Modal Main Action - DELETE ---
+    foodModalDeleteBtn.addEventListener('click', () => {
+        if (currentEditingFoodId === null) return; // Should never happen, but safety first
+        
+        // --- FIX: Get food data directly from state, not the (hidden) form input ---
+        const foodData = appState.userProfile.personalizationFoods.find(f => f.id === currentEditingFoodId);
+        if (!foodData) return; // Food not found
+
+        showActionModal({
+            title: 'Delete Food',
+            message: `Are you sure you want to delete "${foodData.name}"? This cannot be undone.`,
+            confirmText: 'Delete',
+            onConfirm: () => {
+                // Find the index of the food to delete
+                const indexToDelete = appState.userProfile.personalizationFoods.findIndex(
+                    food => food.id === currentEditingFoodId
+                );
+                
+                if (indexToDelete > -1) {
+                    appState.userProfile.personalizationFoods.splice(indexToDelete, 1); // Remove from array
+                    localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile)); // Save
+                    renderPersonalizationSummary(); // Re-render the Home page
+                    closeFoodModal();
+                    showToast("Food deleted.");
+                }
+            }
+        });
+    });
+
+    // --- NEW: Modal Main Action - SAVE ---
+    foodModalEdit.addEventListener('submit', (e) => {
+        e.preventDefault(); // Stop the form from reloading the page
+
+        // 1. Get all the data from the form
+        const newFoodData = {
+            id: currentEditingFoodId || Date.now(), // Use existing ID or create new one
+            name: foodModalName.value,
+            group: foodModalGroup.value || null,
+            status: foodModalStatus.value,
+            doseLogic: foodModalDoseLogic.value || null, // Save null if empty
+            dose: foodModalDose.value,
+            notes: foodModalNotes.value
+        };
+
+        // 2. Validate required fields
+        if (!newFoodData.name || !newFoodData.status) {
+            showToast("Please fill in all required fields (*).", true);
+            return;
+        }
+
+        if (currentEditingFoodId) {
+            // --- UPDATE EXISTING FOOD ---
+            const indexToUpdate = appState.userProfile.personalizationFoods.findIndex(
+                food => food.id === currentEditingFoodId
+            );
+            if (indexToUpdate > -1) {
+                appState.userProfile.personalizationFoods[indexToUpdate] = newFoodData;
+            }
+        } else {
+            // --- ADD NEW FOOD ---
+            appState.userProfile.personalizationFoods.push(newFoodData);
+        }
+
+        // 3. Save to localStorage
+        localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+        
+        // 4. Close modal, re-render Home, and show toast
+        closeFoodModal();
+        renderPersonalizationSummary();
+        showToast("Food saved!");
+    });
+
     const openGemini = (title) => { geminiTitle.textContent = title; geminiMdl.classList.remove('hidden'); geminiLoader.classList.remove('hidden'); geminiContent.classList.add('hidden'); geminiError.classList.add('hidden'); }; const closeGemini = () => geminiMdl.classList.add('hidden'); geminiClose.addEventListener('click', closeGemini);
     const callGeminiAPI = async (prompt, imgData = null, retries = 3, delay = 1000) => {
         const key = appState.userProfile.apiKey || ""; 
@@ -2146,4 +2310,5 @@ Use this exact template:
         }
     });
 
+    window.appState = appState; // <-- ADD THIS LINE FOR TESTING
 });
