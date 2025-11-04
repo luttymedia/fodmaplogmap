@@ -73,9 +73,9 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPageIndex: 0,
         currentlyEditingId: null,
         stagedImageData: null,
-        currentLogView: 'group', // 'group' or 'date'
+        currentLogView: 'date', // 'group' or 'date'
         currentDateSort: 'newest', // 'newest' or 'oldest'
-        currentPersonalizationView: 'group', // 'group' or 'tolerance'
+        currentPersonalizationView: 'tolerance', // 'group' or 'tolerance'
         openLogFormOnLoad: false
     };
 
@@ -839,7 +839,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- NEW: Get search filter text ---
         const filterText = document.getElementById('p13n-search-input').value.toLowerCase().trim();
 
-        if (appState.currentPersonalizationView === 'group') {
+        // --- THIS IS THE FIX ---
+        // Sync the active state of the buttons with the appState
+        const isGroupView = (appState.currentPersonalizationView === 'group');
+        document.getElementById('p13n-view-group-btn').classList.toggle('active', isGroupView);
+        document.getElementById('p13n-view-tolerance-btn').classList.toggle('active', !isGroupView);
+        // --- END FIX ---
+
+        if (isGroupView) {
             groupView.classList.remove('hidden');
             toleranceView.classList.add('hidden');
             renderPersonalizationByGroup(filterText); // Pass filter
@@ -1330,10 +1337,25 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- This is the new MAIN render function ---
+    // --- This is the new MAIN render function ---
     const renderLogEntries = () => {
-        if (appState.currentLogView === 'group') {
+        // Get containers and sync their visibility with the appState
+        const groupContainer = document.getElementById('log-accordion-container');
+        const dateContainer = document.getElementById('log-date-container');
+        const logSortContainer = document.getElementById('log-sort-container');
+        const logSubtitle = document.getElementById('log-subtitle');
+
+        const isGroupView = (appState.currentLogView === 'group');
+
+        groupContainer.classList.toggle('hidden', !isGroupView);
+        dateContainer.classList.toggle('hidden', isGroupView);
+        logSortContainer.classList.toggle('hidden', isGroupView); // Sort button only for date view
+
+        if (isGroupView) {
+            logSubtitle.textContent = 'Tap a group to see entries.';
             renderLogByGroup();
         } else {
+            logSubtitle.textContent = 'Showing all entries by date.';
             renderLogByDate();
         }
     };
@@ -1396,22 +1418,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update state
             appState.currentLogView = btn.dataset.view;
 
-            // Get the new sort container
-            const logSortContainer = document.getElementById('log-sort-container');
-
-            // Toggle containers and sort button
-            if (appState.currentLogView === 'group') {
-                groupContainer.classList.remove('hidden');
-                dateContainer.classList.add('hidden');
-                logSortContainer.classList.add('hidden'); // Hide the container
-                logSubtitle.textContent = 'Tap a group to see entries.';
-            } else {
-                groupContainer.classList.add('hidden');
-                dateContainer.classList.remove('hidden');
-                logSortContainer.classList.remove('hidden'); // Show the container
-                logSubtitle.textContent = 'Showing all entries by date.';
-            }
-            // Re-render the log
+            // Re-render the log (which now handles all visibility)
             renderLogEntries();
         });
     });
@@ -1959,7 +1966,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Populate the Group Selector (we only need to do this once)
         if (foodModalGroup.options.length === 0) {
             // --- NEW: Add a blank "No Group" option ---
-            const defaultOption = new Option("Assign a group... (Optional)", "");
+            const defaultOption = new Option("Assign a group (Optional)", "");
             foodModalGroup.add(defaultOption);
             
             FODMAP_GROUP_DATA.forEach(group => {
