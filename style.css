@@ -2,20 +2,20 @@
   --header-height: 100px; /* Fallback, JS will correct */
 
   /* New Wellness Palette */
-  --color-pastel-blue: #A8C5E5;
-  --color-pastel-blue-dark: #8BAFD4; /* Hover */
+--color-pastel-blue: #334155; /* slate-700 */
+--color-pastel-blue-dark: #1e293b; /* slate-800 */
   --color-pastel-green: #C5E0A5;
   --color-pastel-green-dark: #B0D684; /* Hover */
-  --color-text-on-pastel: #283b6c; /* Dark text for accessibility */
+  --color-text-on-pastel: #ffffff; /* White text */
   
   /* Tints for selected tags (from your example) */
-  --color-tag-bg: #f1f5f9; /* slate-100 */
-  --color-tag-bg-selected: #EAF0F7; /* Light blue tint */
-  --color-tag-text-selected: #2d61a0; /* Original primary blue for text */
+--color-tag-bg: #f1f5f9; /* slate-100 */
+--color-tag-bg-selected: #e2e8f0; /* slate-200 (light gray) */
+--color-tag-text-selected: #334155; /* slate-700 */
   
   /* Old colors (now for text/specifics) */
-  --color-primary-text: #2d61a0; /* Original light blue */
-  --color-secondary-text: #283b6c; /* Original dark blue */
+--color-primary-text: #334155; /* slate-700 */
+--color-secondary-text: #1e293b; /* slate-800 */
   --color-accent-text: #8bb744; /* Original green */
   
   /* Semantic Colors (Unchanged) */
@@ -24,7 +24,7 @@
   --color-warning: #f59e0b;
   
   /* Base Text Colors (Text on white) */
-  --color-text-base: #283b6c; 
+  --color-text-base: #334155; /* slate-700 */ 
   --color-text-muted: #475569;
   --color-text-subtle: #64748b;
 
@@ -33,6 +33,11 @@
   --phase-color-restriction: #8bb744; /* Your original accent green */
   --phase-color-reintro: #2d61a0; /* Your original primary blue */
   --phase-color-personal: #4a0076; /* A deep purple */
+
+  /* New Adaptive Colors (set by JS) */
+  --color-adaptive-bg: #2d61a0; /* Default (Reintro) */
+  --color-adaptive-bg-dark: #283b6c; /* Default (Reintro dark) */
+  --color-adaptive-text: #ffffff; /* Default (White) */
 }
 
 body {
@@ -45,8 +50,8 @@ body {
     color: var(--color-text-base); /* Set base text color */
 }
 .nav-item.active {
-    border-bottom-color: var(--color-primary); 
-    color: var(--color-primary); 
+    border-bottom-color: var(--color-primary-text); 
+    color: var(--color-primary-text); 
     font-weight: 600;
 }
 .nav-item {
@@ -135,7 +140,7 @@ body {
 }
 .profile-checkbox:checked + label {
     background-color: var(--color-tag-bg-selected); 
-    border-color: var(--color-tag-text-selected); 
+    border-color: #cbd5e1; /* slate-300 (light gray border) */ 
     color: var(--color-tag-text-selected); 
     border-radius: 9999px;
 }
@@ -146,8 +151,8 @@ body {
 
 /* Style for the active phase in the side menu */
 #side-menu-phases .log-view-toggle-btn.active {
-    background-color: var(--color-pastel-green);
-    color: var(--color-text-on-pastel);
+    background-color: var(--color-tag-bg-selected); 
+    color: var(--color-text-muted); 
     font-weight: 700;
     box-shadow: none; /* Remove the white button shadow */
 }
@@ -159,7 +164,7 @@ body {
 
 /* Compact Info Modal Styles */
 #info-modal-content h2 { font-size: 1.25rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.25rem; color: var(--color-secondary); }
-#info-modal-content h3 { font-size: 1.1rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.25rem; color: var(--color-primary); }
+#info-modal-content h3 { font-size: 1.1rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.25rem; color: var(--color-primary-text); }
 #info-modal-content p { color: var(--color-text-muted); line-height: 1.5; margin-bottom: 0.25rem; }
 #info-modal-content ul { margin-top: 0.25rem; }
 #info-modal-content .fodmap-group-card { background-color: #f8fafc; border-left-width: 4px; padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.5rem; }
@@ -193,24 +198,42 @@ main section > div { margin-bottom: 1rem; }
 .bg-primary { 
     background-color: var(--color-pastel-blue); 
     color: var(--color-text-on-pastel);
-    font-weight: 700;
+    /* font-weight: 700; */
+}
+.bg-adaptive {
+    background-color: var(--color-adaptive-bg);
+    color: var(--color-adaptive-text);
+    /* font-weight: 700; */
 }
 .hover\:bg-primary-dark:hover { 
     background-color: var(--color-pastel-blue-dark); 
     color: var(--color-text-on-pastel);
 }
+/* New AI Button Colors */
+.bg-ai-reintro {
+    background-color: #beccdf;
+    color: #283b6c;
+    font-weight: 700;
+}
+.hover\:bg-ai-reintro-dark:hover {
+    background-color: #b0c1d4; /* Darker blue-gray */
+    color: #283b6c;
+}
 
 .bg-accent { 
     background-color: var(--color-pastel-green); 
-    color: var(--color-text-on-pastel);
-    font-weight: 700;
+    color: #537429; /* New dark green text */
+    font-weight: 700; /* Re-adding bold for buttons */
 }
 .hover\:bg-accent-dark:hover { 
     background-color: var(--color-pastel-green-dark); 
-    color: var(--color-text-on-pastel);
+    color: #537429; /* New dark green text */
 }
 
-.bg-error { background-color: var(--color-error); }
+.bg-error { 
+    background-color: var(--color-error); 
+    color: white;
+}
 .hover\:bg-error-dark:hover { background-color: var(--color-error-dark); }
 
 .border-primary { border-color: var(--color-primary-text); }
@@ -971,7 +994,7 @@ body {
 /* 1. Style for selected Tolerated/Trigger buttons (Request #1) */
 #food-modal-btn-tolerated.active {
     background-color: var(--color-pastel-green);
-    color: var(--color-text-on-pastel);
+    color: var(--color-accent-text);
     border-color: var(--color-pastel-green-dark);
 }
 
@@ -1072,7 +1095,7 @@ body {
 .bg-warning { 
     background-color: var(--color-warning); 
     color: white; /* High-contrast text for orange */
-    font-weight: 700;
+    /* font-weight: 700; */
 }
 /* --- END: Toast Warning Color --- */
 
@@ -1081,3 +1104,26 @@ body {
     display: inline-block; /* Always show the cancel button in the modal */
 }
 /* --- END: Log Modal Fix --- */
+
+/* --- START: Phase-Adaptive Toast Colors --- */
+.bg-toast-pre {
+    background-color: #fef3c7; /* amber-100 */
+    color: #d97706;
+    font-weight: 600;
+}
+.bg-toast-restriction {
+    background-color: #e9f8d5; /* green-100 */
+    color: #537429;
+    font-weight: 600;
+}
+.bg-toast-reintro {
+    background-color: #beccdf; /* blue-100 */
+    color: #283b6c;
+    font-weight: 600;
+}
+.bg-toast-personal {
+    background-color: #f3e8ff; /* purple-100 */
+    color: #4a0076;
+    font-weight: 600;
+}
+/* --- END: Phase-Adaptive Toast Colors --- */

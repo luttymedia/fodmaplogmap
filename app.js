@@ -12,11 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
      const SYMPTOM_OPTIONS = ["Bloating", "Gas", "Abdominal pain", "Diarrhea", "Constipation", "Fatigue", "Headache"];
 
     const PHASE_STYLES = {
-            "pre-treatment": { label: "Pre-Treatment", colorClass: "phase-pre-treatment", colorHex: "#f59e0b" },
-            "restriction": { label: "Restriction", colorClass: "phase-restriction", colorHex: "#8bb744" },
-            "reintroduction": { label: "Reintroduction", colorClass: "phase-reintroduction", colorHex: "#2d61a0" },
-            "personalization": { label: "Personalization", colorClass: "phase-personalization", colorHex: "#4a0076" }
-        };
+        "pre-treatment": { label: "Pre-Treatment", colorClass: "phase-pre-treatment", colorHex: "#f59e0b", colorHexDark: "#d97706", textColor: "#ffffff" },
+        "restriction": { label: "Restriction", colorClass: "phase-restriction", colorHex: "#8bb744", colorHexDark: "#6a9335", textColor: "#ffffff" },
+        "reintroduction": { label: "Reintroduction", colorClass: "phase-reintroduction", colorHex: "#2d61a0", colorHexDark: "#283b6c", textColor: "#ffffff" },
+        "personalization": { label: "Personalization", colorClass: "phase-personalization", colorHex: "#4a0076", colorHexDark: "#3b005f", textColor: "#ffffff" }
+    };
 
     // --- DOM Elements (mostly constant) ---
     const pages = document.querySelectorAll('.page');
@@ -112,6 +112,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (addEntryFab) { // addEntryFab is defined in the global scope
             addEntryFab.style.backgroundColor = style.colorHex;
         }
+
+        // --- Update Adaptive CSS Variables ---
+        const root = document.documentElement;
+        root.style.setProperty('--color-adaptive-bg', style.colorHex);
+        root.style.setProperty('--color-adaptive-bg-dark', style.colorHexDark);
+        root.style.setProperty('--color-adaptive-text', style.textColor);
 
         // --- Define Phase Booleans ---
         const isPretreat = (phase === 'pre-treatment');
@@ -266,11 +272,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // Get the calculated top padding of the body (which includes header + nav)
         const bodyPaddingTop = document.body.style.paddingTop || '100px';
         
-        let colorClass = 'bg-accent'; // default to success (green)
-        if (status === 'error') {
-            colorClass = 'bg-error'; // red
-        } else if (status === 'warning') {
-            colorClass = 'bg-warning'; // orange
+        let colorClass = 'bg-accent'; // default
+        switch (status) {
+            case 'error':
+                colorClass = 'bg-error';
+                break;
+            case 'warning':
+                colorClass = 'bg-warning';
+                break;
+            case 'pre-treatment':
+                colorClass = 'bg-toast-pre';
+                break;
+            case 'restriction':
+                colorClass = 'bg-toast-restriction';
+                break;
+            case 'reintroduction':
+                colorClass = 'bg-toast-reintro';
+                break;
+            case 'personalization':
+                colorClass = 'bg-toast-personal';
+                break;
+            // 'success' will just use the default 'bg-accent'
         }
         
         // New classes: top-left, new animation, AND pointer-events-none by default
@@ -1617,7 +1639,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // 4. Show toast
             const phaseName = newPhase.charAt(0).toUpperCase() + newPhase.slice(1);
-            showToast(`Switched to ${phaseName} phase!`, "success");
+            showToast(`Switched to ${phaseName} phase!`, newPhase);
             
             // 5. Update the rest of the app
             updateUiForPhase(newPhase);
