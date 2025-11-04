@@ -1070,3 +1070,11 @@ body {
     white-space: pre-wrap; /* Respect newlines in notes */
 }
 /* --- END: Food View Modal Style Additions --- */
+
+/* --- START: Toast Warning Color --- */
+.bg-warning { 
+    background-color: var(--color-warning); 
+    color: white; /* High-contrast text for orange */
+    font-weight: 700;
+}
+/* --- END: Toast Warning Color --- */

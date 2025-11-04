@@ -263,14 +263,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     const toast = document.getElementById('toast');
-    function showToast(message = "Saved!", isError = false) {
+    function showToast(message = "Saved!", status = 'success') { // 'success', 'error', 'warning'
         toast.textContent = message;
         
         // Get the calculated top padding of the body (which includes header + nav)
         const bodyPaddingTop = document.body.style.paddingTop || '100px';
         
+        let colorClass = 'bg-accent'; // default to success (green)
+        if (status === 'error') {
+            colorClass = 'bg-error'; // red
+        } else if (status === 'warning') {
+            colorClass = 'bg-warning'; // orange
+        }
+        
         // New classes: top-left, new animation, AND pointer-events-none by default
-        toast.className = `fixed left-4 py-2 px-4 rounded-lg shadow-xl opacity-0 transform -translate-y-10 transition-all duration-500 ease-in-out text-sm z-50 pointer-events-none ${isError ? 'bg-error' : 'bg-accent'}`;
+        toast.className = `fixed left-4 py-2 px-4 rounded-lg shadow-xl opacity-0 transform -translate-y-10 transition-all duration-500 ease-in-out text-sm z-50 pointer-events-none ${colorClass}`;
         
         // Set the top position dynamically
         toast.style.top = `calc(${bodyPaddingTop} + 0.5rem)`; // 0.5rem (8px) margin from nav
@@ -440,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Check if we have an image or text
         if (!appState.stagedImageData && !foodName) {
-            showToast("Please enter food or upload an image.", true);
+            showToast("Please enter food or upload an image.", "warning");
             return;
         }
 
@@ -707,84 +714,120 @@ document.addEventListener('DOMContentLoaded', () => {
             .join('');
     }
 
-    // --- NEW: "SMART" Auto-Scan (OVERWRITE) ---
+    // --- NEW: Auto-Scan now triggers a modal ---
     function runAutoScan() {
-        // 1. Show confirmation modal (this is now a destructive action)
         showActionModal({
-            title: 'Confirm Auto-Scan',
-            message: "This will ERASE your current diet list and replace it with a new summary generated from your log. Are you sure?",
-            confirmText: 'Erase & Scan',
+            title: 'Auto-Scan Log',
+            message: `How do you want to scan? "Merge" adds new foods and updates existing ones from your log. "Erase" deletes your list and starts over with only what's in your log.`,
+            confirmText: 'Merge', // The safe, default option
             onConfirm: () => {
-                const newFoodsArray = [];
-                const allFoodsByName = {}; // { milk: [...], apple: [...] }
-                let foodIdCounter = Date.now();
-
-                // 2. Group all log entries by food name
-                appState.logEntries.forEach(entry => {
-                    if (entry.group === 'Restriction' || !entry.group) return;
-
-                    const foodName = entry.food.trim().toLowerCase();
-                    if (!allFoodsByName[foodName]) {
-                        allFoodsByName[foodName] = [];
-                    }
-                    allFoodsByName[foodName].push(entry);
-                });
-
-                // 3. Process each unique food
-                for (const foodName in allFoodsByName) {
-                    const entries = allFoodsByName[foodName];
-                    const mostRecentEntry = entries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-                    const group = mostRecentEntry.group; // Get group from most recent log
-
-                    const allTolerated = entries.every(e => !hasSymptoms(e));
-                    const triggerEntries = entries.filter(e => hasSymptoms(e));
-                    // --- NEW LOGIC: Find severe triggers ---
-                    const severeTriggerEntries = triggerEntries.filter(e => parseInt(e.severity, 10) >= 4);
-
-                    let newFoodObject = {
-                        id: foodIdCounter++,
-                        name: foodName.charAt(0).toUpperCase() + foodName.slice(1), // Capitalize
-                        group: group,
-                        status: 'tolerated', // Default
-                        doseLogic: null,
-                        dose: '',
-                        notes: ''
-                    };
-
-                    if (allTolerated) {
-                        // All entries were fine.
-                        newFoodObject.notes = "All logged portions tolerated.";
-                    } else if (severeTriggerEntries.length > 0) {
-                        // --- NEW: Has a SEVERE trigger (4 or 5) ---
-                        const latestSevereTrigger = severeTriggerEntries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-                        newFoodObject.status = 'trigger';
-                        newFoodObject.doseLogic = null; // This makes it a hard trigger
-                        newFoodObject.dose = '';
-                        newFoodObject.notes = `Severe trigger (Severity: ${latestSevereTrigger.severity}/5) at ${latestSevereTrigger.dose}.`;
-                    } else if (triggerEntries.length > 0) {
-                        // --- UPDATED: Has only MILD triggers (1-3) ---
-                        const latestMildTrigger = triggerEntries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-                        newFoodObject.status = 'trigger'; // Base status is trigger
-                        newFoodObject.doseLogic = 'starting at'; // This makes it "mixed"
-                        newFoodObject.dose = latestMildTrigger.dose;
-                        newFoodObject.notes = `Mild symptoms (Severity: ${latestMildTrigger.severity}/5) at this dose.`;
-                    }
-                    // Else: allTolerated is true, handled above.
-
-                    newFoodsArray.push(newFoodObject);
-                }
-
-                // 4. Overwrite the old array in the app state
-                appState.userProfile.personalizationFoods = newFoodsArray;
-                
-                // 5. Save to localStorage
-                localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
-
-                // 6. Re-render the personalization list and show toast
-                renderPersonalizationSummary(); 
-                showToast(`Scan complete! Found ${newFoodsArray.length} unique foods.`);
+                performScan(true); // true = isMerging
+            },
+            altText: 'Erase', // The destructive option
+            onAltConfirm: () => {
+                performScan(false); // false = !isMerging
             }
         });
+    }
+
+    /**
+     * Performs the scan logic, either merging or erasing.
+     * @param {boolean} isMerging - If true, merges with existing list. If false, erases.
+     */
+    function performScan(isMerging) {
+        const newFoodsArray = [];
+        const allFoodsByName = {}; // { milk: [...], apple: [...] }
+        let foodIdCounter = Date.now();
+
+        // 1. Group all log entries by food name (Same as before)
+        appState.logEntries.forEach(entry => {
+            if (!entry.group) return; // Only skip entries with no group
+
+            const foodName = entry.food.trim().toLowerCase();
+            if (!allFoodsByName[foodName]) {
+                allFoodsByName[foodName] = [];
+            }
+            allFoodsByName[foodName].push(entry);
+        });
+
+        // 2. Process each unique food (Same as before)
+        for (const foodName in allFoodsByName) {
+            const entries = allFoodsByName[foodName];
+            const mostRecentEntry = entries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+            const group = mostRecentEntry.group; 
+
+            const allTolerated = entries.every(e => !hasSymptoms(e));
+            const triggerEntries = entries.filter(e => hasSymptoms(e));
+            const severeTriggerEntries = triggerEntries.filter(e => parseInt(e.severity, 10) >= 4);
+
+            let newFoodObject = {
+                id: foodIdCounter++, // This ID is temporary if merging
+                name: foodName.charAt(0).toUpperCase() + foodName.slice(1), 
+                group: group,
+                status: 'tolerated', 
+                doseLogic: null,
+                dose: '',
+                notes: ''
+            };
+
+            if (allTolerated) {
+                newFoodObject.notes = "All logged portions tolerated.";
+            } else if (severeTriggerEntries.length > 0) {
+                const latestSevereTrigger = severeTriggerEntries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                newFoodObject.status = 'trigger';
+                newFoodObject.doseLogic = null; 
+                newFoodObject.dose = '';
+                newFoodObject.notes = `Severe trigger (Severity: ${latestSevereTrigger.severity}/5) at ${latestSevereTrigger.dose}.`;
+            } else if (triggerEntries.length > 0) {
+                const latestMildTrigger = triggerEntries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                newFoodObject.status = 'trigger'; 
+                newFoodObject.doseLogic = 'starting at'; 
+                newFoodObject.dose = latestMildTrigger.dose;
+                newFoodObject.notes = `Mild symptoms (Severity: ${latestMildTrigger.severity}/5) at this dose.`;
+            }
+            
+            newFoodsArray.push(newFoodObject);
+        }
+
+        // --- 3. NEW: Handle Merging vs. Erasing ---
+        let finalFoodCount = 0;
+
+        if (isMerging) {
+            // --- MERGE LOGIC ---
+            let existingFoods = [...appState.userProfile.personalizationFoods];
+            let newFoodsAdded = 0;
+            let foodsUpdated = 0;
+
+            newFoodsArray.forEach(scannedFood => {
+                const existingIndex = existingFoods.findIndex(f => f.name.toLowerCase() === scannedFood.name.toLowerCase());
+
+                if (existingIndex > -1) {
+                    // Food exists: Update it
+                    // Preserve the original ID
+                    const originalId = existingFoods[existingIndex].id;
+                    existingFoods[existingIndex] = { ...scannedFood, id: originalId }; // Overwrite with new data, keep ID
+                    foodsUpdated++;
+                } else {
+                    // Food is new: Add it
+                    existingFoods.push(scannedFood); // Will have its new temporary ID
+                    newFoodsAdded++;
+                }
+            });
+
+            appState.userProfile.personalizationFoods = existingFoods;
+            finalFoodCount = existingFoods.length;
+            showToast(`Scan complete! ${newFoodsAdded} foods added, ${foodsUpdated} updated.`, "success");
+
+        } else {
+            // --- ERASE LOGIC (Old behavior) ---
+            appState.userProfile.personalizationFoods = newFoodsArray;
+            finalFoodCount = newFoodsArray.length;
+            showToast(`Scan complete! Found ${finalFoodCount} unique foods.`, "success");
+        }
+
+        // 4. Save & Re-render (Same as before)
+        localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+        renderPersonalizationSummary(); 
     }
 
     // --- NEW: Main Controller for Personalization Home Tab ---
@@ -1316,7 +1359,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const entryId = parseInt(deleteBtn.dataset.id);
             appState.logEntries = appState.logEntries.filter(entry => entry.id !== entryId);
             saveLogEntries(); // Re-render and save
-            showToast("Entry deleted.");
+            showToast("Entry deleted.", "success");
         } else if (header) {
             // --- HANDLE EXPAND ---
             header.parentElement.classList.toggle('expanded');
@@ -1389,6 +1432,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     logForm.addEventListener('submit', (e) => {
         e.preventDefault(); 
+
+        // --- NEW: Consistent Validation Block (Request 1 & 2) ---
+        const currentPhase = appState.userProfile.currentPhase;
+        const selectedGroup = document.getElementById('log-fodmap-group').value;
+        const foodName = document.getElementById('log-food').value.trim();
+        const dose = document.getElementById('log-dose').value.trim();
+
+        // Validation Order: Group (if reintro), Name, Dose
+        if (currentPhase === 'reintroduction' && !selectedGroup) {
+            // Use 'true' for isError, which will make the toast red.
+            // This is now consistent with the other fields.
+            showToast("Please select a FODMAP group.", "warning");
+            return; 
+        }
+        if (!foodName) {
+            showToast("Please enter a food name.", "warning");
+            return;
+        }
+        if (!dose) {
+            showToast("Please enter a dose.", "warning");
+            return;
+        }
+        // --- END: Consistent Validation Block ---
+
+        // --- NEW: Group Defaulting Logic ---
+        // (This runs *after* validation, so we just process the inputs)
+        let finalGroup = 'Safe Meal'; // Default
+        if (currentPhase === 'reintroduction') {
+            finalGroup = selectedGroup; // We already validated this isn't empty
+        } else if (currentPhase === 'personalization' && selectedGroup) {
+            finalGroup = selectedGroup; // Use selected group if one was chosen
+        } 
+        // If phase is Personalization and no group was selected, it stays "Safe Meal".
+        // If phase is Pre/Restrict, it stays "Safe Meal".
+        // This covers all rules.
+
         const sev = document.getElementById('log-severity-value');
         
         // Get predefined symptoms
@@ -1407,12 +1486,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const entryData = { 
             date: document.getElementById('log-date').value, 
-            // NEW LOGIC: Use "Restriction" if not in reintro phase
-            group: (appState.userProfile.currentPhase === 'reintroduction' || appState.userProfile.currentPhase === 'personalization') 
-                ? document.getElementById('log-fodmap-group').value 
-                : 'Safe Meal',
-            food: document.getElementById('log-food').value, 
-            dose: document.getElementById('log-dose').value, 
+            group: finalGroup, // Use our new, validated AND defaulted variable
+            food: foodName, // Use the trimmed variable
+            dose: dose, // Use the trimmed variable
             symptoms: allSymptoms, // Save the new array
             severity: allSymptoms.includes('None') ? '1' : sev.value, // Save severity, or 1 if "None"
             notes: document.getElementById('log-notes').value 
@@ -1425,12 +1501,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 appState.logEntries[index] = { ...entryData, id: appState.currentlyEditingId }; // Keep original ID
             }
             appState.currentlyEditingId = null; // Reset edit state
-            showToast("Entry updated!");
+            showToast("Entry updated!", "success");
         } else {
             // --- ADD NEW ENTRY ---
             const newEntry = { ...entryData, id: Date.now() };
             appState.logEntries.push(newEntry); 
-            showToast("Added!");
+            showToast("Added!", "success");
         }
 
         saveLogEntries(); 
@@ -1487,7 +1563,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // 4. Show toast
             const phaseName = newPhase.charAt(0).toUpperCase() + newPhase.slice(1);
-            showToast(`Switched to ${phaseName} phase!`);
+            showToast(`Switched to ${phaseName} phase!`, "success");
             
             // 5. Update the rest of the app
             updateUiForPhase(newPhase);
@@ -1526,7 +1602,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- 4. Final Save to localStorage & Toast ---
         localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
-        showToast("Profile Saved!");
+        showToast("Profile Saved!", "success");
     });
 
     // --- Personalization Tab Listeners (with null checks) ---
@@ -1694,22 +1770,28 @@ document.addEventListener('DOMContentLoaded', () => {
         return !symptoms.includes('None') && symptoms.length > 0;
     };
     // --- END: Action Modal Elements ---
+
     /**
      * Shows a custom modal for confirmations (yes/no) or prompts (input).
      * @param {object} config - Configuration object
      * @param {string} config.title - The text for the modal's title.
      * @param {string} config.message - The text for the modal's body.
      * @param {string} [config.type='confirm'] - 'confirm' or 'prompt'.
-     * @param {string} [config.confirmText='OK'] - Text for the confirm button.
-     * @param {string} [config.cancelText='Cancel'] - Text for the cancel button.
+     * @param {string} [config.confirmText='OK'] - Text for the main (blue) confirm button.
      * @param {function} config.onConfirm - Callback function if confirmed. Receives input value if type is 'prompt'.
+     * @param {string} [config.cancelText='Cancel'] - Text for the cancel button.
      * @param {function} [config.onCancel] - Callback function if cancelled.
+     * @param {string} [config.altText] - Text for the alternate (red) button.
+     * @param {function} [config.onAltConfirm] - Callback for the alternate button.
      */
-    function showActionModal({ title, message, type = 'confirm', confirmText = 'OK', cancelText = 'Cancel', onConfirm, onCancel }) {
+    function showActionModal({ title, message, type = 'confirm', confirmText = 'OK', onConfirm, cancelText = 'Cancel', onCancel, altText, onAltConfirm }) {
         actionModalTitle.textContent = title;
         actionModalMessage.textContent = message;
         actionModalBtnConfirm.textContent = confirmText;
         actionModalBtnCancel.textContent = cancelText;
+
+        // Get the new alt button
+        const actionModalBtnAlt = document.getElementById('action-modal-btn-alt');
 
         // Configure for prompt
         if (type === 'prompt') {
@@ -1720,13 +1802,20 @@ document.addEventListener('DOMContentLoaded', () => {
             actionModalInputContainer.classList.add('hidden');
         }
 
+        // --- NEW: Configure Alt Button ---
+        if (altText && onAltConfirm) {
+            actionModalBtnAlt.textContent = altText;
+            actionModalBtnAlt.classList.remove('hidden');
+        } else {
+            actionModalBtnAlt.classList.add('hidden');
+        }
+
         actionModal.classList.remove('hidden');
 
         // --- Create temporary, one-time listeners ---
         const handleConfirm = () => {
             const inputValue = actionModalInput.value;
             if (type === 'prompt' && !inputValue.trim()) {
-                // Don't close if prompt is empty and user hits confirm
                 actionModalInput.focus();
                 return; 
             }
@@ -1743,18 +1832,28 @@ document.addEventListener('DOMContentLoaded', () => {
             closeModal();
         };
 
+        // --- NEW: Alt Confirm Handler ---
+        const handleAltConfirm = () => {
+            if (onAltConfirm) {
+                onAltConfirm();
+            }
+            closeModal();
+        };
+
         const closeModal = () => {
             actionModal.classList.add('hidden');
             // Remove the temporary listeners to avoid memory leaks
             actionModalBtnConfirm.removeEventListener('click', handleConfirm);
             actionModalBtnCancel.removeEventListener('click', handleCancel);
             actionModalClose.removeEventListener('click', handleCancel);
+            actionModalBtnAlt.removeEventListener('click', handleAltConfirm); // NEW
         };
         
         // Attach the new, one-time listeners
         actionModalBtnConfirm.addEventListener('click', handleConfirm);
         actionModalBtnCancel.addEventListener('click', handleCancel);
         actionModalClose.addEventListener('click', handleCancel);
+        actionModalBtnAlt.addEventListener('click', handleAltConfirm); // NEW
     }
 
     // --- NEW: Pre-Treatment Settings Modal Functions ---
@@ -1792,7 +1891,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Close modal and show toast
         closePreTreatmentModal();
-        showToast("Pre-treatment settings saved!");
+        showToast("Pre-treatment settings saved!", "success");
     }
 
     // --- NEW: Pre-Treatment Modal Listeners ---
@@ -1835,7 +1934,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Close modal and show toast
         closeRestrictionModal();
-        showToast("Restriction settings saved!");
+        showToast("Restriction settings saved!", "success");
     }
 
     // --- NEW: Restriction Modal Listeners ---
@@ -2121,7 +2220,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile)); // Save
                     renderPersonalizationSummary(); // Re-render the Home page
                     closeFoodModal();
-                    showToast("Food deleted.");
+                    showToast("Food deleted.", "success");
                 }
             }
         });
@@ -2144,7 +2243,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 2. Validate required fields
         if (!newFoodData.name || !newFoodData.status) {
-            showToast("Please fill in all required fields (*).", true);
+            showToast("Please fill in all required fields (*).", "warning");
             return;
         }
 
@@ -2167,7 +2266,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 4. Close modal, re-render Home, and show toast
         closeFoodModal();
         renderPersonalizationSummary();
-        showToast("Food saved!");
+        showToast("Food saved!", "success");
     });
 
     const openGemini = (title) => { geminiTitle.textContent = title; geminiMdl.classList.remove('hidden'); geminiLoader.classList.remove('hidden'); geminiContent.classList.add('hidden'); geminiError.classList.add('hidden'); }; const closeGemini = () => geminiMdl.classList.add('hidden'); geminiClose.addEventListener('click', closeGemini);
@@ -2175,7 +2274,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const key = appState.userProfile.apiKey || ""; 
         if (!key) {
             console.error("API Key is missing. Please add it in the Profile tab.");
-            showToast("API Key is missing. Add it in your Profile.", true);
+            showToast("API Key is missing. Add it in your Profile.", "error");
             return null; // Stop the API call
         }
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`; let parts = [{ text: prompt }]; if (imgData) parts.push({ inlineData: { mimeType: 'image/jpeg', data: imgData } }); const payload = { contents: [{ parts }] };
@@ -2186,7 +2285,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) { console.error("API failed:", err); return null; }
     };
     document.getElementById('summarize-journey-btn').addEventListener('click', async () => {
-        if (appState.logEntries.length === 0) { showToast("Need logs.", true); return; } 
+        if (appState.logEntries.length === 0) { showToast("Need logs.", "warning"); return; } 
         openGemini('✨ Summary'); 
         const logTxt = appState.logEntries.map(e => `Date:${e.date},Grp:${e.group},Food:${e.food},Dose:${e.dose},Sym:${e.symptom==='Other'?e.otherSymptom:e.symptom},Sev:${e.severity}/5`).join('; '); 
         
@@ -2224,7 +2323,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('plan-challenge-btn').addEventListener('click', async () => {
         const sel = document.getElementById('log-fodmap-group'); 
         const val = sel.value; // This gets the clean value, e.g., "Fructose"
-        if (!val) { showToast("Select group.", true); return; } 
+        if (!val) { showToast("Select group.", "warning"); return; } 
         
         // 1. Use `val` for the modal title, not the full text
         openGemini(`✨ ${val} Plan`); 
