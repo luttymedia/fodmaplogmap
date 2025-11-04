@@ -113,14 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // --- Profile Page ---
         if (phaseSettingsCard) {
-            if (isRestrict) {
-                phaseSettingsCard.classList.remove('hidden');
-                const titleText = 'Restriction Phase Settings';
-                phaseSettingsTitle.textContent = titleText;
-                setupProfilePage(); 
-            } else {
-                phaseSettingsCard.classList.add('hidden');
-            }
+            // Both Pre-treatment and Restriction settings are now modals on the Home tab.
+            phaseSettingsCard.classList.add('hidden');
         }
 
         // --- 1. Home Page Card Visibility ---
@@ -1483,31 +1477,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!appState.userProfile.apiKey) {
             document.getElementById('api-key-accordion-container').classList.add('expanded');
         }
-
-        const phase = appState.userProfile.currentPhase;
-        const rulesContainer = document.getElementById('profile-pretreatment-rules-container');
-
-        // Load Phase-Specific Settings (Date, Duration)
-        if (appState.userProfile.phaseSettings[phase]) {
-            const settings = appState.userProfile.phaseSettings[phase];
-            document.getElementById('profile-phase-start-date').value = settings.startDate || '';
-            document.getElementById('profile-phase-duration-num').value = settings.durationNum || 4;
-            document.getElementById('profile-phase-duration-unit').value = settings.durationUnit || 'weeks';
-        }
-
-/*         // --- NEW: Load Pre-treatment Rules ---
-        if (phase === 'pre-treatment' && rulesContainer) {
-            rulesContainer.classList.remove('hidden'); // Show the textarea
-            document.getElementById('profile-pretreatment-rules').value = appState.userProfile.phaseSettings["pre-treatment"].rules || '';
-        } else if (rulesContainer) {
-            rulesContainer.classList.add('hidden'); // Hide it for all other phases
-        } */
     };
 
     profileForm.addEventListener('submit', (e) => {
         e.preventDefault(); 
-        const phase = appState.userProfile.currentPhase;
-
         // --- 1. Save Basic Profile Info (All Phases) ---
         appState.userProfile.diagnoses = Array.from(document.querySelectorAll('input[name=diagnoses]:checked')).map(el => el.value); 
         appState.userProfile.intolerances = Array.from(document.querySelectorAll('input[name=intolerances]:checked')).map(el => el.value); 
@@ -1515,19 +1488,7 @@ document.addEventListener('DOMContentLoaded', () => {
         appState.userProfile.allergiesOther = document.getElementById('profile-allergies-other').value.trim();
         appState.userProfile.apiKey = document.getElementById('profile-api-key').value.trim();
 
-        // --- 2. Save Phase-Specific Settings (Pre-treat/Restriction) ---
-        if (appState.userProfile.phaseSettings[phase]) {
-            const settings = appState.userProfile.phaseSettings[phase];
-            settings.startDate = document.getElementById('profile-phase-start-date').value || null;
-            settings.durationNum = parseInt(document.getElementById('profile-phase-duration-num').value, 10) || 4;
-            settings.durationUnit = document.getElementById('profile-phase-duration-unit').value;
-            renderCountdown(phase); // Re-render home countdown
-        }
-/*         if (phase === 'pre-treatment') {
-            appState.userProfile.phaseSettings["pre-treatment"].rules = document.getElementById('profile-pretreatment-rules').value;
-            renderPreTreatmentCard(); // Re-render home card
-        } */
-
+        // --- 2. Phase-Specific Settings have been removed from this form ---
         // --- 3. Personalization Map logic REMOVED ---
         // (This will be handled by the new modal's save button later)
 
@@ -1684,6 +1645,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const ptModalSaveBtn = document.getElementById('pretreatment-modal-save-btn');
     // --- END: Pre-Treatment Settings Modal Elements ---
 
+    // --- NEW: Restriction Settings Modal Elements ---
+    const rsModal = document.getElementById('restriction-settings-modal');
+    const rsModalClose = document.getElementById('restriction-modal-close');
+    const rsModalForm = document.getElementById('restriction-modal-form');
+    const rsModalStartDate = document.getElementById('restriction-modal-start-date');
+    const rsModalDurationNum = document.getElementById('restriction-modal-duration-num');
+    const rsModalDurationUnit = document.getElementById('restriction-modal-duration-unit');
+    const rsModalCancel = document.getElementById('restriction-modal-cancel');
+    const rsModalSaveBtn = document.getElementById('restriction-modal-save-btn');
+    // --- END: Restriction Settings Modal Elements ---
+
     // --- NEW: Symptom Check Helper ---
     const hasSymptoms = (entry) => {
         const symptoms = entry.symptoms || ['None'];
@@ -1797,6 +1769,49 @@ document.addEventListener('DOMContentLoaded', () => {
         ptModalClose.addEventListener('click', closePreTreatmentModal);
         ptModalCancel.addEventListener('click', closePreTreatmentModal);
         ptModalForm.addEventListener('submit', savePreTreatmentSettings);
+    }
+
+    // --- NEW: Restriction Settings Modal Functions ---
+    function showRestrictionModal() {
+        if (!rsModal) return; // Safety check
+        const settings = appState.userProfile.phaseSettings["restriction"];
+        
+        rsModalStartDate.value = settings.startDate || '';
+        rsModalDurationNum.value = settings.durationNum || 4;
+        rsModalDurationUnit.value = settings.durationUnit || 'weeks';
+        
+        rsModal.classList.remove('hidden');
+    }
+
+    function closeRestrictionModal() {
+        if (rsModal) rsModal.classList.add('hidden');
+    }
+
+    function saveRestrictionSettings(e) {
+        e.preventDefault();
+        
+        const settings = appState.userProfile.phaseSettings["restriction"];
+        settings.startDate = rsModalStartDate.value || null;
+        settings.durationNum = parseInt(rsModalDurationNum.value, 10) || 4;
+        settings.durationUnit = rsModalDurationUnit.value;
+
+        // Save to localStorage
+        localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+
+        // Re-render home page components
+        renderCountdown('restriction');
+
+        // Close modal and show toast
+        closeRestrictionModal();
+        showToast("Restriction settings saved!");
+    }
+
+    // --- NEW: Restriction Modal Listeners ---
+    if (rsModal) {
+        document.getElementById('restriction-settings-btn').addEventListener('click', showRestrictionModal);
+        rsModalClose.addEventListener('click', closeRestrictionModal);
+        rsModalCancel.addEventListener('click', closeRestrictionModal);
+        rsModalForm.addEventListener('submit', saveRestrictionSettings);
     }
 
     // --- NEW: Food Edit Modal Controller ---
