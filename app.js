@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
      // --- CONSTANTS ---
      // These must be defined first to build the default profile
-     const FODMAP_GROUP_DATA = [ { value: "Fructose", name: "Fructose", examples: "(e.g., Honey, Mango)" }, { value: "Lactose", name: "Lactose", examples: "(e.g., Milk, Yogurt)" }, { value: "Fructans (Grains)", name: "Fructans - Grains", examples: "(e.g., Wheat, Rye)" }, { value: "Fructans (Veg & Fruit)", name: "Fructans - Veg & Fruit", examples: "(e.g., Onion, Garlic)" }, { value: "GOS", name: "Galactans (GOS)", examples: "(e.g., Beans, Lentils)" }, { value: "Polyols (Sorbitol)", name: "Polyols - Sorbitol", examples: "(e.g., Avocado, Blackberry)" }, { value: "Polyols (Mannitol)", name: "Polyols - Mannitol", examples: "(e.g., Cauliflower, Mushroom)" }, { value: "Other", name: "Other / Unclassified", examples: "(Foods you're unsure how to classify)" }, { value: "Restriction", name: "Daily Log", examples: "(A non-challenge or safe meal)" } ];
-     const FODMAP_STYLES = { "Fructose": { color: "bg-yellow-100 text-yellow-800", icon: "🍎" }, "Lactose": { color: "bg-blue-100 text-blue-800", icon: "🥛" }, "Fructans (Grains)": { color: "bg-orange-100 text-orange-800", icon: "🍞" }, "Fructans (Veg & Fruit)": { color: "bg-purple-100 text-purple-800", icon: "🧅" }, "GOS": { color: "bg-teal-100 text-teal-800", icon: "🫘" }, "Polyols (Sorbitol)": { color: "bg-green-100 text-green-800", icon: "🥑" }, "Polyols (Mannitol)": { color: "bg-indigo-100 text-indigo-800", icon: "🍄" }, "Other": { color: "bg-gray-100 text-gray-800", icon: "❔" }, "Restriction": { color: "bg-slate-100 text-slate-800", icon: "🍴" } };
+     const FODMAP_GROUP_DATA = [ { value: "Fructose", name: "Fructose", examples: "(e.g., Honey, Mango)" }, { value: "Lactose", name: "Lactose", examples: "(e.g., Milk, Yogurt)" }, { value: "Fructans (Grains)", name: "Fructans - Grains", examples: "(e.g., Wheat, Rye)" }, { value: "Fructans (Veg & Fruit)", name: "Fructans - Veg & Fruit", examples: "(e.g., Onion, Garlic)" }, { value: "GOS", name: "Galactans (GOS)", examples: "(e.g., Beans, Lentils)" }, { value: "Polyols (Sorbitol)", name: "Polyols - Sorbitol", examples: "(e.g., Avocado, Blackberry)" }, { value: "Polyols (Mannitol)", name: "Polyols - Mannitol", examples: "(e.g., Cauliflower, Mushroom)" }, { value: "Other", name: "Other / Unclassified", examples: "(Foods you're unsure how to classify)" }, { value: "Safe Meal", name: "Safe Meal", examples: "(A non-challenge or safe meal)" } ];
+     const FODMAP_STYLES = { "Fructose": { color: "bg-yellow-100 text-yellow-800", icon: "🍎" }, "Lactose": { color: "bg-blue-100 text-blue-800", icon: "🥛" }, "Fructans (Grains)": { color: "bg-orange-100 text-orange-800", icon: "🍞" }, "Fructans (Veg & Fruit)": { color: "bg-purple-100 text-purple-800", icon: "🧅" }, "GOS": { color: "bg-teal-100 text-teal-800", icon: "🫘" }, "Polyols (Sorbitol)": { color: "bg-green-100 text-green-800", icon: "🥑" }, "Polyols (Mannitol)": { color: "bg-indigo-100 text-indigo-800", icon: "🍄" }, "Other": { color: "bg-gray-100 text-gray-800", icon: "❔" }, "Safe Meal": { color: "bg-slate-100 text-slate-800", icon: "🍴" } };
      const PROFILE_OPTIONS = { diagnoses: ["IMO", "SIBO", "IBS-D", "IBS-C", "IBS-M"], intolerances: ["Sorbitol", "Mannitol", "Lactose", "Fructose", "Gluten"], preferences: ["Vegetarian", "Vegan", "Pescatarian"] };
      const SYMPTOM_OPTIONS = ["Bloating", "Gas", "Abdominal pain", "Diarrhea", "Constipation", "Fatigue", "Headache"];
 
@@ -134,27 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isRestrict) renderCountdown('restriction');
         if (isReintro) renderHomePage(); // This is the reintro progress list
         if (isPersonal) renderPersonalizationSummary();
-
-        // --- 2. Reintro Log Page (Form) ---
-        // Plan button: Show for Reintro ONLY
-        if (planChallengeBtn) planChallengeBtn.classList.toggle('hidden', !isReintro);
-        
-        // *** MODIFICATION: Show group select for Reintro AND Personalization ***
-        if (fodmapSelectContainer) {
-            fodmapSelectContainer.classList.toggle('hidden', !(isReintro || isPersonal));
-        }
-
-        // --- 3. Update Log Form Defaults ---
-        // *** MODIFICATION: This logic is now correct, as isReintro is false for Personalization ***
-        // *** NO, wait, the submit handler logic is already correct. We just needed to update the UI visibility.
-        // *** Let's check the submit handler.
-        // group: (appState.userProfile.currentPhase === 'reintroduction' || appState.userProfile.currentPhase === 'personalization') 
-        // Yes, the submit handler is already correct. This part below is also fine.
-        if (!isReintro && !isPersonal) { // Only force restriction for pre-treat/restrict
-            if (fodmapHiddenInput) {
-                fodmapHiddenInput.value = 'Restriction';
-            }
-        }
         
         // --- 4. Update Nav Tab Label ---
         const reintroTab = document.querySelector('button[data-page="reintroduction-log"]');
@@ -177,6 +156,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- 5. Re-render Log Entries List (to be safe) ---
         renderLogEntries();
+
+        // --- NEW: Update the log form UI ---
+        updateLogFormForPhase(phase);
+    }
+
+    /**
+     * Updates the Log Form UI (Info Box, FODMAP selector) based on the current phase.
+     */
+    function updateLogFormForPhase(phase) {
+        const infoBox = document.getElementById('log-form-info-box');
+        const fodmapSelect = document.getElementById('custom-fodmap-select-container');
+        const planBtn = document.getElementById('plan-challenge-btn');
+        const options = document.querySelectorAll('#custom-fodmap-select-options .custom-select-option');
+
+        if (!infoBox) return; // Safety check if elements aren't ready
+
+        // 1. Reset all elements
+        infoBox.classList.add('hidden');
+        fodmapSelect.classList.add('hidden');
+        planBtn.classList.add('hidden');
+        options.forEach(opt => opt.style.display = 'block'); // Show all options by default
+
+        // 2. Apply rules based on phase
+        switch (phase) {
+            case 'pre-treatment':
+            case 'restriction':
+                infoBox.innerHTML = `<strong>Your Goal:</strong> Log your meals and any symptoms. This helps establish a baseline.`;
+                infoBox.classList.remove('hidden');
+                // Fodmap select remains hidden
+                break;
+
+            case 'reintroduction':
+                infoBox.innerHTML = `<strong>Your Goal:</strong> Log a <strong>specific</strong> FODMAP challenge. Select the group, food, and dose you are testing.`;
+                infoBox.classList.remove('hidden');
+                fodmapSelect.classList.remove('hidden');
+                planBtn.classList.remove('hidden');
+                
+                // Hide "Safe Meal" and "Other" from dropdown
+                options.forEach(opt => {
+                    const val = opt.dataset.value;
+                    if (val === 'Safe Meal' || val === 'Other') {
+                        opt.style.display = 'none';
+                    }
+                });
+                break;
+
+            case 'personalization':
+                infoBox.innerHTML = `<strong>Your Goal:</strong> Log new foods or mixed meals. This helps fine-tune your long-term, personalized diet.`;
+                infoBox.classList.remove('hidden');
+                fodmapSelect.classList.remove('hidden');
+                // All dropdown options remain visible
+                break;
+        }
     }
 
     function navigateTo(pageId) {
@@ -1377,8 +1409,8 @@ document.addEventListener('DOMContentLoaded', () => {
             date: document.getElementById('log-date').value, 
             // NEW LOGIC: Use "Restriction" if not in reintro phase
             group: (appState.userProfile.currentPhase === 'reintroduction' || appState.userProfile.currentPhase === 'personalization') 
-                   ? document.getElementById('log-fodmap-group').value 
-                   : 'Restriction',
+                ? document.getElementById('log-fodmap-group').value 
+                : 'Safe Meal',
             food: document.getElementById('log-food').value, 
             dose: document.getElementById('log-dose').value, 
             symptoms: allSymptoms, // Save the new array
