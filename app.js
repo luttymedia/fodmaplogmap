@@ -23,6 +23,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const navItems = document.querySelectorAll('.nav-item');
     const addEntryFab = document.getElementById('add-entry-fab');
     const hamBtn = document.getElementById('hamburger-btn'); const sideMdl = document.getElementById('side-menu-modal'); const sideOvl = document.getElementById('side-menu-overlay'); const sideClose = document.getElementById('side-menu-close'); const openInfoBtn = document.getElementById('open-info-modal-btn'); const infoMdl = document.getElementById('info-modal'); const infoClose = document.getElementById('info-modal-close'); const infoCloseBtn = document.getElementById('info-modal-close-btn');
+    const logEntryModal = document.getElementById('log-entry-modal');
+    const logModalTitle = document.getElementById('log-modal-title');
+    const logModalClose = document.getElementById('log-modal-close');
+    const logFormSubmitBtn = document.getElementById('log-form-submit-btn');
+    const logFormCancelBtn = document.getElementById('log-form-cancel-edit');
     // --- Phase-Controlled Elements ---
     const progressCard = document.getElementById('home-progress-card'); // You'll need to add this ID in index.html
     const insightsCard = document.getElementById('home-insights-card'); // You'll need to add this ID in index.html
@@ -226,20 +231,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // --- NEW LOGIC for collapsible form ---
-        const logFormWrapper = document.getElementById('add-log-entry-wrapper');
-        if (pageId === 'reintroduction-log') {
-            if (appState.openLogFormOnLoad) {
-                logFormWrapper.classList.add('expanded'); // Expand it
-                logFormWrapper.scrollIntoView({ behavior: 'smooth' }); // Scroll to it
-                appState.openLogFormOnLoad = false; // Reset the flag
-            } else {
-                logFormWrapper.classList.remove('expanded'); // Ensure it's collapsed
-            }
-        }
-        // --- END NEW LOGIC ---
-
-        addEntryFab.classList.toggle('hidden', pageId === 'reintroduction-log');
+        // The floating action button is now always visible
+        addEntryFab.classList.remove('hidden');
         window.scrollTo(0, 0);
          document.querySelectorAll('.nav-item span').forEach(span => { span.classList.remove('hidden', 'sm:inline'); span.classList.add('hidden', 'sm:inline'); });
     }
@@ -258,8 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     navItems.forEach(item => item.addEventListener('click', () => navigateTo(item.dataset.page)));
     addEntryFab.addEventListener('click', () => { 
-        appState.openLogFormOnLoad = true; // Set the flag to auto-open
-        navigateTo('reintroduction-log'); 
+        showLogModal(null); // null = new entry
     });
     
     const toast = document.getElementById('toast');
@@ -277,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // New classes: top-left, new animation, AND pointer-events-none by default
-        toast.className = `fixed left-4 py-2 px-4 rounded-lg shadow-xl opacity-0 transform -translate-y-10 transition-all duration-500 ease-in-out text-sm z-50 pointer-events-none ${colorClass}`;
+        toast.className = `fixed left-4 right-4 mx-auto w-fit py-2 px-4 rounded-lg shadow-xl opacity-0 transform -translate-y-10 transition-all duration-500 ease-in-out text-sm z-[100] pointer-events-none ${colorClass}`;
         
         // Set the top position dynamically
         toast.style.top = `calc(${bodyPaddingTop} + 0.5rem)`; // 0.5rem (8px) margin from nav
@@ -393,16 +385,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // --- Update UI ---
-        document.getElementById('log-form').querySelector('button[type="submit"]').textContent = 'Save Changes';
-        document.getElementById('add-log-entry-wrapper').scrollIntoView({ behavior: 'smooth' });
-        const cancelBtn = document.getElementById('log-form-cancel-edit');
-        cancelBtn.classList.remove('hidden');
+        // We now update the new modal's elements
+        logModalTitle.textContent = 'Edit Log Entry';
+        logFormSubmitBtn.textContent = 'Save Changes';
     };
 
-    // --- NEW: Listener for the Cancel Edit button ---
-    document.getElementById('log-form-cancel-edit').addEventListener('click', () => {
-        resetLogForm(); // Just call our new reset function
-    });
+    // --- Listener for the Cancel Edit button (will be moved/re-created) ---
+    /**
+     * Shows the Log Entry modal.
+     * @param {number | null} entryId - The ID of the entry to edit, or null for a new entry.
+     */
+    function showLogModal(entryId = null) {
+        // 1. Set form context based on phase
+        updateLogFormForPhase(appState.userProfile.currentPhase);
+        
+        if (entryId === null) {
+            // --- NEW ENTRY ---
+            appState.currentlyEditingId = null;
+            resetLogForm(); // Clear any old data
+            logModalTitle.textContent = 'Add Log Entry';
+            logFormSubmitBtn.textContent = 'Add Entry';
+        } else {
+            // --- EDITING ENTRY ---
+            const entryToEdit = appState.logEntries.find(entry => entry.id === entryId);
+            if (entryToEdit) {
+                appState.currentlyEditingId = entryId;
+                populateFormForEdit(entryToEdit);
+                // Note: populateFormForEdit already updates the modal title and button text
+            } else {
+                return; // Entry not found
+            }
+        }
+        
+        // 3. Show the modal
+        logEntryModal.classList.remove('hidden');
+    }
+
+    /**
+     * Closes and resets the Log Entry modal.
+     */
+    function closeLogModal() {
+        logEntryModal.classList.add('hidden');
+        resetLogForm(); // Always reset the form on close
+        appState.currentlyEditingId = null; // Clear editing state
+    }
 
     const handleAIQuery = (prompt, title, imageData = null) => {
          aiResultsLoader.classList.remove('hidden'); aiResultsContainer.classList.add('hidden'); aiResultsContent.innerHTML = '';
@@ -1376,13 +1402,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (editBtn) {
             // --- HANDLE EDIT ---
             const entryId = parseInt(editBtn.dataset.id);
-            const entryToEdit = appState.logEntries.find(entry => entry.id === entryId);
-            if (entryToEdit) {
-                appState.currentlyEditingId = entryId; // Set global edit state
-                populateFormForEdit(entryToEdit);
-                // Ensure form is expanded
-                document.getElementById('add-log-entry-wrapper').classList.add('expanded');
-            }
+            showLogModal(entryId); // Open the modal in edit mode
         } else if (deleteBtn) {
             // --- HANDLE DELETE ---
             const entryId = parseInt(deleteBtn.dataset.id);
@@ -1516,7 +1536,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             appState.currentlyEditingId = null; // Reset edit state
             showToast("Entry updated!", "success");
-            document.getElementById('log-form-cancel-edit').classList.add('hidden');
         } else {
             // --- ADD NEW ENTRY ---
             const newEntry = { ...entryData, id: Date.now() };
@@ -1526,8 +1545,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         saveLogEntries(); 
         
-        // --- NEW: Call the reset function ---
-        resetLogForm();
+        // --- NEW: Close the modal (which also resets the form) ---
+        closeLogModal();
     });
 
     /**
@@ -1551,9 +1570,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('input[name="symptoms"]').forEach(cb => cb.checked = false);
         document.getElementById('severity-section').classList.add('hidden'); 
         
-        // Reset button texts and visibility
-        document.getElementById('log-form').querySelector('button[type="submit"]').textContent = 'Add Entry';
-        document.getElementById('log-form-cancel-edit').classList.add('hidden');
+        // Reset modal button texts
+        logModalTitle.textContent = 'Add Log Entry';
+        logFormSubmitBtn.textContent = 'Add Entry';
         
         // Reset severity button group
         document.getElementById('log-severity-value').value = '1';
@@ -2154,9 +2173,14 @@ document.addEventListener('DOMContentLoaded', () => {
         foodModalDoseLogic.value = '';
     }
 
+    // --- Log Entry Modal Listeners ---
+    logModalClose.addEventListener('click', closeLogModal);
+    logFormCancelBtn.addEventListener('click', closeLogModal);
+
     // --- NEW: Food Edit Modal Listeners ---
     foodModalClose.addEventListener('click', closeFoodModal);
     foodModalCancelBtn.addEventListener('click', closeFoodModal);
+
 
     // Switch from View to Edit mode
     foodModalEditBtn.addEventListener('click', () => {
@@ -2522,11 +2546,6 @@ Use this exact template:
             }
         }
     }
-
-    // --- Click listener for Add Log Entry accordion ---
-    document.getElementById('log-form-header').addEventListener('click', () => {
-        document.getElementById('add-log-entry-wrapper').classList.toggle('expanded');
-    });
 
     // --- Global click listener to close popups ---
     window.addEventListener('click', () => {

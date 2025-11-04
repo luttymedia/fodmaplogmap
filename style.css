@@ -643,11 +643,8 @@ main section > div { margin-bottom: 1rem; }
     font-size: 1.125rem; /* text-lg */
     font-weight: 700;
     color: var(--color-secondary-text);
-    padding: 1rem 0 0.5rem 0.25rem; /* pt-4 pb-2 px-1 */
-    position: sticky;
-    top: var(--header-height); /* JS will correct this variable */
+    padding: 0 0 0.5rem 0.25rem; /* pt-4 pb-2 px-1 */
     background-color: var(--color-page-bg, #f8fafc); /* bg-slate-50 */
-    z-index: 5;
     border-bottom: 1px solid #e2e8f0; /* border-slate-200 */
 }
 body {
@@ -1078,3 +1075,9 @@ body {
     font-weight: 700;
 }
 /* --- END: Toast Warning Color --- */
+
+/* --- START: Log Modal Fix --- */
+#log-entry-modal #log-form-cancel-edit {
+    display: inline-block; /* Always show the cancel button in the modal */
+}
+/* --- END: Log Modal Fix --- */

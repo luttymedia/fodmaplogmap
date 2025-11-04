@@ -195,72 +195,7 @@
                     </div>
                 </div>
             </section>
-
             <section id="reintroduction-log" class="page hidden max-w-3xl mx-auto">
-                <div id="add-log-entry-wrapper" class="bg-white p-4 sm:p-6 rounded-2xl shadow-md mb-4 max-w-3xl mx-auto"> 
-                    
-                    <div id="log-form-header">
-                        <h2 class="text-xl sm:text-2xl font-semibold text-secondary">✏️ Add Log Entry</h2>
-                        <i class="fas fa-chevron-down form-toggle-icon"></i>
-                    </div>
-                    
-                    <div id="log-form-body">
-                        
-                        <div id="log-form-info-box" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-secondary space-y-1 mb-3">
-                            </div>
-                        <form id="log-form" class="space-y-3"> 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3"> 
-                            <input type="date" id="log-date" class="w-full p-2.5 border border-slate-300 rounded-xl" required> 
-                             <div class="custom-select-container" id="custom-fodmap-select-container">
-                            <button type="button" class="custom-select-trigger placeholder" id="custom-fodmap-select-trigger">
-                                <span id="custom-fodmap-select-text">Select FODMAP Group...</span>
-                                <i class="fas fa-chevron-down trigger-icon"></i>
-                            </button>
-                            <ul class="custom-select-options" id="custom-fodmap-select-options">
-                                </ul>
-                            <input type="hidden" id="log-fodmap-group" name="log-fodmap-group" value="">
-                        </div>
-                        </div>
-                        <button type="button" id="plan-challenge-btn" class="w-full bg-accent  font-semibold py-2 px-4 rounded-full hover:bg-accent-dark transition-colors duration-300 shadow flex items-center justify-center gap-2">
-                           ✨ Plan My Challenge
-                        </button>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3"> 
-                            <input type="text" id="log-food" placeholder="Food Name" class="w-full p-2.5 border border-slate-300 rounded-xl"> 
-                            <input type="text" id="log-dose" placeholder="Dose" class="w-full p-2.5 border border-slate-300 rounded-xl"> 
-                        </div>
-                        
-                        <div>
-                            <label class="block mb-1.5 text-sm font-medium text-secondary">Symptoms</label>
-                            <div id="symptom-tags-container" class="flex flex-wrap gap-2">
-                                </div>
-                        </div>
-
-                        <div>
-                            <label id="custom-symptom-trigger" class="block mb-1.5 text-sm font-medium text-secondary cursor-pointer hover:text-primary">
-                                Add Custom Symptom <i class="fas fa-plus-circle text-xs ml-1 opacity-70"></i>
-                            </label>
-                            <div id="custom-symptom-body" class="hidden space-y-2">
-                                <div class="flex gap-2">
-                                    <input type="text" id="custom-symptom-input" placeholder="e.g., Nausea" class="w-full p-2.5 border border-slate-300 rounded-xl">
-                                    <button type="button" id="add-custom-symptom-btn" class="bg-primary font-semibold py-2 px-4 rounded-full hover:bg-primary-dark transition-colors duration-300 shadow">Add</button>
-                                </div>
-                            </div>
-                            <div id="custom-symptom-tags-container" class="flex flex-wrap mt-2">
-                                </div>
-                        </div> 
-
-                        <div id="severity-section" class="hidden pt-1"> 
-                            <label class="block mb-1 text-sm font-medium text-secondary">Severity</label> 
-                            <div id="log-severity" class="severity-btn-group"> 
-                                </div>
-                            <input type="hidden" id="log-severity-value" value="1">
-                        </div>
-
-                        <textarea id="log-notes" rows="2" placeholder="Additional Notes (optional)" class="w-full p-2.5 border border-slate-300 rounded-xl"></textarea> 
-                        <button type="submit" class="w-full bg-primary  font-semibold py-2.5 px-4 rounded-full hover:bg-primary-dark transition-colors duration-300 shadow">Add Entry</button>
-                        <button type="button" id="log-form-cancel-edit" class="hidden w-full bg-slate-200 text-secondary font-semibold py-2.5 px-4 rounded-full hover:bg-slate-300 transition-colors duration-300 shadow">Cancel Edit</button> 
-                    </form>
-                    </div> </div>
                  <div class="space-y-3 max-w-3xl mx-auto"> 
                     <div class="px-2 space-y-2"> <div class="flex justify-between items-center"> <div>
                                 <h2 class="text-xl sm:text-2xl font-semibold text-secondary">🧾 Reintroduction Log</h2>
@@ -367,7 +302,7 @@
             Saved successfully!
         </div>
 
-        <div id="gemini-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60] hidden"> 
+        <div id="gemini-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[85] hidden"> 
             <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full">
                 <div class="p-4 border-b border-slate-200 flex justify-between items-center"> 
                     <h3 id="gemini-modal-title" class="text-lg font-semibold text-secondary">AI Assistant</h3> 
@@ -665,5 +600,91 @@
             });
         }
     </script>
-</body>
+<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+
+    <div id="log-entry-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[80] hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                <h3 id="log-modal-title" class="text-lg font-semibold text-secondary">Add Log Entry</h3>
+                <button id="log-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            </div>
+
+            <form id="log-form">
+                <div class="p-4 space-y-3 max-h-[70vh] overflow-y-auto">
+                    
+                    <div id="log-form-info-box" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-secondary space-y-1">
+                        </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input type="date" id="log-date" class="w-full p-2.5 border border-slate-300 rounded-xl" required>
+                        <div class="custom-select-container" id="custom-fodmap-select-container">
+                            <button type="button" class="custom-select-trigger placeholder" id="custom-fodmap-select-trigger">
+                                <span id="custom-fodmap-select-text">Select FODMAP Group...</span>
+                                <i class="fas fa-chevron-down trigger-icon"></i>
+                            </button>
+                            <ul class="custom-select-options" id="custom-fodmap-select-options">
+                                </ul>
+                            <input type="hidden" id="log-fodmap-group" name="log-fodmap-group" value="">
+                        </div>
+                    </div>
+                    
+                    <button type="button" id="plan-challenge-btn" class="w-full bg-accent  font-semibold py-2 px-4 rounded-full hover:bg-accent-dark transition-colors duration-300 shadow flex items-center justify-center gap-2">
+                       ✨ Plan My Challenge
+                    </button>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input type="text" id="log-food" placeholder="Food Name" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        <input type="text" id="log-dose" placeholder="Dose" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                    </div>
+                    
+                    <div>
+                        <label class="block mb-1.5 text-sm font-medium text-secondary">Symptoms</label>
+                        <div id="symptom-tags-container" class="flex flex-wrap gap-2">
+                            </div>
+                    </div>
+
+                    <div>
+                        <label id="custom-symptom-trigger" class="block mb-1.5 text-sm font-medium text-secondary cursor-pointer hover:text-primary">
+                            Add Custom Symptom <i class="fas fa-plus-circle text-xs ml-1 opacity-70"></i>
+                        </label>
+                        <div id="custom-symptom-body" class="hidden space-y-2">
+                            <div class="flex gap-2">
+                                <input type="text" id="custom-symptom-input" placeholder="e.g., Nausea" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                                <button type="button" id="add-custom-symptom-btn" class="bg-primary font-semibold py-2 px-4 rounded-full hover:bg-primary-dark transition-colors duration-300 shadow">Add</button>
+                            </div>
+                        </div>
+                        <div id="custom-symptom-tags-container" class="flex flex-wrap mt-2">
+                            </div>
+                    </div> 
+
+                    <div id="severity-section" class="hidden pt-1">
+                        <label class="block mb-1 text-sm font-medium text-secondary">Severity</label>
+                        <div id="log-severity" class="severity-btn-group">
+                            </div>
+                        <input type="hidden" id="log-severity-value" value="1">
+                    </div>
+
+                    <textarea id="log-notes" rows="2" placeholder="Additional Notes (optional)" class="w-full p-2.5 border border-slate-300 rounded-xl"></textarea>
+                </div>
+
+                <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl">
+                    <button type="button" id="log-form-cancel-edit" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button>
+                    <button type="submit" id="log-form-submit-btn" class="bg-primary font-semibold py-1.5 px-4 rounded-full hover:bg-primary-dark transition-colors text-sm">Add Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    </body>
 </html>
