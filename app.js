@@ -395,7 +395,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Update UI ---
         document.getElementById('log-form').querySelector('button[type="submit"]').textContent = 'Save Changes';
         document.getElementById('add-log-entry-wrapper').scrollIntoView({ behavior: 'smooth' });
+        const cancelBtn = document.getElementById('log-form-cancel-edit');
+        cancelBtn.classList.remove('hidden');
     };
+
+    // --- NEW: Listener for the Cancel Edit button ---
+    document.getElementById('log-form-cancel-edit').addEventListener('click', () => {
+        resetLogForm(); // Just call our new reset function
+    });
 
     const handleAIQuery = (prompt, title, imageData = null) => {
          aiResultsLoader.classList.remove('hidden'); aiResultsContainer.classList.add('hidden'); aiResultsContent.innerHTML = '';
@@ -1509,6 +1516,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             appState.currentlyEditingId = null; // Reset edit state
             showToast("Entry updated!", "success");
+            document.getElementById('log-form-cancel-edit').classList.add('hidden');
         } else {
             // --- ADD NEW ENTRY ---
             const newEntry = { ...entryData, id: Date.now() };
@@ -1517,9 +1525,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         saveLogEntries(); 
+        
+        // --- NEW: Call the reset function ---
+        resetLogForm();
+    });
+
+    /**
+     * Resets the entire log form to its default state.
+     */
+    function resetLogForm() {
         logForm.reset(); 
         
-        // --- Reset all form fields ---
+        // Reset state
+        appState.currentlyEditingId = null;
+
+        // Reset all form fields
         document.getElementById('log-date').valueAsDate = new Date(); 
         // Reset custom dropdown
         document.getElementById('custom-fodmap-select-text').textContent = 'Select FODMAP Group...';
@@ -1530,14 +1550,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('custom-symptom-body').classList.add('hidden'); // Collapse the custom input
         document.querySelectorAll('input[name="symptoms"]').forEach(cb => cb.checked = false);
         document.getElementById('severity-section').classList.add('hidden'); 
-        document.getElementById('log-form').querySelector('button[type="submit"]').textContent = 'Add Entry'; // Reset button text
+        
+        // Reset button texts and visibility
+        document.getElementById('log-form').querySelector('button[type="submit"]').textContent = 'Add Entry';
+        document.getElementById('log-form-cancel-edit').classList.add('hidden');
         
         // Reset severity button group
         document.getElementById('log-severity-value').value = '1';
         document.querySelectorAll('#log-severity .severity-btn').forEach(btn => {
             btn.classList.toggle('selected', btn.dataset.value === '1');
         });
-    });
+    }
     
     const profileForm = document.getElementById('profile-form');
 
