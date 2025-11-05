@@ -1213,3 +1213,96 @@ body {
     border-bottom: none;
 }
 /* --- END: Medication Tracker Styles --- */
+/* --- START: Onboarding Modal Styles --- */
+#onboarding-modal-close {
+    padding: 0 0.5rem;
+}
+
+.onboarding-slide {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#onboarding-dots .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #cbd5e1; /* bg-slate-300 */
+    transition: all 0.2s ease-in-out;
+}
+
+#onboarding-dots .dot.active {
+    background-color: var(--color-adaptive-bg);
+    transform: scale(1.2);
+}
+
+/* Style for the re-used medication list in onboarding */
+#onboarding-medication-settings-list .medication-settings-item {
+    padding: 0.25rem;
+    background-color: #f1f5f9; /* bg-slate-100 */
+}
+#onboarding-medication-settings-list .medication-settings-item input {
+    padding: 0.375rem; /* p-1.5 */
+    font-size: 0.875rem; /* text-sm */
+}
+#onboarding-medication-settings-list .medication-remove-btn {
+    width: 1.5rem; /* w-6 */
+    height: 1.5rem; /* h-6 */
+}
+/* Style for new Phase Select Buttons */
+.onboarding-phase-btn {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e2e8f0; /* border-slate-200 */
+    border-radius: 0.75rem; /* rounded-xl */
+    text-align: left;
+    background-color: #f8fafc; /* bg-slate-50 */
+    transition: all 0.2s ease-in-out;
+}
+.onboarding-phase-btn:hover:not(.active) {
+    background-color: #fff;
+    border-color: #cbd5e1; /* border-slate-300 */
+}
+/* --- Active Phase Button States --- */
+
+/* Pre-Treatment */
+.onboarding-phase-btn[data-phase="pre-treatment"].active {
+    background-color: #fffbeb; /* bg-amber-50 */
+    border-color: #f59e0b; /* Phase Color */
+}
+.onboarding-phase-btn[data-phase="pre-treatment"].active h4 {
+    color: #b45309; /* text-amber-700 */
+}
+
+/* Restriction */
+.onboarding-phase-btn[data-phase="restriction"].active {
+    background-color: #f0f9eb; /* bg-green-50 */
+    border-color: #8bb744; /* Phase Color */
+}
+.onboarding-phase-btn[data-phase="restriction"].active h4 {
+    color: #4d7c0f; /* lime-700 */
+}
+
+/* Reintroduction */
+.onboarding-phase-btn[data-phase="reintroduction"].active {
+    background-color: #f0f9ff; /* bg-blue-50 */
+    border-color: #2d61a0; /* Phase Color */
+}
+.onboarding-phase-btn[data-phase="reintroduction"].active h4 {
+    color: #1e40af; /* text-blue-800 */
+}
+
+/* Personalization */
+.onboarding-phase-btn[data-phase="personalization"].active {
+    background-color: #fbf5ff; /* bg-purple-50 */
+    border-color: #4a0076; /* Phase Color */
+}
+.onboarding-phase-btn[data-phase="personalization"].active h4 {
+    color: #581c87; /* text-purple-800 */
+}
+/* --- END: Onboarding Modal Styles --- */

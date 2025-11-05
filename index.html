@@ -593,6 +593,11 @@
                             <i class="fas fa-download w-5 mr-2 text-primary"></i>Install App
                         </button>
                     </li>
+                    <li>
+                        <button id="open-onboarding-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
+                            <i class="fas fa-magic w-5 mr-2 text-primary"></i>Show Welcome Setup
+                        </button>
+                    </li>
                     <li class="pt-2 mt-2 border-t border-slate-200">
                         <h3 class="px-3 py-1 text-sm font-semibold text-secondary flex items-center">
                             <i class="fas fa-list-ol w-5 mr-2 text-primary"></i>Phase Selector
@@ -713,6 +718,196 @@
                     <button type="submit" id="log-form-submit-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Add Entry</button>
                 </div>
             </form>
+        </div>
+    </div>
+        <div id="onboarding-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[95] hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full flex flex-col" style="height: 90vh; max-height: 700px;">
+            <div class="p-2 text-right">
+                <button id="onboarding-modal-close" class="text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto px-6 pb-6">
+                <div id="onboarding-slide-welcome" class="onboarding-slide space-y-6 text-center">
+                    <img src="fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" class="h-10 mx-auto">
+                    <h2 class="text-2xl font-semibold text-secondary">Welcome to FODMAP LOGMAP!</h2>
+                    <p class="text-secondary text-base">Your personal companion for navigating the Low FODMAP diet and repairing your gut.</p>
+                    <div class="space-y-3 pt-4">
+                        <button id="onboarding-action-setup" class="w-full bg-adaptive font-semibold py-3 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow text-base">
+                            Start Setup
+                        </button>
+                        <button id="onboarding-action-know-more" class="w-full bg-slate-200 text-secondary font-semibold py-3 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">
+                            What does this app do?
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="onboarding-slide-know-more" class="onboarding-slide hidden space-y-4">
+                    <h2 class="text-2xl font-semibold text-secondary text-center mb-6">Your All-in-One Companion</h2>
+                    <p class="text-secondary text-base pb-2">This app is designed to help you at every stage of your journey with three key tools:</p>
+                    <ul class="space-y-5">
+                        <li class="flex items-start gap-3">
+                            <i class="fas fa-book-medical text-2xl text-primary w-8 text-center"></i>
+                            <div>
+                                <h3 class="font-semibold text-secondary">1. A Smart, Adaptive Log</h3>
+                                <p class="text-muted text-sm">Track meals, symptoms, and reintroduction challenges. The app's Home screen and log form adapt to your current phase.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fas fa-brain text-2xl text-primary w-8 text-center"></i>
+                            <div>
+                                <h3 class="font-semibold text-secondary">2. A Powerful AI Assistant</h3>
+                                <p class="text-muted text-sm">Instantly check if a food is safe, analyze ingredient lists from a photo, and get personalized advice based on your profile.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fas fa-clipboard-check text-2xl text-primary w-8 text-center"></i>
+                            <div>
+                                <h3 class="font-semibold text-secondary">3. A Personalization Hub</h3>
+                                <p class="text-muted text-sm">As you log your triggers and safe foods, the app "auto-scans" your history to build your final, long-term personalized diet.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div id="onboarding-slide-profile" class="onboarding-slide hidden space-y-4">
+                    <h2 class="text-2xl font-semibold text-secondary text-center mb-2">Let's Get to Know You</h2>
+                    <p class="text-muted text-sm text-center mb-4">This info helps the AI Assistant give you <strong>safer, more accurate</strong> advice. It's saved only in your browser.</p>
+                    
+                    <div>
+                        <h3 class="font-semibold text-secondary mb-1.5">Health Conditions</h3>
+                        <div id="onboarding-profile-diagnoses" class="flex flex-wrap gap-2"></div>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-secondary mb-1.5 mt-4">Intolerances & Allergies</h3> 
+                        <div id="onboarding-profile-intolerances" class="flex flex-wrap gap-2"></div>
+                        <input type="text" id="onboarding-profile-allergies-other" placeholder="List other allergies (comma separated)" class="mt-2 w-full p-2 border border-slate-300 rounded-xl mt-4"> 
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-secondary mb-1.5 mt-4">Dietary Preferences</h3> 
+                        <div id="onboarding-profile-preferences" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+
+                <div id="onboarding-slide-phase-select" class="onboarding-slide hidden space-y-4">
+                    <h2 class="text-2xl font-semibold text-secondary text-center mb-2">Where are you in your journey?</h2>
+                    <p class="text-muted text-sm text-center mb-4">Select your current phase to set up your Home screen. You can change this any time from the side menu.</p>
+
+                    <div id="onboarding-phase-btn-container" class="space-y-3">
+                        <input type="hidden" id="onboarding-phase-select-value" value="">
+
+                        <button type="button" class="onboarding-phase-btn" data-phase="pre-treatment">
+                            <h4 class="text-base font-semibold text-secondary">Pre-Treatment</h4>
+                            <p class="text-sm text-muted">Get your system ready for the diet.</p>
+                        </button>
+                        
+                        <button type="button" class="onboarding-phase-btn" data-phase="restriction">
+                            <h4 class="text-base font-semibold text-secondary">Restriction</h4>
+                            <p class="text-sm text-muted">A strict, temporary low-FODMAP diet.</p>
+                        </button>
+
+                        <button type="button" class="onboarding-phase-btn" data-phase="reintroduction">
+                            <h4 class="text-base font-semibold text-secondary">Reintroduction</h4>
+                            <p class="text-sm text-muted">Test FODMAP groups one by one to find triggers.</p>
+                        </button>
+
+                        <button type="button" class="onboarding-phase-btn" data-phase="personalization">
+                            <h4 class="text-base font-semibold text-secondary">Personalization</h4>
+                            <p class="text-sm text-muted">Build your final, long-term diet.</p>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="onboarding-slide-phase-setup" class="onboarding-slide hidden space-y-4">
+                    <h2 id="onboarding-phase-setup-title" class="text-2xl font-semibold text-secondary text-center mb-4">Set Up Your Phase</h2>
+
+                    <div id="onboarding-setup-pre-treatment" class="onboarding-phase-content hidden space-y-3">
+                        <h3 class="font-semibold text-secondary">Pre-Treatment Setup</h3>
+                        <p class="text-sm text-muted">Let's set up your countdown and pre-treatment diet rules.</p>
+                        <div>
+                            <label for="onboarding-pretreatment-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Phase Start Date (Optional)</label>
+                            <input type="date" id="onboarding-pretreatment-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="block mb-1.5 text-sm font-medium text-secondary">Phase Duration</label>
+                            <div class="flex gap-2">
+                                <input type="number" id="onboarding-pretreatment-duration-num" value="4" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
+                                <select id="onboarding-pretreatment-duration-unit" class="w-1/2 p-2.5 border border-slate-300 rounded-xl bg-white">
+                                    <option value="days">Days</option>
+                                    <option value="weeks" selected>Weeks</option>
+                                    <option value="months">Months</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="onboarding-pretreatment-rules" class="block mb-1.5 text-sm font-medium text-secondary">Diet Rules (one per line)</label>
+                            <textarea id="onboarding-pretreatment-rules" rows="3" class="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="e.g., Avoid: Lactose"></textarea>
+                        </div>
+                    </div>
+
+                    <div id="onboarding-setup-restriction" class="onboarding-phase-content hidden space-y-3">
+                        <h3 class="font-semibold text-secondary">Restriction Setup</h3>
+                        <p class="text-sm text-muted">Let's set up your countdown and (optional) medication tracker.</p>
+                        <div>
+                            <label for="onboarding-restriction-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Phase Start Date (Optional)</label>
+                            <input type="date" id="onboarding-restriction-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="block mb-1.5 text-sm font-medium text-secondary">Phase Duration</label>
+                            <div class="flex gap-2">
+                                <input type="number" id="onboarding-restriction-duration-num" value="4" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
+                                <select id="onboarding-restriction-duration-unit" class="w-1/2 p-2.5 border border-slate-300 rounded-xl bg-white">
+                                    <option value="days">Days</option>
+                                    <option value="weeks" selected>Weeks</option>
+                                    <option value="months">Months</option>
+                                </select>
+                            </div>
+                        </div>
+                        <hr class="my-2">
+                        <h4 class="font-semibold text-secondary">Optional: Medication Tracker</h4>
+                        <div>
+                            <label for="onboarding-medication-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Medication Start Date</label>
+                            <input type="date" id="onboarding-medication-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        </div>
+                        <div>
+                            <label for="onboarding-medication-duration" class="block mb-1.5 text-sm font-medium text-secondary">Duration (in days)</label>
+                            <input type="number" id="onboarding-medication-duration" placeholder="e.g., 12" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        </div>
+                        <div id="onboarding-medication-settings-list" class="space-y-2">
+                             <p class="text-xs text-subtle text-center">No medications added.</p>
+                        </div>
+                        <button type="button" id="onboarding-medication-add-btn" class="w-full mt-1 p-2 text-sm font-semibold text-primary border-2 border-dashed border-slate-300 rounded-lg hover:bg-slate-50">
+                            <i class="fas fa-plus mr-1"></i> Add Medication
+                        </button>
+                    </div>
+
+                    <div id="onboarding-setup-reintroduction" class="onboarding-phase-content hidden space-y-4 text-center">
+                        <i class="fas fa-flask-vial text-5xl text-primary my-4"></i>
+                        <p class="text-muted">No extra setup needed! Your goal is to log your challenges. When adding an entry, use the <strong>✨ Plan My Challenge</strong> button to get AI-powered ideas for your test foods.</p>
+                    </div>
+                    
+                    <div id="onboarding-setup-personalization" class="onboarding-phase-content hidden space-y-4 text-center">
+                        <i class="fas fa-magic-wand-sparkles text-5xl text-primary my-4"></i>
+                        <p class="text-muted">You're all set! A great place to start is the <strong>✨ Auto-Scan Log</strong> button on your Home screen. It will read your log history to help build your personal safe food list.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="onboarding-footer" class="p-4 bg-slate-50 border-t border-slate-200 rounded-b-2xl">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <button id="onboarding-btn-skip" class="text-slate-500 font-semibold py-2 px-3 rounded-full hover:bg-slate-200 transition-colors text-sm">Skip</button>
+                    </div>
+                    
+                    <div id="onboarding-dots" class="flex gap-1.5">
+                        </div>
+                    
+                    <div class="flex gap-2">
+                        <button id="onboarding-btn-back" class="hidden bg-slate-200 text-secondary font-semibold py-2 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Back</button>
+                        <button id="onboarding-btn-next" class="hidden bg-adaptive font-semibold py-2 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Next</button>
+                        <button id="onboarding-btn-finish" class="hidden bg-adaptive font-semibold py-2 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Finish</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
         <div id="medication-settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[80] hidden">

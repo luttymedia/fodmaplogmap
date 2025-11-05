@@ -45,6 +45,59 @@ document.addEventListener('DOMContentLoaded', () => {
     const medicationChecklist = document.getElementById('medication-checklist');
     const medicationLogAccordion = document.getElementById('medication-log-accordion');
     const medicationLogHistory = document.getElementById('medication-log-history');
+
+    // --- Onboarding Modal Elements ---
+    const onboardingModal = document.getElementById('onboarding-modal');
+    const onboardingModalClose = document.getElementById('onboarding-modal-close');
+    const openOnboardingBtn = document.getElementById('open-onboarding-btn');
+    
+    // Slides
+    const onboardingSlides = document.querySelectorAll('.onboarding-slide');
+    const slideWelcome = document.getElementById('onboarding-slide-welcome');
+    const slideKnowMore = document.getElementById('onboarding-slide-know-more');
+    const slideProfile = document.getElementById('onboarding-slide-profile');
+    const slidePhaseSelect = document.getElementById('onboarding-slide-phase-select');
+    const slidePhaseSetup = document.getElementById('onboarding-slide-phase-setup');
+    const onboardingPhaseContent = document.querySelectorAll('.onboarding-phase-content');
+    
+    // Welcome Slide Buttons
+    const onboardingActionSetup = document.getElementById('onboarding-action-setup');
+    const onboardingActionKnowMore = document.getElementById('onboarding-action-know-more');
+    
+    // Footer
+    const onboardingFooter = document.getElementById('onboarding-footer');
+    const onboardingBtnSkip = document.getElementById('onboarding-btn-skip');
+    const onboardingBtnBack = document.getElementById('onboarding-btn-back');
+    const onboardingBtnNext = document.getElementById('onboarding-btn-next');
+    const onboardingBtnFinish = document.getElementById('onboarding-btn-finish');
+    const onboardingDots = document.getElementById('onboarding-dots');
+
+    // Slide 3: Profile Form
+    const obProfileDiagnoses = document.getElementById('onboarding-profile-diagnoses');
+    const obProfileIntolerances = document.getElementById('onboarding-profile-intolerances');
+    const obProfileAllergiesOther = document.getElementById('onboarding-profile-allergies-other');
+    const obProfilePreferences = document.getElementById('onboarding-profile-preferences');
+
+    // Slide 4: Phase Select
+    const obPhaseSelectContainer = document.getElementById('onboarding-phase-btn-container');
+    const obPhaseSelectValue = document.getElementById('onboarding-phase-select-value');
+    
+    // Slide 5: Pre-Treatment
+    const obPtStartDate = document.getElementById('onboarding-pretreatment-start-date');
+    const obPtDurationNum = document.getElementById('onboarding-pretreatment-duration-num');
+    const obPtDurationUnit = document.getElementById('onboarding-pretreatment-duration-unit');
+    const obPtRules = document.getElementById('onboarding-pretreatment-rules');
+    
+    // Slide 5: Restriction
+    const obRsStartDate = document.getElementById('onboarding-restriction-start-date');
+    const obRsDurationNum = document.getElementById('onboarding-restriction-duration-num');
+    const obRsDurationUnit = document.getElementById('onboarding-restriction-duration-unit');
+    
+    // Slide 5: Medication
+    const obMedStartDate = document.getElementById('onboarding-medication-start-date');
+    const obMedDuration = document.getElementById('onboarding-medication-duration');
+    const obMedList = document.getElementById('onboarding-medication-settings-list');
+    const obMedAddBtn = document.getElementById('onboarding-medication-add-btn');
         
     // --- Application State Object ---
 
@@ -55,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allergiesOther: '', 
         preferences: [], 
         apiKey: '',
+        hasCompletedOnboarding: false,
         currentPhase: 'reintroduction',
         phaseSettings: {
             "pre-treatment": {
@@ -103,7 +157,11 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPersonalizationView: 'tolerance', // 'group' or 'tolerance'
         openLogFormOnLoad: false,
         currentMedicationIdCounter: 0, // Helper for unique med IDs
-        notificationFallbackData: null // Stores data from a notification click
+        notificationFallbackData: null, // Stores data from a notification click
+        // --- Onboarding State ---
+        onboardingHistory: [], // To track slide navigation for 'Back' button
+        currentOnboardingSlide: 0,
+        onboardingSetupPath: 'setup' // 'setup' or 'knowMore'
     };
 
     // --- NEW: Deep merge/ensure personalizationFoods exists ---
@@ -1111,14 +1169,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const fodmapTriggerText = document.getElementById('custom-fodmap-select-text');
         const fodmapOptions = document.getElementById('custom-fodmap-select-options');
         const fodmapHiddenInput = document.getElementById('log-fodmap-group');
-
-        // --- Medication Tracker Elements ---
-        const medicationTrackerCard = document.getElementById('medication-tracker-card');
-        const medicationTrackerEmpty = document.getElementById('medication-tracker-empty');
-        const medicationTrackerFull = document.getElementById('medication-tracker-full');
-        const medicationChecklist = document.getElementById('medication-checklist');
-        const medicationLogAccordion = document.getElementById('medication-log-accordion');
-        const medicationLogHistory = document.getElementById('medication-log-history');
 
         // Populate options list (only if it's empty)
         if (fodmapOptions.children.length === 0) {
@@ -2169,6 +2219,244 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Medication settings saved!", "success");
     }
 
+    // --- START: ONBOARDING LOGIC ---
+
+    let obMedCounter = 0; // Local counter for onboarding med list
+
+    /**
+     * Populates the dynamic forms inside the onboarding modal.
+     * This should run once on page load.
+     */
+    function setupOnboardingModal() {
+        if (!obProfileDiagnoses) return; // Modal doesn't exist, stop
+
+        // 1. Populate Profile Slide (re-using createCheckbox)
+        obProfileDiagnoses.innerHTML = PROFILE_OPTIONS.diagnoses.map(i => createCheckbox(`ob-diag-${i}`, i, 'ob-diagnoses', appState.userProfile.diagnoses.includes(i))).join('');
+        obProfileIntolerances.innerHTML = PROFILE_OPTIONS.intolerances.map(i => createCheckbox(`ob-intol-${i}`, i, 'ob-intolerances', appState.userProfile.intolerances.includes(i))).join('');
+        obProfilePreferences.innerHTML = PROFILE_OPTIONS.preferences.map(i => createCheckbox(`ob-pref-${i}`, i, 'ob-preferences', appState.userProfile.preferences.includes(i))).join('');
+        
+        // 2. Populate data from existing profile (if user re-runs modal)
+        obProfileAllergiesOther.value = appState.userProfile.allergiesOther || '';
+        const currentPhase = appState.userProfile.currentPhase || '';
+        obPhaseSelectValue.value = currentPhase;
+        
+        if (obPhaseSelectContainer) {
+            obPhaseSelectContainer.querySelectorAll('.onboarding-phase-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.phase === currentPhase);
+            });
+        }
+        
+        // 3. Pre-fill phase settings from appState
+        const ptSettings = appState.userProfile.phaseSettings["pre-treatment"];
+        obPtStartDate.value = ptSettings.startDate || '';
+        obPtDurationNum.value = ptSettings.durationNum || 4;
+        obPtDurationUnit.value = ptSettings.durationUnit || 'weeks';
+        obPtRules.value = ptSettings.rules || '';
+        
+        const rsSettings = appState.userProfile.phaseSettings["restriction"];
+        obRsStartDate.value = rsSettings.startDate || '';
+        obRsDurationNum.value = rsSettings.durationNum || 4;
+        obRsDurationUnit.value = rsSettings.durationUnit || 'weeks';
+
+        const medSettings = appState.userProfile.medicationTracker;
+        obMedStartDate.value = medSettings.startDate || '';
+        obMedDuration.value = medSettings.duration || 12;
+        // Build med list (similar to renderMedicationSettingsList)
+        if (medSettings.medications.length > 0) {
+            obMedList.innerHTML = medSettings.medications.map(med => {
+                const uniqueId = `ob_med_${obMedCounter++}`;
+                return `
+                <div class="medication-settings-item" data-id="${uniqueId}">
+                    <input type="time" class="med-input-time time-input" value="${med.time}">
+                    <input type="text" class="med-input-name name-input" value="${med.name}" placeholder="Medication Name">
+                    <button type="button" class="medication-remove-btn">&times;</button>
+                </div>
+            `;
+            }).join('');
+        } else {
+             obMedList.innerHTML = `<p class="text-xs text-subtle text-center">No medications added.</p>`;
+        }
+    }
+    
+    /**
+     * Shows the onboarding modal and resets it to the first slide.
+     */
+    function showOnboardingModal() {
+        if (!onboardingModal) return;
+        
+        // Reset state
+        appState.onboardingHistory = ['onboarding-slide-welcome'];
+        appState.currentOnboardingSlide = 0;
+        appState.onboardingSetupPath = 'setup'; // Default path
+        
+        // Reset forms to default (in case they skipped before)
+        setupOnboardingModal(); 
+        
+        // Show modal and first slide
+        onboardingModal.classList.remove('hidden');
+        goToOnboardingSlide('onboarding-slide-welcome');
+    }
+    
+    /**
+     * Closes the onboarding modal.
+     */
+    function closeOnboardingModal() {
+        if (onboardingModal) onboardingModal.classList.add('hidden');
+    }
+
+    /**
+     * Main navigation function for the onboarding modal.
+     * @param {string} targetSlideId - The ID of the slide to show.
+     */
+    function goToOnboardingSlide(targetSlideId) {
+        // Hide all slides
+        onboardingSlides.forEach(slide => slide.classList.add('hidden'));
+
+        // Show the target slide
+        const targetSlide = document.getElementById(targetSlideId);
+        if (targetSlide) {
+            targetSlide.classList.remove('hidden');
+        }
+
+        // --- Footer and Dots Logic ---
+        onboardingDots.innerHTML = '';
+        onboardingBtnBack.classList.add('hidden');
+        onboardingBtnNext.classList.add('hidden');
+        onboardingBtnFinish.classList.add('hidden');
+        onboardingFooter.classList.remove('hidden'); // Show footer by default
+
+        switch (targetSlideId) {
+            case 'onboarding-slide-welcome':
+                appState.currentOnboardingSlide = 0;
+                onboardingFooter.classList.add('hidden'); // Slide 1 has its own buttons
+                break;
+                
+            case 'onboarding-slide-know-more':
+                appState.currentOnboardingSlide = 1;
+                onboardingBtnBack.classList.remove('hidden');
+                onboardingBtnNext.classList.remove('hidden');
+                onboardingDots.innerHTML = `<div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>`;
+                break;
+                
+            case 'onboarding-slide-profile':
+                appState.currentOnboardingSlide = 2;
+                onboardingBtnBack.classList.remove('hidden');
+                onboardingBtnNext.classList.remove('hidden');
+                onboardingDots.innerHTML = `<div class="dot"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div>`;
+                break;
+                
+            case 'onboarding-slide-phase-select':
+                appState.currentOnboardingSlide = 3;
+                onboardingBtnBack.classList.remove('hidden');
+                onboardingBtnNext.classList.remove('hidden');
+                // Disable 'Next' until a phase is selected
+                onboardingBtnNext.disabled = !obPhaseSelectValue.value;
+                onboardingBtnNext.style.opacity = obPhaseSelectValue.value ? '1' : '0.5';
+                onboardingDots.innerHTML = `<div class="dot"></div><div class="dot"></div><div class="dot active"></div><div class="dot"></div>`;
+                break;
+                
+            case 'onboarding-slide-phase-setup':
+                appState.currentOnboardingSlide = 4;
+                onboardingBtnBack.classList.remove('hidden');
+                onboardingBtnFinish.classList.remove('hidden'); // Show Finish
+                onboardingDots.innerHTML = `<div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot active"></div>`;
+                
+                // Show the correct sub-content
+                const phase = obPhaseSelectValue.value;
+                const titleEl = document.getElementById('onboarding-phase-setup-title');
+                onboardingPhaseContent.forEach(content => content.classList.add('hidden'));
+                
+                let targetContent;
+                switch (phase) {
+                    case 'pre-treatment':
+                        titleEl.textContent = 'Pre-Treatment Setup';
+                        targetContent = document.getElementById('onboarding-setup-pre-treatment');
+                        break;
+                    case 'restriction':
+                        titleEl.textContent = 'Restriction Setup';
+                        targetContent = document.getElementById('onboarding-setup-restriction');
+                        break;
+                    case 'reintroduction':
+                        titleEl.textContent = 'Ready for Reintroduction!';
+                        targetContent = document.getElementById('onboarding-setup-reintroduction');
+                        break;
+                    case 'personalization':
+                        titleEl.textContent = 'Welcome to Your Final Diet!';
+                        targetContent = document.getElementById('onboarding-setup-personalization');
+                        break;
+                }
+                if (targetContent) targetContent.classList.remove('hidden');
+                break;
+        }
+    }
+    
+    /**
+     * Reads all form data from the onboarding modal and saves it to appState.
+     */
+    function saveOnboardingData() {
+        // 1. Save Profile Data (Slide 3)
+        appState.userProfile.diagnoses = Array.from(document.querySelectorAll('input[name="ob-diagnoses"]:checked')).map(el => el.value); 
+        appState.userProfile.intolerances = Array.from(document.querySelectorAll('input[name="ob-intolerances"]:checked')).map(el => el.value); 
+        appState.userProfile.preferences = Array.from(document.querySelectorAll('input[name="ob-preferences"]:checked')).map(el => el.value); 
+        appState.userProfile.allergiesOther = obProfileAllergiesOther.value.trim();
+
+        // 2. Save Selected Phase (Slide 4)
+        const selectedPhase = obPhaseSelectValue.value;
+        if (selectedPhase) {
+            appState.userProfile.currentPhase = selectedPhase;
+        }
+
+        // 3. Save Dynamic Phase Settings (Slide 5)
+        switch (selectedPhase) {
+            case 'pre-treatment':
+                appState.userProfile.phaseSettings["pre-treatment"] = {
+                    startDate: obPtStartDate.value || null,
+                    durationNum: parseInt(obPtDurationNum.value, 10) || 4,
+                    durationUnit: obPtDurationUnit.value,
+                    rules: obPtRules.value
+                };
+                break;
+            case 'restriction':
+                appState.userProfile.phaseSettings["restriction"] = {
+                    startDate: obRsStartDate.value || null,
+                    durationNum: parseInt(obRsDurationNum.value, 10) || 4,
+                    durationUnit: obRsDurationUnit.value
+                };
+                
+                // Save medication settings
+                const newMedications = [];
+                obMedList.querySelectorAll('.medication-settings-item').forEach((item, index) => {
+                    const time = item.querySelector('.med-input-time').value;
+                    const name = item.querySelector('.med-input-name').value;
+                    if (time && name) {
+                        newMedications.push({ id: `m${index + 1}`, time: time, name: name });
+                    }
+                });
+                
+                appState.userProfile.medicationTracker = {
+                    startDate: obMedStartDate.value || null,
+                    duration: parseInt(obMedDuration.value, 10) || 0,
+                    medications: newMedications,
+                    log: {} // Start with a fresh log
+                };
+                break;
+        }
+        
+        // 4. Mark onboarding as complete
+        appState.userProfile.hasCompletedOnboarding = true;
+        
+        // 5. Save everything to localStorage
+        localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+
+        // 6. Refresh the app UI
+        updateUiForPhase(appState.userProfile.currentPhase);
+        setupProfilePage(); // Sync the main profile page with new data
+        
+        showToast("Welcome! Your profile is all set.", appState.userProfile.currentPhase);
+    }
+
+    // --- END: ONBOARDING LOGIC ---
+
     /**
      * Renders the "Today's Medication" card on the Home screen.
      */
@@ -2513,6 +2801,111 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Log Entry Modal Listeners ---
     logModalClose.addEventListener('click', closeLogModal);
     logFormCancelBtn.addEventListener('click', closeLogModal);
+
+    // --- Onboarding Modal Listeners ---
+    if (onboardingModal) {
+        onboardingModalClose.addEventListener('click', closeOnboardingModal);
+        openOnboardingBtn.addEventListener('click', () => {
+            closeSide(); // Close side menu
+            showOnboardingModal(); // Show onboarding
+        });
+
+        // Slide 1: Welcome
+        onboardingActionSetup.addEventListener('click', () => {
+            appState.onboardingSetupPath = 'setup';
+            appState.onboardingHistory.push('onboarding-slide-profile');
+            goToOnboardingSlide('onboarding-slide-profile');
+        });
+        onboardingActionKnowMore.addEventListener('click', () => {
+            appState.onboardingSetupPath = 'knowMore';
+            appState.onboardingHistory.push('onboarding-slide-know-more');
+            goToOnboardingSlide('onboarding-slide-know-more');
+        });
+
+        // Footer: Navigation
+        onboardingBtnSkip.addEventListener('click', closeOnboardingModal);
+        
+        onboardingBtnBack.addEventListener('click', () => {
+            appState.onboardingHistory.pop(); // Remove current slide
+            const prevSlide = appState.onboardingHistory[appState.onboardingHistory.length - 1]; // Get previous
+            if (prevSlide) {
+                goToOnboardingSlide(prevSlide);
+            }
+        });
+        
+        onboardingBtnNext.addEventListener('click', () => {
+            let nextSlideId = '';
+            const currentSlide = appState.onboardingHistory[appState.onboardingHistory.length - 1];
+            
+            if (currentSlide === 'onboarding-slide-know-more') {
+                nextSlideId = 'onboarding-slide-profile';
+            } else if (currentSlide === 'onboarding-slide-profile') {
+                nextSlideId = 'onboarding-slide-phase-select';
+            } else if (currentSlide === 'onboarding-slide-phase-select') {
+                nextSlideId = 'onboarding-slide-phase-setup';
+            }
+            
+            if (nextSlideId) {
+                appState.onboardingHistory.push(nextSlideId);
+                goToOnboardingSlide(nextSlideId);
+            }
+        });
+        
+        onboardingBtnFinish.addEventListener('click', () => {
+            saveOnboardingData();
+            closeOnboardingModal();
+        });
+        
+        // Slide 4: Phase Select
+        if (obPhaseSelectContainer) {
+            obPhaseSelectContainer.addEventListener('click', (e) => {
+                const clickedButton = e.target.closest('.onboarding-phase-btn');
+                if (!clickedButton) return;
+
+                const phase = clickedButton.dataset.phase;
+
+                // 1. Set the hidden input value
+                obPhaseSelectValue.value = phase;
+
+                // 2. Update button active states
+                obPhaseSelectContainer.querySelectorAll('.onboarding-phase-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                clickedButton.classList.add('active');
+
+                // 3. Enable the 'Next' button
+                onboardingBtnNext.disabled = false;
+                onboardingBtnNext.style.opacity = '1';
+            });
+        }
+
+        // Slide 5: Medication List
+        obMedAddBtn.addEventListener('click', () => {
+            const newId = `ob_med_${obMedCounter++}`;
+            const item = document.createElement('div');
+            item.className = 'medication-settings-item';
+            item.dataset.id = newId;
+            item.innerHTML = `
+                <input type="time" class="med-input-time time-input" value="09:00">
+                <input type="text" class="med-input-name name-input" placeholder="Medication Name">
+                <button type="button" class="medication-remove-btn">&times;</button>
+            `;
+            if (obMedList.querySelector('p')) {
+                obMedList.innerHTML = '';
+            }
+            obMedList.appendChild(item);
+            item.querySelector('.med-input-name').focus();
+        });
+
+        obMedList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('medication-remove-btn')) {
+                e.target.closest('.medication-settings-item').remove();
+                if (obMedList.children.length === 0) {
+                    obMedList.innerHTML = `<p class="text-xs text-subtle text-center">No medications added.</p>`;
+                }
+            }
+        });
+    }
 
     // --- NEW: Food Edit Modal Listeners ---
     foodModalClose.addEventListener('click', closeFoodModal);
