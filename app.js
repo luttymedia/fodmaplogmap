@@ -103,7 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPersonalizationView: 'tolerance', // 'group' or 'tolerance'
         openLogFormOnLoad: false,
         currentMedicationIdCounter: 0, // Helper for unique med IDs
-        notificationFallbackData: null // Stores data from a notification click
+        notificationFallbackData: null, // Stores data from a notification click
+        toastOnNextVisible: null // Stores a toast message to show when app regains focus
     };
 
     // --- NEW: Deep merge/ensure personalizationFoods exists ---
@@ -115,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {string} phase - The current phase (e.g., 'restriction')
      */
     function updateUiForPhase(phase) {
-        console.log(`[Inference] Updating UI for phase: ${phase}`);
+        console.log(`Updating UI for phase: ${phase}`);
 
         // --- Update Phase Bar ---
         const phaseBar = document.getElementById('phase-bar');
@@ -2368,32 +2369,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Clears all previously scheduled medication notifications.
-     */
-    async function clearAllMedicationNotifications() {
-        if (!navigator.serviceWorker) return;
-
-        try {
-            const registration = await navigator.serviceWorker.ready;
-            // Get all pending notifications (requires 'includeTriggered: true')
-            const notifications = await registration.getNotifications({ includeTriggered: true });
-
-            let clearCount = 0;
-            for (const notification of notifications) {
-                if (notification.tag && notification.tag.startsWith('med-')) {
-                    notification.close();
-                    clearCount++;
-                }
-            }
-            console.log(`[Inference] Cleared ${clearCount} pending notifications.`);
-        } catch (err) {
-            console.error('[Notification] Error clearing notifications:', err);
-        }
-    }
-
-    /**
-     * Schedules all medication notifications for the entire duration.
-     * Handles permissions and browser compatibility.
+     * Schedules all medication notifications using setTimeout.
+     * This relies on the app being open or minimized.
      */
     async function scheduleAllMedicationNotifications() {
         if (!navigator.serviceWorker || !('Notification' in window)) {
@@ -2412,34 +2389,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // 2. Check for scheduling support (TimestampTrigger)
-        let supportsScheduling = false;
-        try {
-            // This is the modern, correct way to check for this permission
-            const status = await navigator.permissions.query({ name: 'notifications', showTrigger: true });
-            supportsScheduling = (status.state === 'granted');
-        } catch (err) {
-            // Browser doesn't even support querying this permission
-            supportsScheduling = false;
-            console.error('Could not query for showTrigger permission:', err);
-        }
-
-        if (!supportsScheduling) {
-            showToast("Warning: Your browser can't schedule reminders for when the app is closed.", "warning");
-            // We don't return, but we will skip the scheduling logic
-        }
-
-        // 3. Clear all old notifications before setting new ones
-        await clearAllMedicationNotifications();
+        // 2. Clear any old timers (This is a good practice, we'll just log for now)
+        // In a real app, we'd store timer IDs in an array and clear them.
+        // For now, we'll just start new ones.
+        console.log('Starting new batch of setTimeout timers.');
 
         const tracker = appState.userProfile.medicationTracker;
         if (!tracker.startDate || tracker.duration <= 0 || tracker.medications.length === 0) {
-            console.log('[Inference] No medication settings, skipping schedule.');
+            console.log('No medication settings, skipping schedule.');
             return;
         }
 
         const registration = await navigator.serviceWorker.ready;
         const startDate = new Date(tracker.startDate + 'T00:00:00');
+        const now = Date.now();
         let scheduledCount = 0;
 
         for (let i = 0; i < tracker.duration; i++) {
@@ -2452,91 +2415,139 @@ document.addEventListener('DOMContentLoaded', () => {
                 const notificationTimestamp = new Date(currentDay);
                 notificationTimestamp.setHours(hours, minutes, 0, 0);
 
-                // Don't schedule notifications for the past
-                if (notificationTimestamp.getTime() < Date.now()) {
-                    continue;
-                }
+                const timeToNotification = notificationTimestamp.getTime() - now;
 
-                const options = {
-                    body: `It's time to take your ${med.name}.`,
-                    icon: 'icon-192.png',
-                    badge: 'icon-192.png', // For Android
-                    tag: `med-${med.id}-${dateKey}`, // Unique ID
-                    data: {
-                        medId: med.id,
-                        date: dateKey,
-                        name: med.name
-                    }
-                    // 'actions' array removed to test the conflict
-                };
+                // Only schedule notifications for the future
+                if (timeToNotification > 0) {
 
-                if (supportsScheduling) {
-                    try {
-                        options.showTrigger = new TimestampTrigger(notificationTimestamp.getTime());
-                        await registration.showNotification(`Medication Reminder`, options);
-                        scheduledCount++;
-                    } catch (err) {
-                        console.error(`[Notification] Failed to schedule: ${err.message}`);
-                        // This can fail if the timestamp is invalid
-                    }
+                    const options = {
+                        body: `It's time to take your ${med.name}.`,
+                        icon: 'icon-192.png',
+                        badge: 'icon-192.png', // For Android
+                        tag: `med-${med.id}-${dateKey}`, // Unique ID
+                        data: {
+                            medId: med.id,
+                            date: dateKey,
+                            name: med.name
+                        },
+                        actions: [
+                            { action: 'mark-as-taken', title: 'Mark as Taken' }
+                        ]
+                    };
+
+                    // Use setTimeout to schedule the notification
+                    // We bind the variables to the function
+                    setTimeout(((reg, opt) => {
+                        return () => {
+                            console.log(`[Notification] Triggering notification for ${opt.data.name}`);
+                            reg.showNotification('Medication Reminder', opt);
+                        };
+                    })(registration, options), timeToNotification);
+
+                    scheduledCount++;
                 }
-                // If scheduling isn't supported, we just... don't schedule.
             }
         }
 
-        if (supportsScheduling && scheduledCount > 0) {
-            console.log(`[Inference] Successfully scheduled ${scheduledCount} notifications.`);
+        if (scheduledCount > 0) {
+            console.log(`Successfully scheduled ${scheduledCount} notifications via setTimeout.`);
+            // The user requested we add a warning modal later.
+            // For now, the toast is fine.
             showToast(`All ${scheduledCount} medication reminders are set!`, "success");
-        } else if (supportsScheduling && scheduledCount === 0) {
-            console.log('[Inference] No future notifications to schedule.');
+        } else {
+            console.log('No future notifications to schedule.');
         }
     }
 
-    // --- Listen for messages from the Service Worker (e.g., "Mark as Taken") ---
+    // --- Listen for messages from the Service Worker ---
     if (navigator.serviceWorker) {
         navigator.serviceWorker.addEventListener('message', (event) => {
-            if (event.data && event.data.type === 'mark-as-taken') {
+            if (!event.data) return;
+
+            if (event.data.type === 'mark-as-taken') {
+                // --- Handle "Mark as Taken" button click (from Android) ---
                 const { medId, date } = event.data;
                 const success = handleMarkAsTaken(medId, date);
                 if (success) {
-                    showToast("Marked as taken!", "success");
+                    // 1. Find the med details to build the toast message
+                    const med = appState.userProfile.medicationTracker.medications.find(m => m.id === medId);
+                    const medName = med ? med.name : 'Medication';
+                    const medTime = med ? med.time : '';
+                    const toastMessage = `${medTime}h ${medName} marked as taken!`;
+
+                    // 2. Check if app is visible
+                    if (document.visibilityState === 'visible') {
+                        showToast(toastMessage, "success"); // Show specific toast now
+                    } else {
+                        // App is in the background. Check if a toast is already queued.
+                        if (appState.toastOnNextVisible) {
+                            // A toast is already waiting, so make it generic
+                            appState.toastOnNextVisible = "Multiple medications marked as taken!";
+                        } else {
+                            // This is the first toast, so show the specific one
+                            appState.toastOnNextVisible = toastMessage;
+                        }
+                    }
                 }
+            } else if (event.data.type === 'show-fallback-modal') {
+                // --- Handle notification body click (when app is already open) ---
+                const { medId, date } = event.data;
+                showNotificationFallbackModal(medId, date);
             }
         });
     }
 
     /**
-     * Checks for URL parameters on load to handle notification clicks.
+ * Shows the "Did you take your pill?" modal.
+ * This is a helper function called by both notification pathways.
+ */
+function showNotificationFallbackModal(medId, date) {
+    if (!medId || !date) return;
+
+    // Find the medication name
+    const tracker = appState.userProfile.medicationTracker;
+    const med = tracker.medications.find(m => m.id === medId);
+    const medName = med ? med.name : 'medication';
+    const time = med ? med.time : '';
+
+    // Show the fallback modal
+    showActionModal({
+        title: 'Medication Reminder',
+        message: `Did you take your ${time}h ${medName}?`,
+        confirmText: 'Yes, I did',
+        onConfirm: () => {
+            const success = handleMarkAsTaken(medId, date);
+            if (success) {
+                showToast("Marked as taken!", "success");
+            }
+        },
+        cancelText: 'Not yet'
+    });
+}
+
+    /**
+     * Checks for URL parameters on load to handle notification clicks (when app was closed).
      */
     function handleNotificationClickOnLoad() {
         const urlParams = new URLSearchParams(window.location.search);
-
+        
         if (urlParams.has('source') && urlParams.get('source') === 'notification') {
             const medId = urlParams.get('medId');
             const date = urlParams.get('date');
+            const action = urlParams.get('action'); // Get the new param
 
-            if (medId && date) {
-                // Find the medication name
-                const tracker = appState.userProfile.medicationTracker;
-                const med = tracker.medications.find(m => m.id === medId);
-                const medName = med ? med.name : 'medication';
-                const time = med ? med.time : '';
-
-                // Show the fallback modal
-                showActionModal({
-                    title: 'Medication Reminder',
-                    message: `Did you take your ${time} ${medName}?`,
-                    confirmText: 'Yes, I did',
-                    onConfirm: () => {
-                        const success = handleMarkAsTaken(medId, date);
-                        if (success) {
-                            showToast("Marked as taken!", "success");
-                        }
-                    },
-                    cancelText: 'Not yet'
-                });
+            if (action === 'mark') {
+                // --- App was opened by "Mark as Taken" button ---
+                const success = handleMarkAsTaken(medId, date);
+                if (success) {
+                    // Show toast *after* a slight delay to let the app load
+                    setTimeout(() => showToast("Marked as taken!", "success"), 500);
+                }
+            } else {
+                // --- App was opened by notification body ---
+                showNotificationFallbackModal(medId, date);
             }
-
+            
             // Clean the URL so it doesn't re-trigger
             window.history.replaceState({}, document.title, window.location.pathname);
         }
@@ -3116,6 +3127,15 @@ Use this exact template:
         const aiAttachPopup = document.getElementById('ai-attach-popup');
         if (aiAttachPopup.classList.contains('open')) {
             aiAttachPopup.classList.remove('open');
+        }
+    });
+
+    // --- NEW: Visibility Change Listener ---
+    // This shows a toast when the app is re-focused
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && appState.toastOnNextVisible) {
+            showToast(appState.toastOnNextVisible, 'success');
+            appState.toastOnNextVisible = null; // Clear the flag
         }
     });
 

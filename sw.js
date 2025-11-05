@@ -71,27 +71,58 @@ self.addEventListener('notificationclick', (event) => {
 
   notification.close();
 
+  // --- NEW: Smart URL & Message Logic ---
+  const urlToOpen = `/?source=notification&medId=${data.medId}&date=${data.date}`;
+  let postMessageType;
+  let urlActionParam;
+
   if (action === 'mark-as-taken') {
-    // --- Action Button Clicked (Android) ---
-    // Send a message to any open app clients
-    event.waitUntil(
-      clients.matchAll({ type: 'window' }).then((clientList) => {
-        for (const client of clientList) {
-          client.postMessage({
-            type: 'mark-as-taken',
-            medId: data.medId,
-            date: data.date
-          });
-        }
-      })
-    );
+    // --- User clicked "Mark as Taken" button ---
+    postMessageType = 'mark-as-taken';
+    urlActionParam = '&action=mark';
   } else {
-    // --- Notification Body Clicked (All Devices) ---
-    // Open the app, adding URL params for the in-app fallback
-    event.waitUntil(
-      clients.openWindow(`/?source=notification&medId=${data.medId}&date=${data.date}`)
-    );
+    // --- User clicked notification body ---
+    postMessageType = 'show-fallback-modal';
+    urlActionParam = '&action=show';
   }
+  
+  event.waitUntil(
+    clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    }).then((clientList) => {
+      
+      // Try to find an open client
+      let appClient = null;
+      for (const client of clientList) {
+        if (client.url.includes(self.registration.scope)) {
+          appClient = client;
+          break;
+        }
+      }
+
+      if (appClient) {
+        // --- App is already open ---
+        // 1. Send it the correct message
+        appClient.postMessage({
+          type: postMessageType,
+          medId: data.medId,
+          date: data.date
+        });
+        
+        // 2. ONLY focus if the user clicked the *body*
+        if (postMessageType === 'show-fallback-modal') {
+            return appClient.focus();
+        }
+        // If 'mark-as-taken', we don't focus. The update happens silently.
+        
+      } else {
+        // --- App is closed ---
+        // Open a new window with the correct URL params
+        return clients.openWindow(urlToOpen + urlActionParam);
+      }
+    })
+  );
 });
 
 // --- NEW: NOTIFICATION CLOSE HANDLER ---
