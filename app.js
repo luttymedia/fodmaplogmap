@@ -2413,10 +2413,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 2. Check for scheduling support (TimestampTrigger)
-        const supportsScheduling = 'showTrigger' in Notification.prototype;
+        let supportsScheduling = false;
+        try {
+            // This is the modern, correct way to check for this permission
+            const status = await navigator.permissions.query({ name: 'notifications', showTrigger: true });
+            supportsScheduling = (status.state === 'granted');
+        } catch (err) {
+            // Browser doesn't even support querying this permission
+            supportsScheduling = false;
+            console.error('Could not query for showTrigger permission:', err);
+        }
+
         if (!supportsScheduling) {
             showToast("Warning: Your browser can't schedule reminders for when the app is closed.", "warning");
-            // We don't return, as the service worker click handler is still useful
+            // We don't return, but we will skip the scheduling logic
         }
 
         // 3. Clear all old notifications before setting new ones
