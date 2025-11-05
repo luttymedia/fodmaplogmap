@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isPersonal) renderPersonalizationSummary();
         
         // --- 4. Update Nav Tab Label ---
-        const reintroTab = document.querySelector('button[data-page="reintroduction-log"]');
+        const reintroTab = document.querySelector('button[data-page="daily-log"]');
         if (reintroTab) {
             const reintroTabText = reintroTab.querySelector('span');
             const reintroTabIcon = reintroTab.querySelector('i');
