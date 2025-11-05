@@ -14,7 +14,7 @@ self.addEventListener('install', (event) => {
       .then((cache) => {
         return cache.addAll(FILES_TO_CACHE);
       })
-      .then(() => self.skipWaiting()) // <-- ADD THIS LINE: Forces the new SW to activate
+      .then(() => self.skipWaiting()) // <-- Forces the new SW to activate
   );
 });
 
@@ -58,6 +58,46 @@ self.addEventListener('activate', (event) => {
           return caches.delete(key);
         }
       }));
-    }).then(() => self.clients.claim()) // <-- ADD THIS: Makes the active SW control the page immediately
+    }).then(() => self.clients.claim()) // <-- Makes the active SW control the page immediately
   );
+});
+
+// --- NEW: NOTIFICATION CLICK HANDLER ---
+
+self.addEventListener('notificationclick', (event) => {
+  const notification = event.notification;
+  const data = notification.data;
+  const action = event.action;
+
+  notification.close();
+
+  if (action === 'mark-as-taken') {
+    // --- Action Button Clicked (Android) ---
+    // Send a message to any open app clients
+    event.waitUntil(
+      clients.matchAll({ type: 'window' }).then((clientList) => {
+        for (const client of clientList) {
+          client.postMessage({
+            type: 'mark-as-taken',
+            medId: data.medId,
+            date: data.date
+          });
+        }
+      })
+    );
+  } else {
+    // --- Notification Body Clicked (All Devices) ---
+    // Open the app, adding URL params for the in-app fallback
+    event.waitUntil(
+      clients.openWindow(`/?source=notification&medId=${data.medId}&date=${data.date}`)
+    );
+  }
+});
+
+// --- NEW: NOTIFICATION CLOSE HANDLER ---
+// This listener is mostly for logging, but ensures the
+// service worker handles all notification events.
+self.addEventListener('notificationclose', (event) => {
+  // You can add logging here later if needed
+  console.log('Notification was closed.', event.notification.tag);
 });

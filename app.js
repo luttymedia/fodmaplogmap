@@ -102,7 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentDateSort: 'newest', // 'newest' or 'oldest'
         currentPersonalizationView: 'tolerance', // 'group' or 'tolerance'
         openLogFormOnLoad: false,
-        currentMedicationIdCounter: 0 // Helper for unique med IDs
+        currentMedicationIdCounter: 0, // Helper for unique med IDs
+        notificationFallbackData: null // Stores data from a notification click
     };
 
     // --- NEW: Deep merge/ensure personalizationFoods exists ---
@@ -2134,8 +2135,8 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Saves the medication settings from the modal to appState and localStorage.
      */
-    function saveMedicationSettings(e) {
-        e.preventDefault();
+    async function saveMedicationSettings(e) {
+    e.preventDefault();
 
         const newMedications = [];
         medModalSettingsList.querySelectorAll('.medication-settings-item').forEach((item, index) => {
@@ -2163,9 +2164,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Re-render the home page card
         renderMedicationTracker();
 
-        // Close modal and show toast
-        medModal.classList.add('hidden'); // Use direct class manipulation, not closeMedicationSettings()
-        showToast("Medication settings saved!", "success");
+        // Close modal
+        medModal.classList.add('hidden'); // Use direct class manipulation
+
+        // Show toast *before* scheduling
+        showToast("Medication settings saved! Setting reminders...", "success");
+
+        // Now schedule (this might show another toast)
+        await scheduleAllMedicationNotifications();
     }
 
     /**
@@ -2329,6 +2335,203 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // --- NEW: NOTIFICATION LOGIC ---
+
+    /**
+     * Marks a medication as taken, saves, and re-renders.
+     * @param {string} medId - The medication ID (e.g., 'm1')
+     * @param {string} dateKey - The date string (e.g., '2025-11-05')
+     * @returns {boolean} - True if an update was made, false if already taken.
+     */
+    function handleMarkAsTaken(medId, dateKey) {
+        if (!medId || !dateKey) return false;
+
+        console.log(`[Notification] Marking ${medId} as taken for ${dateKey}`);
+        const tracker = appState.userProfile.medicationTracker;
+
+        if (!tracker.log[dateKey]) {
+            tracker.log[dateKey] = [];
+        }
+
+        if (!tracker.log[dateKey].includes(medId)) {
+            tracker.log[dateKey].push(medId);
+            localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+
+            // If we're on the restriction page, re-render
+            if (restrictionCard && !restrictionCard.classList.contains('hidden')) {
+                renderMedicationTracker();
+            }
+            return true; // Return success
+        }
+        return false; // Already taken
+    }
+
+    /**
+     * Clears all previously scheduled medication notifications.
+     */
+    async function clearAllMedicationNotifications() {
+        if (!navigator.serviceWorker) return;
+
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            // Get all pending notifications (requires 'includeTriggered: true')
+            const notifications = await registration.getNotifications({ includeTriggered: true });
+
+            let clearCount = 0;
+            for (const notification of notifications) {
+                if (notification.tag && notification.tag.startsWith('med-')) {
+                    notification.close();
+                    clearCount++;
+                }
+            }
+            console.log(`[Inference] Cleared ${clearCount} pending notifications.`);
+        } catch (err) {
+            console.error('[Notification] Error clearing notifications:', err);
+        }
+    }
+
+    /**
+     * Schedules all medication notifications for the entire duration.
+     * Handles permissions and browser compatibility.
+     */
+    async function scheduleAllMedicationNotifications() {
+        if (!navigator.serviceWorker || !('Notification' in window)) {
+            showToast("Notifications are not supported on this browser.", "warning");
+            return;
+        }
+
+        // 1. Check for permission
+        let permission = Notification.permission;
+        if (permission === 'default') {
+            permission = await Notification.requestPermission();
+        }
+
+        if (permission === 'denied') {
+            showToast("Notifications blocked. Please enable them in settings.", "warning");
+            return;
+        }
+
+        // 2. Check for scheduling support (TimestampTrigger)
+        const supportsScheduling = 'showTrigger' in Notification.prototype;
+        if (!supportsScheduling) {
+            showToast("Warning: Your browser can't schedule reminders for when the app is closed.", "warning");
+            // We don't return, as the service worker click handler is still useful
+        }
+
+        // 3. Clear all old notifications before setting new ones
+        await clearAllMedicationNotifications();
+
+        const tracker = appState.userProfile.medicationTracker;
+        if (!tracker.startDate || tracker.duration <= 0 || tracker.medications.length === 0) {
+            console.log('[Inference] No medication settings, skipping schedule.');
+            return;
+        }
+
+        const registration = await navigator.serviceWorker.ready;
+        const startDate = new Date(tracker.startDate + 'T00:00:00');
+        let scheduledCount = 0;
+
+        for (let i = 0; i < tracker.duration; i++) {
+            const currentDay = new Date(startDate);
+            currentDay.setDate(startDate.getDate() + i);
+            const dateKey = currentDay.toLocaleDateString('en-CA'); // 'YYYY-MM-DD'
+
+            for (const med of tracker.medications) {
+                const [hours, minutes] = med.time.split(':');
+                const notificationTimestamp = new Date(currentDay);
+                notificationTimestamp.setHours(hours, minutes, 0, 0);
+
+                // Don't schedule notifications for the past
+                if (notificationTimestamp.getTime() < Date.now()) {
+                    continue;
+                }
+
+                const options = {
+                    body: `It's time to take your ${med.name}.`,
+                    icon: 'icon-192.png',
+                    badge: 'icon-192.png', // For Android
+                    tag: `med-${med.id}-${dateKey}`, // Unique ID
+                    data: {
+                        medId: med.id,
+                        date: dateKey,
+                        name: med.name
+                    }
+                    // 'actions' array removed to test the conflict
+                };
+
+                if (supportsScheduling) {
+                    try {
+                        options.showTrigger = new TimestampTrigger(notificationTimestamp.getTime());
+                        await registration.showNotification(`Medication Reminder`, options);
+                        scheduledCount++;
+                    } catch (err) {
+                        console.error(`[Notification] Failed to schedule: ${err.message}`);
+                        // This can fail if the timestamp is invalid
+                    }
+                }
+                // If scheduling isn't supported, we just... don't schedule.
+            }
+        }
+
+        if (supportsScheduling && scheduledCount > 0) {
+            console.log(`[Inference] Successfully scheduled ${scheduledCount} notifications.`);
+            showToast(`All ${scheduledCount} medication reminders are set!`, "success");
+        } else if (supportsScheduling && scheduledCount === 0) {
+            console.log('[Inference] No future notifications to schedule.');
+        }
+    }
+
+    // --- Listen for messages from the Service Worker (e.g., "Mark as Taken") ---
+    if (navigator.serviceWorker) {
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'mark-as-taken') {
+                const { medId, date } = event.data;
+                const success = handleMarkAsTaken(medId, date);
+                if (success) {
+                    showToast("Marked as taken!", "success");
+                }
+            }
+        });
+    }
+
+    /**
+     * Checks for URL parameters on load to handle notification clicks.
+     */
+    function handleNotificationClickOnLoad() {
+        const urlParams = new URLSearchParams(window.location.search);
+
+        if (urlParams.has('source') && urlParams.get('source') === 'notification') {
+            const medId = urlParams.get('medId');
+            const date = urlParams.get('date');
+
+            if (medId && date) {
+                // Find the medication name
+                const tracker = appState.userProfile.medicationTracker;
+                const med = tracker.medications.find(m => m.id === medId);
+                const medName = med ? med.name : 'medication';
+                const time = med ? med.time : '';
+
+                // Show the fallback modal
+                showActionModal({
+                    title: 'Medication Reminder',
+                    message: `Did you take your ${time} ${medName}?`,
+                    confirmText: 'Yes, I did',
+                    onConfirm: () => {
+                        const success = handleMarkAsTaken(medId, date);
+                        if (success) {
+                            showToast("Marked as taken!", "success");
+                        }
+                    },
+                    cancelText: 'Not yet'
+                });
+            }
+
+            // Clean the URL so it doesn't re-trigger
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+    // --- END: NOTIFICATION LOGIC ---
 
     // --- NEW: Food Edit Modal Controller ---
     let currentEditingFoodId = null; // State for the modal
@@ -2838,6 +3041,7 @@ Use this exact template:
             document.documentElement.style.setProperty('--header-height', `${totalTopHeight}px`);
         } 
     };
+    handleNotificationClickOnLoad(); // Check for notification click
     navigateTo('home');
     setupLogForm();
     // renderLogEntries(); // <-- REMOVED
