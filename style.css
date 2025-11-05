@@ -708,6 +708,10 @@ body {
 .phase-reintroduction { background-color: var(--phase-color-reintro); }
 .phase-personalization { background-color: var(--phase-color-personal); }
 
+/* New Phase Progress Bar Fills */
+.bg-phase-pre { background-color: var(--phase-color-pre); }
+.bg-phase-restrict { background-color: var(--phase-color-restriction); }
+
 /* New Personalization Summary Tags */
 .summary-tag {
     display: inline-block;
