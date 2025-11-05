@@ -93,9 +93,39 @@
                     <div class="p-3 bg-slate-50 rounded-lg text-sm text-secondary">
                         <p><strong>Goal:</strong> Avoid all high-FODMAP foods to establish a baseline. Use the AI Assistant to check foods before you eat!</p>
                     </div>
-                    <button id="home-ai-shortcut-btn" class="w-full bg-accent font-semibold py-2.5 px-4 rounded-full hover:bg-accent-dark transition-colors duration-300 shadow flex items-center justify-center gap-2"> 
-                        <i class="fas fa-brain"></i> Check Food with AI
-                    </button>
+                    <div id="medication-tracker-card" class="hidden">
+
+                        <div id="medication-tracker-empty" class="hidden">
+                            <div class="relative p-3 bg-slate-100 rounded-lg text-center">
+                                <h3 class="font-semibold text-secondary mb-2">💊 Medication Tracker</h3>
+                                <p class="text-sm text-subtle mb-3">Track your antibiotics or other medications.</p>
+                                <button id="medication-setup-btn" class="w-full bg-adaptive font-semibold py-2 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow">
+                                    Set Up Tracker
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="medication-tracker-full" class="hidden relative p-3 bg-slate-100 rounded-lg">
+                            <button id="medication-settings-btn" class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200" title="Edit Medication Settings">
+                                <i class="fas fa-cog text-sm"></i>
+                            </button>
+                            <h3 class="font-semibold text-secondary mb-3 text-center">💊 Today's Medication</h3>
+
+                            <div id="medication-checklist" class="space-y-2 mb-3">
+                                </div>
+
+                            <div id="medication-log-accordion" class="accordion-group bg-white">
+                                <div class="accordion-header" style="padding-top: 0.5rem; padding-bottom: 0.5rem;">
+                                    <h3 style="font-size: 0.875rem;">View Medication Log</h3>
+                                    <i class="fas fa-chevron-down accordion-icon" style="font-size: 0.875rem;"></i>
+                                </div>
+                                <div class="accordion-body">
+                                    <div id="medication-log-history" class="p-2 text-xs text-subtle">
+                                        </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="relative p-3 bg-green-50 border border-green-200 rounded-lg">
                         <button id="restriction-settings-btn" class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-green-600 hover:bg-green-100" title="Edit Settings">
                             <i class="fas fa-cog text-sm"></i>
@@ -685,5 +715,44 @@
             </form>
         </div>
     </div>
+        <div id="medication-settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[80] hidden">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                    <h3 id="medication-modal-title" class="text-lg font-semibold text-secondary">Medication Settings</h3>
+                    <button id="medication-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+                </div>
+
+                <form id="medication-modal-form">
+                    <div class="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+                        <div>
+                            <label for="medication-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Start Date</label>
+                            <input type="date" id="medication-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        </div>
+                        <div>
+                            <label for="medication-duration" class="block mb-1.5 text-sm font-medium text-secondary">Duration (in days)</label>
+                            <input type="number" id="medication-duration" placeholder="e.g., 12" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        </div>
+
+                        <hr>
+
+                        <div>
+                            <h4 class="text-sm font-medium text-secondary mb-2">Medication Schedule</h4>
+                            <div id="medication-settings-list" class="space-y-2">
+                                <p class="text-xs text-subtle text-center">No medications added.</p>
+                            </div>
+                            <button type="button" id="medication-add-btn" class="w-full mt-2 p-2 text-sm font-semibold text-primary border-2 border-dashed border-slate-300 rounded-lg hover:bg-slate-50">
+                                <i class="fas fa-plus mr-1"></i> Add Medication
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl">
+                        <button type="button" id="medication-modal-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button>
+                        <button type="submit" id="medication-modal-save-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Save Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </body>
 </html>

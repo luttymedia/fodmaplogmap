@@ -37,7 +37,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const planChallengeBtn = document.getElementById('plan-challenge-btn');
     const fodmapSelectContainer = document.getElementById('custom-fodmap-select-container');
     const fodmapHiddenInput = document.getElementById('log-fodmap-group');
-    
+
+    // --- Medication Tracker Elements ---
+    const medicationTrackerCard = document.getElementById('medication-tracker-card');
+    const medicationTrackerEmpty = document.getElementById('medication-tracker-empty');
+    const medicationTrackerFull = document.getElementById('medication-tracker-full');
+    const medicationChecklist = document.getElementById('medication-checklist');
+    const medicationLogAccordion = document.getElementById('medication-log-accordion');
+    const medicationLogHistory = document.getElementById('medication-log-history');
+        
     // --- Application State Object ---
 
     // Define the default profile structure
@@ -61,7 +69,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 durationUnit: 'weeks'
             }
         },
-        personalizationFoods: []
+        personalizationFoods: [],
+            medicationTracker: {
+            startDate: null,      // e.g., '2025-10-20'
+            duration: 12,         // e.g., 12 (for 12 days)
+            medications: [
+                // { id: 'm1', time: '09:00', name: 'Antibiotic' },
+                // { id: 'm2', time: '14:00', name: 'Antibiotic' }
+            ],
+            log: {
+                // '2025-10-20': ['m1', 'm2'], // Stores IDs of taken doses
+                // '2025-10-21': ['m1']
+            }
+        }
     };
 
     const savedProfile = localStorage.getItem('fodmapUserProfile') ? JSON.parse(localStorage.getItem('fodmapUserProfile')) : {};
@@ -81,7 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentLogView: 'date', // 'group' or 'date'
         currentDateSort: 'newest', // 'newest' or 'oldest'
         currentPersonalizationView: 'tolerance', // 'group' or 'tolerance'
-        openLogFormOnLoad: false
+        openLogFormOnLoad: false,
+        currentMedicationIdCounter: 0 // Helper for unique med IDs
     };
 
     // --- NEW: Deep merge/ensure personalizationFoods exists ---
@@ -148,6 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderPreTreatmentCard(); // Add this call
         }
         if (isRestrict) renderCountdown('restriction');
+        if (isRestrict) renderMedicationTracker();
         if (isReintro) renderHomePage(); // This is the reintro progress list
         if (isPersonal) renderPersonalizationSummary();
         
@@ -1089,6 +1111,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const fodmapOptions = document.getElementById('custom-fodmap-select-options');
         const fodmapHiddenInput = document.getElementById('log-fodmap-group');
 
+        // --- Medication Tracker Elements ---
+        const medicationTrackerCard = document.getElementById('medication-tracker-card');
+        const medicationTrackerEmpty = document.getElementById('medication-tracker-empty');
+        const medicationTrackerFull = document.getElementById('medication-tracker-full');
+        const medicationChecklist = document.getElementById('medication-checklist');
+        const medicationLogAccordion = document.getElementById('medication-log-accordion');
+        const medicationLogHistory = document.getElementById('medication-log-history');
+
         // Populate options list (only if it's empty)
         if (fodmapOptions.children.length === 0) {
             FODMAP_GROUP_DATA.forEach(group => {
@@ -1840,6 +1870,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const rsModalSaveBtn = document.getElementById('restriction-modal-save-btn');
     // --- END: Restriction Settings Modal Elements ---
 
+    // --- NEW: Medication Settings Modal Elements ---
+    const medModal = document.getElementById('medication-settings-modal');
+    const medModalClose = document.getElementById('medication-modal-close');
+    const medModalForm = document.getElementById('medication-modal-form');
+    const medModalStartDate = document.getElementById('medication-start-date');
+    const medModalDuration = document.getElementById('medication-duration');
+    const medModalSettingsList = document.getElementById('medication-settings-list');
+    const medModalAddBtn = document.getElementById('medication-add-btn');
+    const medModalCancel = document.getElementById('medication-modal-cancel');
+    const medModalSaveBtn = document.getElementById('medication-modal-save-btn');
+    // --- END: Medication Settings Modal Elements ---
+
     // --- NEW: Symptom Check Helper ---
     const hasSymptoms = (entry) => {
         const symptoms = entry.symptoms || ['None'];
@@ -2019,6 +2061,273 @@ document.addEventListener('DOMContentLoaded', () => {
         rsModalClose.addEventListener('click', closeRestrictionModal);
         rsModalCancel.addEventListener('click', closeRestrictionModal);
         rsModalForm.addEventListener('submit', saveRestrictionSettings);
+    }
+
+    // --- NEW: Medication Tracker Functions & Listeners ---
+
+    /**
+     * Renders the list of medication inputs in the settings modal.
+     */
+    function renderMedicationSettingsList() {
+        if (!medModalSettingsList) return;
+
+        const medications = appState.userProfile.medicationTracker.medications;
+        appState.currentMedicationIdCounter = 0; // Reset counter
+
+        if (medications.length === 0) {
+            medModalSettingsList.innerHTML = `<p class="text-xs text-subtle text-center">No medications added.</p>`;
+            return;
+        }
+
+        medModalSettingsList.innerHTML = medications.map(med => {
+            // Ensure IDs are unique for this session
+            const uniqueId = med.id || `temp_${appState.currentMedicationIdCounter++}`;
+            return `
+                <div class="medication-settings-item" data-id="${uniqueId}">
+                    <input type="time" class="med-input-time time-input" value="${med.time}">
+                    <input type="text" class="med-input-name name-input" value="${med.name}" placeholder="Medication Name">
+                    <button type="button" class="medication-remove-btn">&times;</button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    /**
+     * Populates and shows the Medication Settings modal.
+     */
+    function showMedicationSettings() {
+        if (!medModal) return;
+        const tracker = appState.userProfile.medicationTracker;
+
+        medModalStartDate.value = tracker.startDate || '';
+        medModalDuration.value = tracker.duration || 12;
+
+        // We MUST re-clone the array to avoid mutation
+        // This gives the modal a temporary copy to work with
+        const tempMeds = tracker.medications.map((med, index) => ({
+            id: `med_${index}`, // Assign temporary stable IDs
+            time: med.time,
+            name: med.name
+        }));
+
+        // Pass this temporary array to the state
+        appState.userProfile.medicationTracker.medications = tempMeds;
+        renderMedicationSettingsList();
+
+        medModal.classList.remove('hidden');
+    }
+
+    /**
+     * Closes and resets the Medication Settings modal.
+     */
+    function closeMedicationSettings() {
+        if (medModal) {
+            medModal.classList.add('hidden');
+            // IMPORTANT: Reset the medications array by re-loading from localStorage
+            // This discards any un-saved changes from the modal
+            const savedProfile = localStorage.getItem('fodmapUserProfile') ? JSON.parse(localStorage.getItem('fodmapUserProfile')) : {};
+            const savedTracker = (savedProfile && savedProfile.medicationTracker) ? savedProfile.medicationTracker : defaultProfile.medicationTracker;
+            appState.userProfile.medicationTracker = savedTracker;
+        }
+    }
+
+    /**
+     * Saves the medication settings from the modal to appState and localStorage.
+     */
+    function saveMedicationSettings(e) {
+        e.preventDefault();
+
+        const newMedications = [];
+        medModalSettingsList.querySelectorAll('.medication-settings-item').forEach((item, index) => {
+            const time = item.querySelector('.med-input-time').value;
+            const name = item.querySelector('.med-input-name').value;
+            if (time && name) { // Only save if both fields are filled
+                newMedications.push({
+                    id: `m${index + 1}`, // Create new, clean IDs
+                    time: time,
+                    name: name
+                });
+            }
+        });
+
+        appState.userProfile.medicationTracker = {
+            startDate: medModalStartDate.value || null,
+            duration: parseInt(medModalDuration.value, 10) || 0,
+            medications: newMedications,
+            log: appState.userProfile.medicationTracker.log || {} // Preserve the log
+        };
+
+        // Save to localStorage
+        localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+
+        // Re-render the home page card
+        renderMedicationTracker();
+
+        // Close modal and show toast
+        medModal.classList.add('hidden'); // Use direct class manipulation, not closeMedicationSettings()
+        showToast("Medication settings saved!", "success");
+    }
+
+    /**
+     * Renders the "Today's Medication" card on the Home screen.
+     */
+    function renderMedicationTracker() {
+    if (!medicationTrackerCard) return;
+
+    const tracker = appState.userProfile.medicationTracker;
+    const hasSettings = tracker.startDate && tracker.duration > 0 && tracker.medications.length > 0;
+
+    let isActive = false;
+    if (hasSettings) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const start = new Date(tracker.startDate + 'T00:00:00');
+
+        const timeDiff = today.getTime() - start.getTime();
+        const daysElapsed = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+
+        // Check if we are within the duration window
+        isActive = (daysElapsed >= 0 && daysElapsed < tracker.duration);
+    }
+
+    // Show the whole tracker card (it contains both states)
+    medicationTrackerCard.classList.remove('hidden');
+
+    if (isActive) {
+        // --- RENDER FULL STATE ---
+        medicationTrackerFull.classList.remove('hidden');
+        medicationTrackerEmpty.classList.add('hidden');
+
+        const todayKey = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD'
+        const takenToday = tracker.log[todayKey] || [];
+
+        medicationChecklist.innerHTML = tracker.medications.map(med => {
+            const isChecked = takenToday.includes(med.id);
+            return `
+                <div class="medication-checklist-item">
+                    <input type="checkbox" id="med-${med.id}" data-id="${med.id}" ${isChecked ? 'checked' : ''}>
+                    <label for="med-${med.id}">
+                        <span class="time">${med.time}</span> - ${med.name}
+                    </label>
+                </div>
+            `;
+        }).join('');
+
+        // 4. Render Log History (simple version)
+        const logKeys = Object.keys(tracker.log).sort().reverse(); // Newest first
+        if (logKeys.length === 0) {
+            medicationLogHistory.innerHTML = `<p class="text-center italic">No history yet.</p>`;
+        } else {
+            medicationLogHistory.innerHTML = logKeys.slice(0, 10).map(dateKey => { // Show last 10 days
+                const takenCount = tracker.log[dateKey].length;
+                const totalCount = tracker.medications.length;
+                const dateString = new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                return `<p><strong>${dateString}:</strong> Took ${takenCount} of ${totalCount} doses.</p>`;
+            }).join('');
+        }
+    } else {
+        // --- RENDER EMPTY STATE ---
+        // (Or "finished" state)
+        medicationTrackerFull.classList.add('hidden');
+        medicationTrackerEmpty.classList.remove('hidden');
+    }
+}
+
+    // --- Wire up all Medication Tracker listeners ---
+    if (medModal) {
+        // Settings cog on the home card
+        document.getElementById('medication-settings-btn').addEventListener('click', showMedicationSettings);
+
+        // "Set Up" button on the empty state card
+        document.getElementById('medication-setup-btn').addEventListener('click', showMedicationSettings);
+
+        // Modal close/cancel
+        medModalClose.addEventListener('click', closeMedicationSettings);
+        medModalCancel.addEventListener('click', closeMedicationSettings);
+
+        // Modal save
+        medModalForm.addEventListener('submit', saveMedicationSettings);
+
+        // Add new medication row in modal
+        medModalAddBtn.addEventListener('click', () => {
+            const newId = `temp_${appState.currentMedicationIdCounter++}`;
+            const item = document.createElement('div');
+            item.className = 'medication-settings-item';
+            item.dataset.id = newId;
+            item.innerHTML = `
+                <input type="time" class="med-input-time time-input" value="09:00">
+                <input type="text" class="med-input-name name-input" placeholder="Medication Name">
+                <button type="button" class="medication-remove-btn">&times;</button>
+            `;
+
+            // Clear the "empty" message if it's there
+            if (medModalSettingsList.querySelector('p')) {
+                medModalSettingsList.innerHTML = '';
+            }
+            medModalSettingsList.appendChild(item);
+            item.querySelector('.med-input-name').focus();
+        });
+
+        // Remove medication row in modal (using delegation)
+        medModalSettingsList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('medication-remove-btn')) {
+                e.target.closest('.medication-settings-item').remove();
+
+                // Check if list is now empty
+                if (medModalSettingsList.children.length === 0) {
+                    medModalSettingsList.innerHTML = `<p class="text-xs text-subtle text-center">No medications added.</p>`;
+                }
+            }
+        });
+
+        // Checklist on home card (using delegation)
+        medicationChecklist.addEventListener('change', (e) => {
+            if (e.target.matches('input[type="checkbox"]')) {
+                const medId = e.target.dataset.id;
+                const todayKey = new Date().toLocaleDateString('en-CA');
+
+                // Ensure the log array exists for today
+                if (!appState.userProfile.medicationTracker.log[todayKey]) {
+                    appState.userProfile.medicationTracker.log[todayKey] = [];
+                }
+
+                const takenList = appState.userProfile.medicationTracker.log[todayKey];
+
+                if (e.target.checked) {
+                    // Add to list if not already present
+                    if (!takenList.includes(medId)) {
+                        takenList.push(medId);
+                    }
+                    // Apply line-through style via label
+                    e.target.nextElementSibling.classList.add('strikethrough'); 
+                } else {
+                    // Remove from list
+                    appState.userProfile.medicationTracker.log[todayKey] = takenList.filter(id => id !== medId);
+                    // Remove line-through style via label
+                    e.target.nextElementSibling.classList.remove('strikethrough');
+                }
+
+                // Save changes
+                localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+
+                // Re-render the log history (but not the whole card)
+                const logKeys = Object.keys(appState.userProfile.medicationTracker.log).sort().reverse();
+                medicationLogHistory.innerHTML = logKeys.slice(0, 10).map(dateKey => {
+                    const takenCount = appState.userProfile.medicationTracker.log[dateKey].length;
+                    const totalCount = appState.userProfile.medicationTracker.medications.length;
+                    const dateString = new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    return `<p><strong>${dateString}:</strong> Took ${takenCount} of ${totalCount} doses.</p>`;
+                }).join('');
+            }
+        });
+
+        // Log accordion expand/collapse
+        medicationLogAccordion.addEventListener('click', (e) => {
+            const header = e.target.closest('.accordion-header');
+            if (header) {
+                header.parentElement.classList.toggle('expanded');
+            }
+        });
     }
 
     // --- NEW: Food Edit Modal Controller ---
@@ -2536,7 +2845,13 @@ Use this exact template:
     setupProfilePage();
     updateUiForPhase(appState.userProfile.currentPhase); // This now handles all initial rendering
     document.getElementById('log-date').valueAsDate = new Date();
-    calculatePadding();
+
+    // --- Calculate Padding ---
+    // Run on DOM load for a fast first paint
+    calculatePadding(); 
+    // Run on Window load to correct for image/asset loading
+    window.addEventListener('load', calculatePadding); 
+    // Run on resize
     window.addEventListener('resize', calculatePadding);
 
     // --- Swipe Navigation ---

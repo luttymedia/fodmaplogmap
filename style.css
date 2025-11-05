@@ -1131,3 +1131,85 @@ body {
     font-weight: 600;
 }
 /* --- END: Phase-Adaptive Toast Colors --- */
+
+/* --- START: Medication Tracker Styles --- */
+
+/* Styles for the dynamic list in the settings modal */
+.medication-settings-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* gap-2 */
+    background-color: #f8fafc; /* bg-slate-50 */
+    padding: 0.5rem; /* p-2 */
+    border-radius: 0.5rem; /* rounded-lg */
+}
+.medication-settings-item input {
+    width: 100%;
+    border: 1px solid #cbd5e1; /* border-slate-300 */
+    border-radius: 0.5rem; /* rounded-lg */
+    padding: 0.5rem; /* p-2 */
+    font-size: 0.875rem; /* text-sm */
+}
+.medication-settings-item .time-input {
+    flex-basis: 110px; /* Give time input a fixed base size */
+}
+.medication-settings-item .name-input {
+    flex-grow: 1; /* Allow name input to grow */
+}
+.medication-remove-btn {
+    flex-shrink: 0;
+    width: 1.75rem; /* w-7 */
+    height: 1.75rem; /* h-7 */
+    border: none;
+    background-color: #e2e8f0; /* bg-slate-200 */
+    color: var(--color-text-subtle);
+    border-radius: 9999px; /* rounded-full */
+    cursor: pointer;
+}
+.medication-remove-btn:hover {
+    background-color: #fecaca; /* bg-red-200 */
+    color: var(--color-error);
+}
+
+/* Styles for the checklist on the home page card */
+.medication-checklist-item {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    padding: 0.5rem 0.75rem; /* py-2 px-3 */
+    border-radius: 0.5rem; /* rounded-lg */
+    border: 1px solid #e2e8f0; /* border-slate-200 */
+}
+.medication-checklist-item input[type="checkbox"] {
+    width: 1.25rem; /* w-5 */
+    height: 1.25rem; /* h-5 */
+    margin-right: 0.75rem; /* mr-3 */
+    flex-shrink: 0;
+    accent-color: var(--color-adaptive-bg); /* Use phase color */
+}
+.medication-checklist-item label {
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600;
+    color: var(--color-text-base);
+}
+.medication-checklist-item label .time {
+    font-weight: 700;
+}
+.medication-checklist-item label.strikethrough {
+    text-decoration: line-through;
+    color: var(--color-text-subtle);
+}
+.medication-checklist-item input[type="checkbox"]:checked + label {
+    text-decoration: line-through;
+    color: var(--color-text-subtle);
+}
+
+/* Styles for the log history */
+#medication-log-history p {
+    padding: 0.25rem 0.5rem;
+    border-bottom: 1px solid #f1f5f9; /* border-slate-100 */
+}
+#medication-log-history p:last-child {
+    border-bottom: none;
+}
+/* --- END: Medication Tracker Styles --- */
