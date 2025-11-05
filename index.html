@@ -69,7 +69,10 @@
                     <div class="p-3 bg-slate-50 rounded-lg text-sm text-secondary">
                         <p><strong>Goal:</strong> Follow your specific diet rules to calm symptoms before your treatment and the Restriction phase begin.</p>
                     </div>
-                    <div class="p-3 bg-slate-50 rounded-lg">
+                    <div class="relative p-3 bg-slate-100 rounded-lg">
+                        <button id="pretreatment-rules-settings-btn" class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200" title="Edit Diet Rules">
+                            <i class="fas fa-cog text-sm"></i>
+                        </button>
                         <h3 class="font-semibold text-secondary mb-2">My Diet Rules:</h3>
                         <ul id="home-pretreatment-rules-list" class="list-disc list-inside text-muted space-y-1 text-sm">
                             </ul>
@@ -397,7 +400,7 @@
                         </div>
                         
                         <div>
-                            <label for="food-modal-group" class="block mb-1 text-sm font-medium text-secondary">Food Group*</label>
+                            <label for="food-modal-group" class="block mb-1 text-sm font-medium text-secondary">Food Group</label>
                             <select id="food-modal-group" class="w-full p-2.5 border border-slate-300 rounded-xl bg-white">
                                 </select>
                         </div>
@@ -727,11 +730,14 @@
             </div>
             
             <div class="flex-1 overflow-y-auto px-6 pb-6">
-                <div id="onboarding-slide-welcome" class="onboarding-slide space-y-6 text-center">
-                    <img src="fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" class="h-10 mx-auto">
-                    <h2 class="text-2xl font-semibold text-secondary">Welcome to FODMAP LOGMAP!</h2>
-                    <p class="text-secondary text-base">Your personal companion for navigating the Low FODMAP diet and repairing your gut.</p>
-                    <div class="space-y-3 pt-4">
+                <div id="onboarding-slide-welcome" class="onboarding-slide flex flex-col justify-between h-full">
+                    <div class="text-center space-y-6">
+                        <img src="fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" class="h-10 mx-auto">
+                        
+                        <img src="onboarding1.png" alt="Welcome to FODMAP LOGMAP" class="w-full max-w-xs mx-auto rounded-2xl">
+                    </div>
+                    
+                    <div class="space-y-3">
                         <button id="onboarding-action-setup" class="w-full bg-adaptive font-semibold py-3 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow text-base">
                             Start Setup
                         </button>
@@ -817,8 +823,8 @@
                     </div>
                 </div>
 
-                <div id="onboarding-slide-phase-setup" class="onboarding-slide hidden space-y-4">
-                    <h2 id="onboarding-phase-setup-title" class="text-2xl font-semibold text-secondary text-center mb-4">Set Up Your Phase</h2>
+                <div id="onboarding-slide-phase-setup" class="onboarding-slide hidden h-full">
+                    
 
                     <div id="onboarding-setup-pre-treatment" class="onboarding-phase-content hidden space-y-3">
                         <h3 class="font-semibold text-secondary">Pre-Treatment Setup</h3>
@@ -840,7 +846,7 @@
                         </div>
                         <div>
                             <label for="onboarding-pretreatment-rules" class="block mb-1.5 text-sm font-medium text-secondary">Diet Rules (one per line)</label>
-                            <textarea id="onboarding-pretreatment-rules" rows="3" class="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="e.g., Avoid: Lactose"></textarea>
+                            <textarea id="onboarding-pretreatment-rules" rows="6" class="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="e.g., Avoid: Lactose"></textarea>
                         </div>
                     </div>
 
@@ -880,13 +886,17 @@
                         </button>
                     </div>
 
-                    <div id="onboarding-setup-reintroduction" class="onboarding-phase-content hidden space-y-4 text-center">
-                        <i class="fas fa-flask-vial text-5xl text-primary my-4"></i>
+                    <div id="onboarding-setup-reintroduction" class="onboarding-phase-content hidden onboarding-slide-spaced">
+                        
+                        <img src="onboarding2.png" alt="Ready for Reintroduction" class="w-full max-w-xs rounded-2xl">
+
                         <p class="text-muted">No extra setup needed! Your goal is to log your challenges. When adding an entry, use the <strong>✨ Plan My Challenge</strong> button to get AI-powered ideas for your test foods.</p>
                     </div>
                     
-                    <div id="onboarding-setup-personalization" class="onboarding-phase-content hidden space-y-4 text-center">
-                        <i class="fas fa-magic-wand-sparkles text-5xl text-primary my-4"></i>
+                    <div id="onboarding-setup-personalization" class="onboarding-phase-content hidden onboarding-slide-spaced">
+                        
+                        <img src="onboarding3.png" alt="Welcome to Your Final Diet" class="w-full max-w-xs rounded-2xl">
+
                         <p class="text-muted">You're all set! A great place to start is the <strong>✨ Auto-Scan Log</strong> button on your Home screen. It will read your log history to help build your personal safe food list.</p>
                     </div>
                 </div>

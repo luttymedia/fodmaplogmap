@@ -1306,3 +1306,20 @@ body {
     color: #581c87; /* text-purple-800 */
 }
 /* --- END: Onboarding Modal Styles --- */
+
+/* --- Vertical Alignment Fix for Image/Text Slides --- */
+.onboarding-slide-spaced {
+    height: 100%; /* Ensure it fills the parent container */
+    display: grid;
+    /* Grid structure: 1st row for image, 2nd row for spacer/gap, 3rd row for text */
+    grid-template-rows: auto 1fr auto;
+    text-align: center;
+}
+.onboarding-slide-spaced img {
+    grid-row: 1; /* Place image at the top */
+    margin: 0 auto; /* Center the image */
+}
+.onboarding-slide-spaced p {
+    grid-row: 3; /* Place text at the bottom */
+}
+/* --- END Vertical Alignment Fix --- */

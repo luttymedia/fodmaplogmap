@@ -2065,7 +2065,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- NEW: Pre-Treatment Modal Listeners ---
     if (ptModal) {
-        document.getElementById('pretreatment-settings-btn').addEventListener('click', showPreTreatmentModal);
+        const ptSettingsBtn = document.getElementById('pretreatment-settings-btn');
+        const ptRulesBtn = document.getElementById('pretreatment-rules-settings-btn'); // New button
+
+        if (ptSettingsBtn) {
+            ptSettingsBtn.addEventListener('click', showPreTreatmentModal);
+        }
+        if (ptRulesBtn) { // Add listener for new button
+            ptRulesBtn.addEventListener('click', showPreTreatmentModal);
+        }
+        
         ptModalClose.addEventListener('click', closePreTreatmentModal);
         ptModalCancel.addEventListener('click', closePreTreatmentModal);
         ptModalForm.addEventListener('submit', savePreTreatmentSettings);
@@ -2363,25 +2372,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Show the correct sub-content
                 const phase = obPhaseSelectValue.value;
-                const titleEl = document.getElementById('onboarding-phase-setup-title');
-                onboardingPhaseContent.forEach(content => content.classList.add('hidden'));
+                onboardingPhaseContent.forEach(content => content.classList.add('hidden')); // Keep this line to hide all setups
                 
                 let targetContent;
                 switch (phase) {
                     case 'pre-treatment':
-                        titleEl.textContent = 'Pre-Treatment Setup';
                         targetContent = document.getElementById('onboarding-setup-pre-treatment');
                         break;
                     case 'restriction':
-                        titleEl.textContent = 'Restriction Setup';
                         targetContent = document.getElementById('onboarding-setup-restriction');
                         break;
                     case 'reintroduction':
-                        titleEl.textContent = 'Ready for Reintroduction!';
                         targetContent = document.getElementById('onboarding-setup-reintroduction');
                         break;
                     case 'personalization':
-                        titleEl.textContent = 'Welcome to Your Final Diet!';
                         targetContent = document.getElementById('onboarding-setup-personalization');
                         break;
                 }
