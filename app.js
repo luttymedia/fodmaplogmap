@@ -2845,14 +2845,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }).join('');
             }
         });
-
-        // Log accordion expand/collapse
-        medicationLogAccordion.addEventListener('click', (e) => {
-            const header = e.target.closest('.accordion-header');
-            if (header) {
-                header.parentElement.classList.toggle('expanded');
-            }
-        });
     }
 
     // --- NEW: Food Edit Modal Controller ---
