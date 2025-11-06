@@ -29,9 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const logFormSubmitBtn = document.getElementById('log-form-submit-btn');
     const logFormCancelBtn = document.getElementById('log-form-cancel-edit');
     // --- Phase-Controlled Elements ---
-    const progressCard = document.getElementById('home-progress-card'); // You'll need to add this ID in index.html
-    const insightsCard = document.getElementById('home-insights-card'); // You'll need to add this ID in index.html
+    const progressCard = document.getElementById('home-progress-card');
+    const insightsCard = document.getElementById('home-insights-card');
     const pretreatmentCard = document.getElementById('home-pre-treatment-card');
+    const chartCard = document.getElementById('home-chart-card');
     const restrictionCard = document.getElementById('home-restriction-card');
     const personalizationCard = document.getElementById('home-personalization-card');
     const planChallengeBtn = document.getElementById('plan-challenge-btn');
@@ -138,6 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         personalizationFoods: [],
+            uiSettings: {
+                isProgressExpanded: true
+            },
             medicationTracker: {
             startDate: null,      // e.g., '2025-10-20'
             duration: 12,         // e.g., 12 (for 12 days)
@@ -180,6 +184,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- NEW: Deep merge/ensure personalizationFoods exists ---
     appState.userProfile.personalizationFoods = appState.userProfile.personalizationFoods || [];
+
+    // Ensure uiSettings exists and has its defaults
+    appState.userProfile.uiSettings = {
+        ...(defaultProfile.uiSettings || {}), // Get defaults (isProgressExpanded: true)
+        ...(savedProfile.uiSettings || {}) // Override with saved settings
+    };
 
     /**
      * Updates the UI contextually based on the user's current phase.
@@ -235,6 +245,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Insights card: Show for Reintro ONLY
         if (insightsCard) insightsCard.classList.toggle('hidden', !isReintro);
+
+        // Chart card: Show for Reintro ONLY
+        if (chartCard) chartCard.classList.toggle('hidden', !isReintro);
 
         // --- Call Home Page Renderers ---
         if (isPretreat) {
@@ -689,9 +702,16 @@ document.addEventListener('DOMContentLoaded', () => {
     cameraUploadInput.addEventListener('change', handleFileSelect);
 
     const summaryContainer = document.getElementById('progress-summary');
+    const homePageContainer = document.getElementById('home');
     const renderHomePage = () => {
         summaryContainer.innerHTML = '';
         let itemsAdded = 0; 
+
+    // --- NEW: Apply saved accordion state ---
+    const progressCardEl = document.getElementById('home-progress-card');
+    if (progressCardEl) {
+        progressCardEl.classList.toggle('expanded', appState.userProfile.uiSettings.isProgressExpanded);
+    }
 
         FODMAP_GROUP_DATA.forEach(groupData => {
             if (groupData.value === "Restriction") return; // Skip this group
@@ -747,7 +767,24 @@ document.addEventListener('DOMContentLoaded', () => {
         renderSymptomChart();
     };
     summaryContainer.addEventListener('click', (e) => {
-        const header = e.target.closest('.progress-item-header'); if (header) { const item = header.parentElement; const expanded = item.classList.contains('expanded'); summaryContainer.querySelectorAll('.progress-item').forEach(i => i.classList.remove('expanded')); if (!expanded) item.classList.add('expanded'); }
+            const header = e.target.closest('.progress-item-header'); if (header) { const item = header.parentElement; const expanded = item.classList.contains('expanded'); summaryContainer.querySelectorAll('.progress-item').forEach(i => i.classList.remove('expanded')); if (!expanded) item.classList.add('expanded'); }
+        });
+        homePageContainer.addEventListener('click', (e) => {
+        const header = e.target.closest('.accordion-header');
+        if (header) {
+            const group = header.parentElement;
+            if (group.classList.contains('accordion-group')) {
+                // Toggle the class
+                const isNowExpanded = group.classList.toggle('expanded');
+
+                // --- NEW: Save the state ---
+                if (group.id === 'home-progress-card') {
+                    appState.userProfile.uiSettings.isProgressExpanded = isNowExpanded;
+                    localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+                }
+                // --- END ---
+            }
+        }
     });
 
     // --- NEW COUNTDOWN RENDERER ---
