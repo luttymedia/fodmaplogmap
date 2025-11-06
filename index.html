@@ -269,7 +269,21 @@
                             <div class="api-key-body">
                                 <p class="text-xs text-subtle mb-2">Get your key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-primary underline">Google AI Studio</a>. This is saved only in your browser.</p> 
                                 <input type="password" id="profile-api-key" placeholder="Enter your Google AI API Key" class="w-full p-2 border border-slate-300 rounded-xl"> 
+
+                            <input type="file" id="import-file-input" class="hidden" accept="application/json">
+                            <h4 class="text-xs font-semibold text-subtle pt-3 border-t border-slate-200 mt-3">Data Management</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button type="button" id="import-data-btn" class="w-full text-center p-2 text-sm font-semibold text-primary bg-slate-100 border border-slate-300 rounded-lg hover:bg-slate-200">
+                                    <i class="fas fa-upload mr-1"></i> Import
+                                </button>
+                                <button type="button" id="export-data-btn" class="w-full text-center p-2 text-sm font-semibold text-primary bg-slate-100 border border-slate-300 rounded-lg hover:bg-slate-200">
+                                    <i class="fas fa-download mr-1"></i> Export
+                                </button>
                             </div>
+                            <button type="button" id="reset-app-btn" class="w-full text-center p-2 text-sm font-semibold text-error bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 mt-2">
+                                <i class="fas fa-trash-alt mr-1"></i> Reset App
+                            </button>
+                        </div>
                         </div>
 
                         <!-- NEW: Phase Countdown Settings -->

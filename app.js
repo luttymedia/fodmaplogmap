@@ -1762,6 +1762,27 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Profile Saved!", "success");
     });
 
+    // --- Data Management Listeners ---
+    const importFileInput = document.getElementById('import-file-input');
+    const importDataBtn = document.getElementById('import-data-btn');
+    const exportDataBtn = document.getElementById('export-data-btn');
+    const resetAppBtn = document.getElementById('reset-app-btn');
+
+    if (importDataBtn && importFileInput) {
+        importDataBtn.addEventListener('click', () => {
+            importFileInput.click(); // Trigger the hidden file input
+        });
+        importFileInput.addEventListener('change', handleImportData);
+    }
+
+    if (exportDataBtn) {
+        exportDataBtn.addEventListener('click', handleExportData);
+    }
+
+    if (resetAppBtn) {
+        resetAppBtn.addEventListener('click', handleResetApp);
+    }
+
     // --- Personalization Tab Listeners (with null checks) ---
     
     // Add listeners for the personalization view toggle buttons
@@ -1975,8 +1996,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (altText && onAltConfirm) {
             actionModalBtnAlt.textContent = altText;
             actionModalBtnAlt.classList.remove('hidden');
+            actionModalBtnConfirm.classList.add('hidden'); // Hide the default blue button
         } else {
             actionModalBtnAlt.classList.add('hidden');
+            actionModalBtnConfirm.classList.remove('hidden'); // Show the default blue button
         }
 
         actionModal.classList.remove('hidden');
@@ -2011,6 +2034,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const closeModal = () => {
             actionModal.classList.add('hidden');
+            actionModalBtnConfirm.classList.remove('hidden'); // Always reset on close
+            actionModalBtnAlt.classList.add('hidden'); // Always reset on close
             // Remove the temporary listeners to avoid memory leaks
             actionModalBtnConfirm.removeEventListener('click', handleConfirm);
             actionModalBtnCancel.removeEventListener('click', handleCancel);
@@ -3287,6 +3312,14 @@ Use this exact template:
         }
     }
 
+    // --- FINAL: Check for onboarding ---
+    if (!appState.userProfile.hasCompletedOnboarding) {
+        // Use a short timeout to let the app finish painting
+        setTimeout(() => {
+            showOnboardingModal();
+        }, 100);
+    }
+
     // --- Global click listener to close popups ---
     window.addEventListener('click', () => {
         // Close custom select
@@ -3302,6 +3335,128 @@ Use this exact template:
             aiAttachPopup.classList.remove('open');
         }
     });
+
+    /**
+     * Packages and downloads the user's data as a JSON file.
+     */
+    function handleExportData() {
+        try {
+            const backupData = {
+                logEntries: appState.logEntries,
+                userProfile: appState.userProfile
+            };
+
+            const dataStr = JSON.stringify(backupData, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+
+            const date = new Date().toISOString().split('T')[0];
+            a.download = `fodmap-logmap-backup-${date}.json`;
+
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            URL.revokeObjectURL(url);
+            showToast("Data exported!", "success");
+
+        } catch (err) {
+            console.error("Export failed:", err);
+            showToast("Data export failed.", "error");
+        }
+    }
+
+    /**
+     * Handles the file selection for importing data.
+     * @param {Event} event - The change event from the file input.
+     */
+    function handleImportData(event) {
+        const file = event.target.files[0];
+        if (!file) {
+            return; // User cancelled
+        }
+        
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            const fileContent = e.target.result; // Store file content
+            
+            // --- NEW: Show confirmation modal FIRST ---
+            showActionModal({
+                title: 'Import Backup',
+                message: 'This will overwrite ALL current data (logs and profile) with the data from this file. This cannot be undone.',
+                confirmText: 'Overwrite',
+                onConfirm: () => {
+                    // --- Logic moved inside onConfirm ---
+                    try {
+                        const importedData = JSON.parse(fileContent); // Parse stored content
+                        
+                        // Basic validation
+                        if (importedData.logEntries && importedData.userProfile) {
+                    // Save to localStorage
+                    localStorage.setItem('fodmapLogEntries', JSON.stringify(importedData.logEntries));
+                    localStorage.setItem('fodmapUserProfile', JSON.stringify(importedData.userProfile));
+
+                    // Show confirmation and reload
+                    showToast("Import successful! Restarting app...", "success");
+
+                    // Reload the app to apply the new state
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+
+                } else {
+                    throw new Error("Invalid file format.");
+                }
+                    } catch (err) {
+                        console.error("Import failed:", err);
+                        showToast("Import failed. File may be invalid.", "error");
+                    }
+                }
+            });
+            // --- END: New modal logic ---
+        };
+        
+        reader.onerror = () => {
+            console.error("File reading failed:", reader.error);
+            showToast("Could not read the file.", "error");
+        };
+
+        reader.readAsText(file);
+
+        // Reset the file input so the same file can be re-uploaded
+        event.target.value = null;
+    }
+
+    /**
+     * Shows a confirmation modal to reset all app data.
+     */
+    function handleResetApp() {
+        showActionModal({
+            title: 'Reset App Data',
+            message: 'Are you sure? This will delete all log entries and profile settings. This action cannot be undone.',
+            altText: 'Delete All', // Use altText for the red button
+            onAltConfirm: () => { // Use onAltConfirm for the logic
+                try {
+                    localStorage.removeItem('fodmapLogEntries');
+                    localStorage.removeItem('fodmapUserProfile');
+
+                    showToast("App data cleared! Restarting...", "success");
+
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+
+                } catch (err) {
+                    console.error("Reset failed:", err);
+                    showToast("Data reset failed.", "error");
+                }
+            }
+        });
+    }
 
     window.appState = appState; // <-- ADD THIS LINE FOR TESTING
 });
