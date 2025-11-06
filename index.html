@@ -718,7 +718,14 @@
                     </button>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <input type="text" id="log-food" placeholder="Food Name" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        <div class="relative">
+                            <input type="text" id="log-food" placeholder="Food Name" class="w-full p-2.5 border border-slate-300 rounded-xl" autocomplete="off">
+                            <button type="button" id="log-food-confirm-btn" class="log-food-confirm-btn" title="Confirm Food Name">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <ul id="log-food-autocomplete" class="autocomplete-suggestions">
+                                </ul>
+                        </div>
                         <input type="text" id="log-dose" placeholder="Dose" class="w-full p-2.5 border border-slate-300 rounded-xl">
                     </div>
                     

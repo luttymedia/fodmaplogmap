@@ -1332,3 +1332,62 @@ body {
     width: 100%;
 }
 /* --- END: Chart.js Styles --- */
+
+/* --- START: Autocomplete Styles --- */
+.autocomplete-suggestions {
+    position: absolute;
+    top: 100%; /* Position right below the input */
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border: 1px solid #ced5dd; /* border-slate-200 */
+    border-top: none; /* Top border is covered by the input */
+    border-radius: 0 0 0.75rem 0.75rem; /* rounded-b-xl */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-top: -2px; /* Pull it up slightly to meet the input */
+    z-index: 90; /* Make sure it's above other modal content */
+    max-height: 150px;
+    overflow-y: auto;
+    display: none; /* Hidden by default */
+}
+.autocomplete-suggestions li {
+    padding: 0.5rem 1rem; /* py-2 px-4 */
+    cursor: pointer;
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600;
+    color: var(--color-text-base);
+    transition: background-color 0.15s ease-in-out;
+}
+.autocomplete-suggestions li:hover {
+    background-color: #f1f5f9; /* bg-slate-100 */
+}
+/* --- END: Autocomplete Styles --- */
+
+/* --- START: Log Food Confirm Button Styles --- */
+.log-food-confirm-btn {
+    position: absolute;
+    right: 0.25rem; /* right-1 */
+    top: 0.25rem; /* top-1 */
+    bottom: 0.25rem; /* bottom-1 */
+    width: 2.25rem; /* w-9 */
+    display: none; /* Hidden by default */
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem; /* text-sm */
+    color: var(--color-adaptive-text);
+    background-color: var(--color-adaptive-bg);
+    border-radius: 9999px; /* rounded-full */
+    cursor: pointer;
+    border: none;
+    opacity: 0.9;
+    transition: opacity 0.2s;
+}
+.log-food-confirm-btn:hover {
+    opacity: 1;
+}
+
+/* Add padding to the food input to make space for the button */
+#log-food {
+    padding-right: 3rem; /* pr-12 */
+}
+/* --- END: Log Food Confirm Button Styles --- */

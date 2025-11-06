@@ -192,6 +192,75 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     /**
+     * Gets a unique, sorted list of all food names from the log and profile.
+     * @returns {string[]} A sorted array of unique, capitalized food names.
+     */
+    function getUniqueFoodNames() {
+        const logFoods = appState.logEntries.map(entry => entry.food.trim());
+        const profileFoods = appState.userProfile.personalizationFoods.map(food => food.name.trim());
+        
+        const allFoods = [...logFoods, ...profileFoods];
+        
+        // Use a Map to store the unique names, preferring the original capitalization
+        // (This makes "Oatmeal" win over "oatmeal" if both exist)
+        const uniqueNamesMap = new Map();
+        allFoods.forEach(name => {
+            const lowerName = name.toLowerCase();
+            if (!uniqueNamesMap.has(lowerName)) {
+                uniqueNamesMap.set(lowerName, name);
+            }
+        });
+
+        // Return a sorted array of the unique, original-cased names
+        return Array.from(uniqueNamesMap.values()).sort((a, b) => a.localeCompare(b));
+    }
+
+    /**
+     * Shows autocomplete suggestions for the log food input.
+     * @param {string[]} matches - Array of matching food names.
+     * @param {HTMLElement} inputElement - The input element to position against.
+     */
+    function showAutocomplete(matches, inputElement) {
+        const suggestionsList = document.getElementById('log-food-autocomplete');
+        if (!suggestionsList) return;
+
+        suggestionsList.innerHTML = ''; // Clear old suggestions
+        if (matches.length === 0) {
+            suggestionsList.style.display = 'none';
+            return;
+        }
+
+        matches.forEach(match => {
+            const li = document.createElement('li');
+            li.textContent = match;
+            li.addEventListener('mousedown', (e) => { // Use mousedown to fire before blur
+                e.preventDefault(); // Prevent input from losing focus
+                inputElement.value = match;
+                hideAutocomplete(); // This will now also hide the check button
+            });
+            suggestionsList.appendChild(li);
+        });
+
+        suggestionsList.style.display = 'block';
+    }
+
+    /**
+     * Hides the autocomplete suggestions.
+     */
+    function hideAutocomplete() {
+        const suggestionsList = document.getElementById('log-food-autocomplete');
+        if (suggestionsList) {
+            suggestionsList.style.display = 'none';
+            suggestionsList.innerHTML = '';
+        }
+        // NEW: Also hide the confirm button
+        const confirmBtn = document.getElementById('log-food-confirm-btn');
+        if (confirmBtn) {
+            confirmBtn.style.display = 'none';
+        }
+    }
+
+    /**
      * Updates the UI contextually based on the user's current phase.
      * This function is called on startup and whenever the phase is changed.
      * @param {string} phase - The current phase (e.g., 'restriction')
@@ -563,6 +632,7 @@ document.addEventListener('DOMContentLoaded', () => {
         logEntryModal.classList.add('hidden');
         resetLogForm(); // Always reset the form on close
         appState.currentlyEditingId = null; // Clear editing state
+        hideAutocomplete(); // NEW: Hide autocomplete
     }
 
     const handleAIQuery = (prompt, title, imageData = null) => {
@@ -1262,6 +1332,66 @@ document.addEventListener('DOMContentLoaded', () => {
                 fodmapTrigger.classList.remove('open');
             }
         });
+
+        // --- NEW: Autocomplete Listeners for Food Input ---
+        const logFoodInput = document.getElementById('log-food');
+        let allFoodNames = []; // Cache for suggestions
+        
+        logFoodInput.addEventListener('focus', () => {
+            // Get all names when the user first focuses
+            allFoodNames = getUniqueFoodNames();
+        });
+
+        logFoodInput.addEventListener('input', () => {
+            const query = logFoodInput.value.trim();
+            const confirmBtn = document.getElementById('log-food-confirm-btn');
+
+            if (query.length < 1) {
+                hideAutocomplete(); // This hides both list and button
+                return;
+            }
+
+            // Show confirm button whenever there is text
+            if (confirmBtn) {
+                confirmBtn.style.display = 'flex';
+            }
+
+            const matches = allFoodNames.filter(name => 
+                name.toLowerCase().includes(query.toLowerCase())
+            );
+            
+            showAutocomplete(matches, logFoodInput);
+        });
+
+        logFoodInput.addEventListener('blur', () => {
+            // We use a short timeout to allow a click on a suggestion
+            // to register before the list is hidden.
+            setTimeout(hideAutocomplete, 200);
+        });
+        logFoodInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent form from submitting
+                
+                // NEW: Trigger the confirm button if it's visible
+                const confirmBtn = document.getElementById('log-food-confirm-btn');
+                if (confirmBtn && confirmBtn.style.display !== 'none') {
+                    confirmBtn.click(); // Programmatically click the button
+                } else {
+                    // Fallback: just move focus
+                    hideAutocomplete();
+                    document.getElementById('log-dose').focus();
+                }
+            }
+        });
+
+        // --- NEW: Confirm Button Click Listener ---
+        const logFoodConfirmBtn = document.getElementById('log-food-confirm-btn');
+        if (logFoodConfirmBtn) {
+            logFoodConfirmBtn.addEventListener('click', () => {
+                hideAutocomplete(); // Hide suggestions and the button itself
+                document.getElementById('log-dose').focus(); // Move focus to Dose
+            });
+        }
         
         // --- Severity Button Setup (Unchanged) ---
         const sevCont = document.getElementById('log-severity'); 
@@ -2047,14 +2177,22 @@ document.addEventListener('DOMContentLoaded', () => {
             actionModalInputContainer.classList.add('hidden');
         }
 
-        // --- NEW: Configure Alt Button ---
+        // --- NEW: Configure Alt & Confirm Buttons ---
+        
+        // Configure Alt Button (Red)
         if (altText && onAltConfirm) {
             actionModalBtnAlt.textContent = altText;
             actionModalBtnAlt.classList.remove('hidden');
-            actionModalBtnConfirm.classList.add('hidden'); // Hide the default blue button
         } else {
             actionModalBtnAlt.classList.add('hidden');
-            actionModalBtnConfirm.classList.remove('hidden'); // Show the default blue button
+        }
+
+        // Configure Confirm Button (Blue)
+        if (onConfirm) { // Check if an onConfirm function was provided
+            actionModalBtnConfirm.textContent = confirmText;
+            actionModalBtnConfirm.classList.remove('hidden');
+        } else {
+            actionModalBtnConfirm.classList.add('hidden');
         }
 
         actionModal.classList.remove('hidden');
@@ -3095,24 +3233,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- NEW: Modal Main Action - SAVE ---
-    foodModalEdit.addEventListener('submit', (e) => {
-        e.preventDefault(); // Stop the form from reloading the page
-
+    /**
+     * Helper function to save (create or update) a food item.
+     * This is called *after* all validation has passed.
+     */
+    function saveFoodData() {
         // 1. Get all the data from the form
         const newFoodData = {
             id: currentEditingFoodId || Date.now(), // Use existing ID or create new one
-            name: foodModalName.value,
+            name: foodModalName.value.trim(),
             group: foodModalGroup.value || null,
             status: foodModalStatus.value,
             doseLogic: foodModalDoseLogic.value || null, // Save null if empty
-            dose: foodModalDose.value,
-            notes: foodModalNotes.value
+            dose: foodModalDose.value.trim(),
+            notes: foodModalNotes.value.trim()
         };
 
-        // 2. Validate required fields
+        // 2. Validate required fields (This is a final check)
         if (!newFoodData.name || !newFoodData.status) {
             showToast("Please fill in all required fields (*).", "warning");
-            return;
+            return; // Should be impossible if validation passed, but good for safety
         }
 
         if (currentEditingFoodId) {
@@ -3135,6 +3275,62 @@ document.addEventListener('DOMContentLoaded', () => {
         closeFoodModal();
         renderPersonalizationSummary();
         showToast("Food saved!", "success");
+    }
+    // --- NEW: Modal Main Action - SAVE (with Validation) ---
+    foodModalEdit.addEventListener('submit', (e) => {
+        e.preventDefault(); // Stop the form from reloading the page
+
+        const newName = foodModalName.value.trim();
+        const newNameLower = newName.toLowerCase();
+        const currentId = currentEditingFoodId; // null if new
+
+        // 1. Check for required fields *first*
+        if (!newName || !foodModalStatus.value) {
+            showToast("Please fill in all required fields (*).", "warning");
+            return;
+        }
+
+        // 2. Check for EXACT duplicate
+        const exactMatch = appState.userProfile.personalizationFoods.find(
+            food => food.name.toLowerCase() === newNameLower && food.id !== currentId
+        );
+
+        if (exactMatch) {
+            showToast(`Error: "${exactMatch.name}" is already in your list.`, "warning");
+            return; // Stop the save
+        }
+
+        // 3. Check for FUZZY "includes" match
+        const similarFoods = appState.userProfile.personalizationFoods.filter(food => {
+            if (food.id === currentId) return false; // Don't compare against self
+            
+            const existingNameLower = food.name.toLowerCase();
+            
+            // Avoid simple plurals being "included" in their singular form
+            // e.g., "apples" includes "apple", but we also check if "apple" includes "apples" (false)
+            if (newNameLower.length > existingNameLower.length) {
+                return newNameLower.includes(existingNameLower);
+            } else {
+                return existingNameLower.includes(newNameLower);
+            }
+        });
+
+        if (similarFoods.length > 0) {
+            // Found a fuzzy match, ask the user
+            showActionModal({
+                title: 'Wait, Similar Food Found',
+                message: `You are adding "${newName}", which is similar to "${similarFoods[0].name}" in your list. Are they different foods?`,
+                confirmText: 'Add as New Food',
+                onConfirm: () => {
+                    saveFoodData(); // User confirmed, proceed with save
+                },
+                cancelText: 'Cancel'
+                // onCancel does nothing, just closes the modal
+            });
+        } else {
+            // No duplicates and no fuzzy matches, save immediately
+            saveFoodData();
+        }
     });
 
     const openGemini = (title) => { geminiTitle.textContent = title; geminiMdl.classList.remove('hidden'); geminiLoader.classList.remove('hidden'); geminiContent.classList.add('hidden'); geminiError.classList.add('hidden'); }; const closeGemini = () => geminiMdl.classList.add('hidden'); geminiClose.addEventListener('click', closeGemini);
