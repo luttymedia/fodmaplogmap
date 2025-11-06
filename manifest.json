@@ -4,8 +4,8 @@
   "start_url": ".",
   "display": "standalone",
   "background_color": "#FFFFFF",
-  "theme_color": "#2d61a0",
-  "description": "Your FODMAP reintroduction companion.",
+  "theme_color": "#000000",
+  "description": "Your gut repair companion.",
   "icons": [
     {
       "src": "icon-192.png",
