@@ -1823,7 +1823,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (importDataBtn && importFileInput) {
         importDataBtn.addEventListener('click', () => {
-            importFileInput.click(); // Trigger the hidden file input
+            // --- NEW: Show confirmation modal FIRST ---
+            showActionModal({
+                title: 'Import Backup',
+                message: "This will overwrite ALL current data (logs and profile) with the data from this file. This cannot be undone.",
+                confirmText: 'Overwrite',
+                onConfirm: () => {
+                    importFileInput.click(); // Trigger the hidden file input
+                }
+            });
         });
         importFileInput.addEventListener('change', handleImportData);
     }
@@ -3556,8 +3564,15 @@ Use this exact template:
      * Packages and downloads the user's data as a JSON file.
      */
     function handleExportData() {
-        try {
-            const backupData = {
+        // --- NEW: Show confirmation modal FIRST ---
+        showActionModal({
+            title: 'Export Data Backup',
+            message: "This will create a backup file containing all your logs and profile settings.\n\nThis file can be used with the 'Import' button to restore your data or move it to a new device. It will be saved to your device's default 'Downloads' folder.",
+            confirmText: 'Export Now',
+            onConfirm: () => {
+                // --- Logic moved inside onConfirm ---
+                try {
+                    const backupData = {
                 logEntries: appState.logEntries,
                 userProfile: appState.userProfile
             };
@@ -3583,6 +3598,9 @@ Use this exact template:
             console.error("Export failed:", err);
             showToast("Data export failed.", "error");
         }
+                // --- END: Logic moved inside onConfirm ---
+            }
+        });
     }
 
     /**
@@ -3594,21 +3612,15 @@ Use this exact template:
         if (!file) {
             return; // User cancelled
         }
-        
+
         const reader = new FileReader();
-        
+
         reader.onload = (e) => {
             const fileContent = e.target.result; // Store file content
-            
-            // --- NEW: Show confirmation modal FIRST ---
-            showActionModal({
-                title: 'Import Backup',
-                message: 'This will overwrite ALL current data (logs and profile) with the data from this file. This cannot be undone.',
-                confirmText: 'Overwrite',
-                onConfirm: () => {
-                    // --- Logic moved inside onConfirm ---
-                    try {
-                        const importedData = JSON.parse(fileContent); // Parse stored content
+
+            // --- Logic is now the main body of onload ---
+            try {
+                const importedData = JSON.parse(fileContent); // Parse stored content
                         
                         // Basic validation
                         if (importedData.logEntries && importedData.userProfile) {
@@ -3625,16 +3637,14 @@ Use this exact template:
                     }, 2000);
 
                 } else {
-                    throw new Error("Invalid file format.");
-                }
-                    } catch (err) {
-                        console.error("Import failed:", err);
-                        showToast("Import failed. File may be invalid.", "error");
-                    }
-                }
-            });
-            // --- END: New modal logic ---
-        };
+                throw new Error("Invalid file format.");
+            }
+        } catch (err) {
+            console.error("Import failed:", err);
+            showToast("Import failed. File may be invalid.", "error");
+        }
+        // --- END: Simplified logic ---
+    };
         
         reader.onerror = () => {
             console.error("File reading failed:", reader.error);
