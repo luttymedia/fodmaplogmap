@@ -244,9 +244,6 @@ document.addEventListener('DOMContentLoaded', () => {
         suggestionsList.style.display = 'block';
     }
 
-    /**
-     * Hides the autocomplete suggestions.
-     */
     function hideAutocomplete() {
         const suggestionsList = document.getElementById('log-food-autocomplete');
         if (suggestionsList) {
@@ -258,6 +255,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (confirmBtn) {
             confirmBtn.style.display = 'none';
         }
+    }
+
+    /**
+     * Converts a string to Title Case.
+     * e.g., "apple slices" -> "Apple Slices"
+     * @param {string} str - The string to convert.
+     * @returns {string} The Title Cased string.
+     */
+    function toTitleCase(str) {
+        if (!str) return '';
+        return str.toLowerCase()
+            .split(' ')
+            .map(word => {
+                if (word.length === 0) return '';
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            })
+            .join(' ');
     }
 
     /**
@@ -1433,7 +1447,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const customSymptomBody = document.getElementById('custom-symptom-body');
 
         const addCustomTag = () => {
-            const symptom = customSymptomInput.value.trim();
+            const symptom = toTitleCase(customSymptomInput.value.trim());
             if (symptom) {
                 const tag = document.createElement('div');
                 tag.className = 'custom-symptom-tag';
@@ -1761,7 +1775,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- NEW: Consistent Validation Block (Request 1 & 2) ---
         const currentPhase = appState.userProfile.currentPhase;
         const selectedGroup = document.getElementById('log-fodmap-group').value;
-        const foodName = document.getElementById('log-food').value.trim();
+        const foodName = toTitleCase(document.getElementById('log-food').value.trim());
         const dose = document.getElementById('log-dose').value.trim();
 
         // Validation Order: Group (if reintro), Name, Dose
@@ -1933,7 +1947,7 @@ document.addEventListener('DOMContentLoaded', () => {
         appState.userProfile.diagnoses = Array.from(document.querySelectorAll('input[name=diagnoses]:checked')).map(el => el.value); 
         appState.userProfile.intolerances = Array.from(document.querySelectorAll('input[name=intolerances]:checked')).map(el => el.value); 
         appState.userProfile.preferences = Array.from(document.querySelectorAll('input[name=preferences]:checked')).map(el => el.value); 
-        appState.userProfile.allergiesOther = document.getElementById('profile-allergies-other').value.trim();
+        appState.userProfile.allergiesOther = toTitleCase(document.getElementById('profile-allergies-other').value.trim());
         appState.userProfile.apiKey = document.getElementById('profile-api-key').value.trim();
 
         // --- 2. Phase-Specific Settings have been removed from this form ---
@@ -2620,7 +2634,7 @@ document.addEventListener('DOMContentLoaded', () => {
         appState.userProfile.diagnoses = Array.from(document.querySelectorAll('input[name="ob-diagnoses"]:checked')).map(el => el.value); 
         appState.userProfile.intolerances = Array.from(document.querySelectorAll('input[name="ob-intolerances"]:checked')).map(el => el.value); 
         appState.userProfile.preferences = Array.from(document.querySelectorAll('input[name="ob-preferences"]:checked')).map(el => el.value); 
-        appState.userProfile.allergiesOther = obProfileAllergiesOther.value.trim();
+        appState.userProfile.allergiesOther = toTitleCase(obProfileAllergiesOther.value.trim());
 
         // 2. Save Selected Phase (Slide 4)
         const selectedPhase = obPhaseSelectValue.value;
@@ -3241,7 +3255,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Get all the data from the form
         const newFoodData = {
             id: currentEditingFoodId || Date.now(), // Use existing ID or create new one
-            name: foodModalName.value.trim(),
+            name: toTitleCase(foodModalName.value.trim()),
             group: foodModalGroup.value || null,
             status: foodModalStatus.value,
             doseLogic: foodModalDoseLogic.value || null, // Save null if empty
