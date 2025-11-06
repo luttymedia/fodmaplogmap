@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FODMAP LOGMAP | Your Gut Repair Companion</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Font: Quicksand -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- App Icons (Lucide) -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Quicksand', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Define the 4 core colors for easy use */
+        :root {
+            --color-brand: #2d61a0; /* Reintro Blue */
+            --color-safe: #8bb744;  /* Restriction Green */
+            --color-limit: #f59e0b; /* Pre-treat Orange */
+            --color-personal: #4a0076; /* Personal Purple */
+        }
+        
+        /* Custom gradient for the brand */
+        .brand-gradient {
+            background-image: linear-gradient(to right, var(--color-brand), var(--color-personal)); /* Blue to Purple */
+        }
+        
+        .brand-text-gradient {
+            background: linear-gradient(to right, var(--color-safe), var(--color-brand)); /* Green to Blue */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- Scroll Animations --- */
+        
+        /* Base state for animated elements */
+        .animate-fade-in,
+        .animate-slide-up {
+            opacity: 0;
+            transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.215, 0.610, 0.355, 1);
+        }
+
+        .animate-slide-up {
+            transform: translateY(40px);
+        }
+
+        /* Visible state */
+        .is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Staggered delay helpers */
+        .delay-100 { transition-delay: 100ms; }
+        .delay-200 { transition-delay: 200ms; }
+        .delay-300 { transition-delay: 300ms; }
+
+    </style>
+</head>
+<body class="bg-white text-slate-800 selection:bg-blue-100">
+
+    <!-- 
+      Header
+      Simple, sticky, and clean.
+    -->
+    <header class="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/60">
+        <nav class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <a class="flex-shrink-0 flex items-center gap-2" href="#" aria-label="FODMAP LOGMAP Home">
+                    <svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="40" height="40" rx="12" fill="var(--color-brand)"/>
+                        <path d="M13 29V11L20.5 17.5L28 11V29L20.5 22.5L13 29Z" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="font-bold text-xl text-slate-900">FODMAP LOGMAP</span>
+                </a>
+                
+                <!-- Desktop Nav -->
+                <div class="hidden md:flex md:items-center md:gap-8">
+                    <a href="#features" class="font-medium text-slate-600 hover:text-blue-600 transition-colors">Features</a>
+                    <a href="#why-us" class="font-medium text-slate-600 hover:text-blue-600 transition-colors">Why Us?</a>
+                    <a href="#download" class="inline-flex items-center justify-center px-5 py-2.5 rounded-full brand-gradient text-white font-semibold shadow-lg hover:shadow-blue-300 transition-all hover:scale-105 transform">
+                        Get the App
+                    </a>
+                </div>
+                
+                <!-- Mobile Menu Button (placeholder) -->
+                <div class="md:hidden">
+                    <button class="text-slate-700">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+
+        <!-- 
+          Hero Section
+          UPDATED: Text and CTA button
+        -->
+        <section class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center overflow-hidden">
+            <div class="animate-fade-in" data-animate>
+                <span class="inline-block px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 font-semibold text-sm animate-slide-up" data-animate>
+                    Your Gut-Friendly Companion
+                </span>
+                
+                <h1 class="mt-6 text-4xl md:text-6xl font-extrabold tracking-tight text-slate-900 animate-slide-up delay-100" data-animate>
+                    Finally. A FODMAP App That
+                    <span class="block brand-text-gradient">Makes Reintroduction Simple.</span>
+                </h1>
+                
+                <p class="mt-6 max-w-2xl mx-auto text-lg md:text-xl text-slate-600 animate-slide-up delay-200" data-animate>
+                    Stop guessing, start living. Ditch the confusing spreadsheets. 
+                    Get <span class="font-bold text-blue-700">AI-powered food checks</span> and discover your triggers 
+                    with a simple, motivating guide.
+                </p>
+                
+                <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-slide-up delay-300" data-animate>
+                    <a href="#download" class="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full brand-gradient text-white text-lg font-semibold shadow-xl hover:shadow-blue-300 transition-all hover:scale-105 transform">
+                        <i data-lucide="smartphone" class="w-5 h-5"></i>
+                        Get for Android
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Hero Image Placeholder -->
+            <div class="mt-16 md:mt-24 animate-fade-in delay-300" data-animate>
+                <img src="https://placehold.co/1000x600/EBF8FF/2D61A0?text=App+Dashboard+Screenshot&font=quicksand" 
+                     alt="Screenshot of the FODMAP LOGMAP app dashboard showing a simple, colorful interface."
+                     class="rounded-3xl shadow-2xl shadow-blue-100 w-full max-w-4xl mx-auto">
+            </div>
+        </section>
+
+        <!-- 
+          Problem Section
+        -->
+        <section class="py-16 md:py-24 bg-orange-50">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <div class="max-w-3xl mx-auto">
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 animate-slide-up" data-animate>
+                        Feeling lost in the reintroduction phase?
+                    </h2>
+                    <p class="mt-5 text-lg text-slate-600 animate-slide-up" data-animate>
+                        You did the hard part—elimination. But now what? 
+                        Most FODMAP apps are either giant, clinical databases (hello, Monash) or 
+                        overcomplicated tracking journals. We get it.
+                    </p>
+                    <p class="mt-4 text-lg text-slate-600 font-semibold animate-slide-up" data-animate>
+                        Feeling better shouldn't be this complicated.
+                    </p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 
+          Features Section
+          UPDATED: First feature card is now AI
+        -->
+        <section id="features" class="py-20 md:py-28 bg-blue-50">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-2xl mx-auto">
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 animate-slide-up" data-animate>
+                        Your Toolkit for a Happy Gut
+                    </h2>
+                    <p class="mt-4 text-lg text-slate-600 animate-slide-up" data-animate>
+                        We built LOGMAP with features that *actually* help you 
+                        find your triggers—without the overwhelm.
+                    </p>
+                </div>
+                
+                <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+                    
+                    <!-- Feature 1: AI Food Assistant -->
+                    <div class="flex flex-col items-center text-center p-6 bg-white rounded-2xl animate-slide-up" data-animate>
+                        <div class="flex-shrink-0 flex items-center justify-center h-16 w-16 rounded-full brand-gradient text-white shadow-lg shadow-blue-200">
+                            <i data-lucide="brain-circuit" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="mt-6 text-xl font-bold text-slate-900">
+                            The AI Food Assistant
+                        </h3>
+                        <p class="mt-3 text-base text-slate-600">
+                            Instantly check any food. Scan a barcode or take a photo of an ingredient list. 
+                            Our AI gives you personalized advice based on your unique profile.
+                        </p>
+                        <img src="https://placehold.co/400x500/F4F4F5/2D61A0?text=Screenshot:+AI+Food+Check&font=quicksand" 
+                             alt="App screenshot showing the AI Assistant checking an ingredient list."
+                             class="mt-6 rounded-xl shadow-lg w-full max-w-xs">
+                    </div>
+                    
+                    <!-- Feature 2: Guided Reintroduction -->
+                    <div class="flex flex-col items-center text-center p-6 bg-white rounded-2xl animate-slide-up delay-100" data-animate>
+                        <div class="flex-shrink-0 flex items-center justify-center h-16 w-16 rounded-full brand-gradient text-white shadow-lg shadow-blue-200">
+                            <i data-lucide="map" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="mt-6 text-xl font-bold text-slate-900">
+                            Guided Reintroduction Steps
+                        </h3>
+                        <p class="mt-3 text-base text-slate-600">
+                            We guide you through reintroducing each FODMAP group (Fructose, Sorbitol, etc.) one by one. 
+                            Clear instructions, simple challenges, and zero guesswork. 
+                            You're in control.
+                        </p>
+                         <img src="https://placehold.co/400x500/F4F4F5/2D61A0?text=Screenshot:+Reintro+Flow&font=quicksand" 
+                             alt="App screenshot showing the guided reintroduction steps."
+                             class="mt-6 rounded-xl shadow-lg w-full max-w-xs">
+                    </div>
+                    
+                    <!-- Feature 3: Personal Safe List -->
+                    <div class="flex flex-col items-center text-center p-6 bg-white rounded-2xl animate-slide-up delay-200" data-animate>
+                        <div class="flex-shrink-0 flex items-center justify-center h-16 w-16 rounded-full brand-gradient text-white shadow-lg shadow-blue-200">
+                            <i data-lucide="sparkles" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="mt-6 text-xl font-bold text-slate-900">
+                            Your Personal 'Forever' List
+                        </h3>
+                        <p class="mt-3 text-base text-slate-600">
+                            As you complete challenges, the app builds your personal "Safe" and "Limit" list. 
+                            It's your unique food map, built *by* you, *for* you. 
+                            This is the ultimate goal!
+                        </p>
+                         <img src="https://placehold.co/400x500/F4F4F5/2D61A0?text=Screenshot:+Safe+List&font=quicksand" 
+                             alt="App screenshot showing the personal 'Safe List'."
+                             class="mt-6 rounded-xl shadow-lg w-full max-w-xs">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 
+          How it Works Section
+          UPDATED: Step 1 and 3 text
+        -->
+        <section class="py-20 md:py-28 bg-white">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-2xl mx-auto">
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 animate-slide-up" data-animate>
+                        Get started in 3 easy steps
+                    </h2>
+                </div>
+                
+                <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
+                    
+                    <!-- Step 1 -->
+                    <div class="flex flex-col items-center animate-slide-up" data-animate>
+                        <img src="https://placehold.co/400x300/EBF8FF/2D61A0?text=Graphic:+Log+Your+Meal&font=quicksand" 
+                             alt="Colorful graphic illustrating logging a meal."
+                             class="rounded-2xl shadow-xl shadow-blue-100">
+                        <h3 class="mt-6 text-xl font-bold text-slate-900">1. Log Your Day</h3>
+                        <p class="mt-2 text-slate-600">Quickly log meals, tap any symptoms, and set a fast 1-5 severity.</p>
+                    </div>
+                    
+                    <!-- Step 2 -->
+                    <div class="flex flex-col items-center animate-slide-up delay-100" data-animate>
+                        <img src="https://placehold.co/400x300/EBF8FF/2D61A0?text=Graphic:+Start+a+Challenge&font=quicksand" 
+                             alt="Colorful graphic illustrating starting a reintroduction challenge."
+                             class="rounded-2xl shadow-xl shadow-blue-100">
+                        <h3 class="mt-6 text-xl font-bold text-slate-900">2. Start a Challenge</h3>
+                        <p class="mt-2 text-slate-600">Pick a FODMAP group and follow the simple, guided reintroduction steps.</p>
+                    </div>
+                    
+                    <!-- Step 3 -->
+                    <div class="flex flex-col items-center animate-slide-up delay-200" data-animate>
+                        <img src="https://placehold.co/400x300/EBF8FF/2D61A0?text=Graphic:+See+Your+Results&font=quicksand" 
+                             alt="Colorful graphic illustrating the personal 'Safe List'."
+                             class="rounded-2xl shadow-xl shadow-blue-100">
+                        <h3 class="mt-6 text-xl font-bold text-slate-900">3. Find Your Foods</h3>
+                        <p class="mt-2 text-slate-600">Our app auto-scans your log to help build your personal, permanent "Safe List".</p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- 
+          Comparison Section ("Why Us?")
+          UPDATED: AI row added, Logging row fixed
+        -->
+        <section id="why-us" class="py-20 md:py-28 bg-green-50">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-2xl mx-auto">
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 animate-slide-up" data-animate>
+                        Designed for <span class="brand-text-gradient">Humans</span>, Not Scientists
+                    </h2>
+                    <p class="mt-4 text-lg text-slate-600 animate-slide-up" data-animate>
+                        We love the science (and the Monash team!), but their app is a clinical database.
+                        LOGMAP is your personal companion, built to be simple.
+                    </p>
+                </div>
+                
+                <div class="mt-12 overflow-x-auto animate-fade-in" data-animate>
+                    <table class="w-full min-w-max text-left border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="p-4 text-lg font-bold text-slate-900">Feature</th>
+                                <th class="p-4 text-lg font-bold brand-gradient text-white rounded-t-lg text-center">
+                                    FODMAP LOGMAP
+                                </th>
+                                <th class="p-4 text-lg font-bold text-slate-600 text-center">
+                                    Other Apps
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr class="bg-white">
+                                <td class="p-4 font-semibold text-slate-700">Main Focus</td>
+                                <td class="p-4 font-semibold text-blue-700 text-center">
+                                    Reintroduction & Personal Logging
+                                </td>
+                                <td class="p-4 text-slate-600 text-center">
+                                    Exhaustive Food Database
+                                </td>
+                            </tr>
+                            <tr class="bg-green-50">
+                                <td class="p-4 font-semibold text-slate-700">AI Assistant</td>
+                                <td class="p-4 font-semibold text-blue-700 text-center">
+                                    Personalized AI food & camera scans
+                                </td>
+                                <td class="p-4 text-slate-600 text-center">
+                                    Static food database (no AI)
+                                </td>
+                            </tr>
+                             <tr class="bg-white">
+                                <td class="p-4 font-semibold text-slate-700">Logging System</td>
+                                <td class="p-4 font-semibold text-blue-700 text-center">
+                                    Fast Symptom Logging (1-5 Severity)
+                                </td>
+                                <td class="p-4 text-slate-600 text-center">
+                                    Complex charts, detailed forms
+                                </td>
+                            </tr>
+                            <tr class="bg-green-50">
+                                <td class="p-4 font-semibold text-slate-700">Guidance</td>
+                                <td class="p-4 font-semibold text-blue-700 text-center">
+                                    Guided, step-by-step reintro path
+                                </td>
+                                <td class="p-4 text-slate-600 text-center">
+                                    Clinical info, mostly self-directed
+                                </td>
+                            </tr>
+                            <tr class="bg-white">
+                                <td class="p-4 font-semibold text-slate-700">The "Feel"</td>
+                                <td class="p-4 font-semibold text-blue-700 text-center">
+                                    Motivational, simple, your companion
+                                </td>
+                                <td class="p-4 text-slate-600 text-center">
+                                    Clinical, academic, a "manual"
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 
+          Testimonials Section
+        -->
+        <section class="py-20 md:py-28 bg-purple-50">
+             <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-2xl mx-auto">
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 animate-slide-up" data-animate>
+                        Don't just take our word for it
+                    </h2>
+                </div>
+                
+                <div class="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    
+                    <!-- Testimonial 1 -->
+                    <div class="p-8 bg-white rounded-2xl shadow-lg shadow-slate-100 animate-slide-up" data-animate>
+                        <div class="flex text-orange-400">
+                           <!-- Star icons -->
+                           <i data-lucide="star" fill="currentColor" class="w-5 h-5"></i>
+                           <i data-lucide="star" fill="currentColor" class="w-5 h-5 ml-1"></i>
+                           <i data-lucide="star" fill="currentColor" class="w-5 h-5 ml-1"></i>
+                           <i data-lucide="star" fill="currentColor" class="w-5 h-5 ml-1"></i>
+                           <i data-lucide="star" fill="currentColor" class="w-5 h-5 ml-1"></i>
+                        </div>
+                        <blockquote class="mt-4 text-lg text-slate-700">
+                            "This app saved my sanity during reintroduction. Seeing the results made it so obvious what my triggers were. I tried Monash and just got lost. This is SO much simpler."
+                        </blockquote>
+                        <footer class="mt-6 flex items-center gap-3">
+                            <img src="https://placehold.co/48x48/F3E8FF/4A0076?text=SK&font=quicksand" alt="Avatar for Sarah K." class="w-12 h-12 rounded-full">
+                            <div>
+                                <div class="font-bold text-slate-900">[Speculation] Sarah K.</div>
+                                <div class="text-sm text-slate-500">LOGMAP User</div>
+                            </div>
+                        </footer>
+                    </div>
+                    
+                    <!-- Testimonial 2 -->
+                    <div class="p-8 bg-white rounded-2xl shadow-lg shadow-slate-100 animate-slide-up delay-100" data-animate>
+                         <div class="flex text-orange-400">
+                           <i data-lucide="star" fill="currentColor" class="w-5 h-5"></i>
+                           <i data-lucide="star" fill="currentColor" class="w-5 h-5 ml-1"></i>
+                           <i data-lucide="star" fill="currentColor" class="w-5 h-5 ml-1"></i>
+                           <i data-lucide="star" fill="currentColor" class="w-5 h-5 ml-1"></i>
+                           <i data-lucide="star" fill="currentColor" class="w-5 h-5 ml-1"></i>
+                        </div>
+                        <blockquote class="mt-4 text-lg text-slate-700">
+                            "The guided steps are a lifesaver. I didn'g know where to start, and LOGMAP held my hand the whole way. Finally feel like I have a plan."
+                        </blockquote>
+                        <footer class="mt-6 flex items-center gap-3">
+                            <img src="https://placehold.co/48x48/F3E8FF/4A0076?text=MD&font=quicksand" alt="Avatar for Mike D." class="w-12 h-12 rounded-full">
+                            <div>
+                                <div class="font-bold text-slate-900">[Speculation] Mike D.</div>
+                                <div class="text-sm text-slate-500">LOGMAP User</div>
+                            </div>
+                        </footer>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- 
+          Final CTA Section
+          UPDATED: Text and CTA button
+        -->
+        <section id="download" class="py-20 md:py-32 brand-gradient text-white">
+            <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-3xl md:text-5xl font-extrabold tracking-tight animate-slide-up" data-animate>
+                    Ready to feel good again?
+                </h2>
+                <p class="mt-6 max-w-2xl mx-auto text-lg md:text-xl text-blue-100 animate-slide-up delay-100" data-animate>
+                    Take the guesswork out of your gut health. Download FODMAP LOGMAP for free
+                    and start your journey back to loving food—the simple way.
+                </d>
+                
+                <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-slide-up delay-200" data-animate>
+                    <a href="#" class="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-white text-blue-700 text-lg font-semibold shadow-2xl transition-all hover:scale-105 transform">
+                        <i data-lucide="smartphone" class="w-5 h-5"></i>
+                        Get for Android
+                    </a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 
+      Footer
+      Simple and clean.
+    -->
+    <footer class="bg-white">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                 <svg width="24" height="24" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="40" height="40" rx="12" fill="var(--color-brand)"/>
+                    <path d="M13 29V11L20.5 17.5L28 11V29L20.5 22.5L13 29Z" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="font-bold text-lg text-slate-900">FODMAP LOGMAP</span>
+            </div>
+            <div class="text-sm text-slate-500">
+                © 2025 FODMAP LOGMAP. All rights reserved.
+            </div>
+            <div class="flex gap-4">
+                <a href="#" class="text-sm text-slate-500 hover:text-blue-600">Privacy Policy</a>
+                <a href="#" class="text-sm text-slate-500 hover:text-blue-600">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+
+    <!-- 
+      JavaScript
+      For icon replacement and scroll animations.
+    -->
+    <script>
+        // Scroll Animation Logic & Icon Init
+        document.addEventListener("DOMContentLoaded", () => {
+            // Init Lucide Icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            } else {
+                console.error('Lucide icons script did not load.');
+            }
+
+            const animatedElements = document.querySelectorAll("[data-animate]");
+
+            if ("IntersectionObserver" in window) {
+                const observer = new IntersectionObserver((entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add("is-visible");
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, {
+                    threshold: 0.1 // Trigger when 10% of the element is visible
+                });
+
+                animatedElements.forEach(el => {
+                    observer.observe(el);
+                    
+                    // Add animation class based on data attribute
+                    const animationType = el.dataset.animateType || "slide-up"; // Default to slide-up
+                    if (animationType === "fade-in") {
+                        el.classList.add("animate-fade-in");
+                    } else {
+                        el.classList.add("animate-slide-up");
+                    }
+                });
+            } else {
+                // Fallback for older browsers
+                animatedElements.forEach(el => {
+                    el.classList.add("is-visible");
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>

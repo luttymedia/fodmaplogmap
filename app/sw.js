@@ -2,8 +2,8 @@ const CACHE_NAME = 'fodmap-logmap-v3';
 const FILES_TO_CACHE = [
   'index.html',
   'manifest.json',
-  'icon-192.png',
-  'icon-512.png',
+  'images/icon-192.png',
+  'images/icon-512.png',
   '/' // Caches the root URL
 ];
 
