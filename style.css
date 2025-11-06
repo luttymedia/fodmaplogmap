@@ -1,0 +1,1325 @@
+:root {
+  --header-height: 100px; /* Fallback, JS will correct */
+
+  /* New Wellness Palette */
+--color-pastel-blue: #334155; /* slate-700 */
+--color-pastel-blue-dark: #1e293b; /* slate-800 */
+  --color-pastel-green: #C5E0A5;
+  --color-pastel-green-dark: #B0D684; /* Hover */
+  --color-text-on-pastel: #ffffff; /* White text */
+  
+  /* Tints for selected tags (from your example) */
+--color-tag-bg: #f1f5f9; /* slate-100 */
+--color-tag-bg-selected: #ced5dd; /* slate-200 (light gray) */
+--color-tag-text-selected: #334155; /* slate-700 */
+  
+  /* Old colors (now for text/specifics) */
+--color-primary-text: #334155; /* slate-700 */
+--color-secondary-text: #1e293b; /* slate-800 */
+  --color-accent-text: #8bb744; /* Original green */
+  
+  /* Semantic Colors (Unchanged) */
+  --color-error: #dc2626;
+  --color-error-dark: #b91c1c;
+  --color-warning: #f59e0b;
+  
+  /* Base Text Colors (Text on white) */
+  --color-text-base: #334155; /* slate-700 */ 
+  --color-text-muted: #475569;
+  --color-text-subtle: #64748b;
+
+  /* New Phase Colors */
+  --phase-color-pre: #f59e0b; /* A warm orange */
+  --phase-color-restriction: #8bb744; /* Your original accent green */
+  --phase-color-reintro: #2d61a0; /* Your original primary blue */
+  --phase-color-personal: #4a0076; /* A deep purple */
+
+  /* New Adaptive Colors (set by JS) */
+  --color-adaptive-bg: #2d61a0; /* Default (Reintro) */
+  --color-adaptive-bg-dark: #283b6c; /* Default (Reintro dark) */
+  --color-adaptive-text: #ffffff; /* Default (White) */
+}
+
+body {
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 500;
+    /* Fallback padding, JS will correct this */
+    padding-top: var(--header-height); 
+    padding-bottom: 80px; /* Fallback for bottom nav */
+    overscroll-behavior-x: none; /* Prevent browser back/forward swipe */
+    color: var(--color-text-base); /* Set base text color */
+}
+.nav-item.active {
+    border-bottom-color: var(--color-primary-text); 
+    color: var(--color-primary-text); 
+    font-weight: 600;
+}
+.nav-item {
+    border-bottom: 2px solid transparent;
+    padding-top: 0.5rem; 
+    padding-bottom: 0.5rem; 
+}
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+.gemini-modal-content, .ai-results-content { white-space: pre-wrap; }
+
+/* New Skeleton Loader Styles */
+.skeleton-wrapper {
+    width: 100%;
+}
+.skeleton-line {
+    height: 1rem; /* h-4 */
+    background-color: #ced5dd; /* bg-slate-200 */
+    border-radius: 0.25rem; /* rounded-md */
+    position: relative;
+    overflow: hidden;
+}
+.skeleton-line + .skeleton-line {
+    margin-top: 0.75rem; /* space-y-3 */
+}
+.skeleton-line::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 150%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, #f1f5f9, transparent); /* bg-slate-100 shimmer */
+    animation: shimmer-animation 1.5s infinite;
+}
+@keyframes shimmer-animation {
+    0% { left: -150%; }
+    100% { left: 150%; }
+}
+
+/* New Text Loader for Modals */
+.modal-loader-text {
+    font-size: 1.125rem; /* text-lg */
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-align: center;
+}
+.modal-loader-text .dot {
+    animation: modal-dot-blink 1.4s infinite;
+    animation-fill-mode: both;
+}
+.modal-loader-text .dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+.modal-loader-text .dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+@keyframes modal-dot-blink {
+    0%, 80%, 100% { opacity: 0; }
+    40% { opacity: 1; }
+}
+
+.log-item-body, .progress-item-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+    padding: 0 1rem;
+}
+.log-item.expanded .log-item-body, .progress-item.expanded .progress-item-body {
+    max-height: 500px; 
+    padding: 0.5rem 1rem 0.5rem 1rem; 
+}
+.log-item.expanded .log-item-header .expand-icon, .progress-item.expanded .progress-item-header .expand-icon {
+    transform: rotate(90deg);
+}
+.profile-checkbox + label {
+    border-radius: 9999px;
+    background-color: var(--color-tag-bg);
+    border: 1px solid var(--color-tag-bg); /* Use border for consistent size */
+    color: var(--color-text-muted); /* Lighter text when unselected */
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+}
+.profile-checkbox:checked + label {
+    background-color: var(--color-tag-bg-selected); 
+    border-color: #cbd5e1; /* slate-300 (light gray border) */ 
+    color: var(--color-tag-text-selected); 
+    border-radius: 9999px;
+}
+#side-menu-modal { transition: transform 0.3s ease-in-out; }
+#side-menu-modal.hidden { transform: translateX(-100%); }
+#side-menu-overlay { transition: opacity 0.3s ease-in-out; }
+#side-menu-overlay.hidden { opacity: 0; pointer-events: none; }
+
+/* Style for the active phase in the side menu */
+#side-menu-phases .log-view-toggle-btn.active {
+    background-color: var(--color-tag-bg-selected); 
+    color: var(--color-text-muted); 
+    font-weight: 700;
+    box-shadow: none; /* Remove the white button shadow */
+}
+
+/* Hover effect for inactive buttons */
+#side-menu-phases .log-view-toggle-btn:not(.active):hover {
+    background-color: #f1f5f9; /* bg-slate-100 */
+}
+
+/* Compact Info Modal Styles */
+#info-modal-content h2 { font-size: 1.25rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.25rem; color: var(--color-secondary); }
+#info-modal-content h3 { font-size: 1.1rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.25rem; color: var(--color-primary-text); }
+#info-modal-content p { color: var(--color-text-muted); line-height: 1.5; margin-bottom: 0.25rem; }
+#info-modal-content ul { margin-top: 0.25rem; }
+#info-modal-content .fodmap-group-card { background-color: #f8fafc; border-left-width: 4px; padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.5rem; }
+.progress-item-body p {
+    font-size: 0.75rem; /* text-xs */
+    line-height: 1rem; /* text-xs */
+    color: #475569; /* text-slate-600 */
+    border-bottom-width: 1px; /* border-b */
+    border-color: #ced5dd; /* border-slate-200 */
+    padding-top: 0.25rem; /* py-1 */
+    padding-bottom: 0.25rem; /* py-1 */
+ }
+ .progress-item-body p:last-child {
+    border-bottom-width: 0px; /* border-b-0 */
+ }
+#info-modal-content .info-note { background-color: #eaf0f7; border-color: #b9cbe0; margin-top: 1rem; padding: 0.75rem; }
+#info-modal-content .info-note h3 { color: var(--color-secondary); }
+main section > div { margin-bottom: 1rem; }
+#log-entries { gap: 0.75rem; }
+.log-item-header, .progress-item-header { padding: 0.75rem; }
+
+/* New Utility Classes */
+.text-primary { color: var(--color-primary-text); }
+.text-secondary { color: var(--color-secondary-text); }
+.text-accent { color: var(--color-accent-text); }
+.text-error { color: var(--color-error); }
+.text-warning { color: var(--color-warning); }
+.text-muted { color: var(--color-text-muted); }
+.text-subtle { color: var(--color-text-subtle); }
+
+.bg-primary { 
+    background-color: var(--color-pastel-blue); 
+    color: var(--color-text-on-pastel);
+    /* font-weight: 700; */
+}
+.bg-adaptive {
+    background-color: var(--color-adaptive-bg);
+    color: var(--color-adaptive-text);
+    /* font-weight: 700; */
+}
+.hover\:bg-primary-dark:hover { 
+    background-color: var(--color-pastel-blue-dark); 
+    color: var(--color-text-on-pastel);
+}
+/* New AI Button Colors */
+.bg-ai-reintro {
+    background-color: #beccdf;
+    color: #283b6c;
+    font-weight: 700;
+}
+.hover\:bg-ai-reintro-dark:hover {
+    background-color: #b0c1d4; /* Darker blue-gray */
+    color: #283b6c;
+}
+
+.bg-accent { 
+    background-color: var(--color-pastel-green); 
+    color: #537429; /* New dark green text */
+    font-weight: 700; /* Re-adding bold for buttons */
+}
+.hover\:bg-accent-dark:hover { 
+    background-color: var(--color-pastel-green-dark); 
+    color: #537429; /* New dark green text */
+}
+
+.bg-error { 
+    background-color: var(--color-error); 
+    color: white;
+}
+.hover\:bg-error-dark:hover { background-color: var(--color-error-dark); }
+
+.border-primary { border-color: var(--color-primary-text); }
+.focus\:ring-primary:focus { box-shadow: 0 0 0 2px var(--color-pastel-blue); }
+
+/* FODMAP Group cards in Info Modal */
+#info-modal-content .border-l-blue-400 { border-color: #60a5fa; }
+#info-modal-content .text-blue-700 { color: #1d4ed8; }
+#info-modal-content .border-l-yellow-400 { border-color: #facc15; }
+#info-modal-content .text-yellow-700 { color: #a16207; }
+#info-modal-content .border-l-orange-400 { border-color: #fb923c; }
+#info-modal-content .text-orange-700 { color: #c2410c; }
+#info-modal-content .border-l-purple-400 { border-color: #c084fc; }
+#info-modal-content .text-purple-700 { color: #7e22ce; }
+#info-modal-content .border-l-teal-400 { border-color: #2dd4bf; }
+#info-modal-content .text-teal-700 { color: #0f766e; }
+#info-modal-content .border-l-green-400 { border-color: #4ade80; }
+#info-modal-content .text-green-700 { color: #15803d; }
+#info-modal-content .border-l-indigo-400 { border-color: #818cf8; }
+#info-modal-content .text-indigo-700 { color: #4338ca; }
+
+/* Styles for Severity Button Group */
+.severity-btn-group {
+    display: flex;
+    border-radius: 9999px; /* rounded-full */
+    overflow: hidden;
+    border: 1px solid #cbd5e1; /* border-slate-300 */
+}
+.severity-btn {
+    flex: 1;
+    padding: 0.5rem 0.25rem; /* py-2 px-1 */
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 500; /* font-medium */
+    text-align: center;
+    background-color: #f1f5f9; /* bg-slate-100 */
+    color: var(--color-text-muted);
+    border-right: 1px solid #cbd5e1;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    -webkit-tap-highlight-color: transparent; /* Disable tap flash on mobile */
+}
+.severity-btn:last-child {
+    border-right: none;
+}
+.severity-btn:hover {
+    background-color: #ced5dd; /* bg-slate-200 */
+}
+.severity-btn.selected {
+    background-color: var(--color-pastel-blue);
+    color: var(--color-text-on-pastel);
+    font-weight: 700;
+    border-color: var(--color-pastel-blue-dark);
+    border-radius: 9999px; /* This was missing */
+}
+
+/* Styles for Log Accordion */
+.accordion-group {
+    background-color: #fff;
+    border-radius: 1rem; /* rounded-2xl */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    border: none;
+    overflow: hidden;
+    margin-bottom: 0.75rem; /* space-y-3 */
+}
+.accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem; /* CHANGED: Was p-4 */
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent; /* Disable tap flash on mobile */
+}
+.accordion-header h3 {
+    font-size: 1rem; /* CHANGED: Was text-lg */
+    font-weight: 600; /* font-semibold */
+    color: var(--color-secondary);
+}
+.accordion-header .accordion-icon {
+    transition: transform 0.3s ease-in-out;
+    font-size: 1rem;
+    color: var(--color-primary);
+}
+.accordion-group.expanded .accordion-icon {
+    transform: rotate(180deg);
+}
+.accordion-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+}
+.accordion-group.expanded .accordion-body {
+    max-height: 1000px; /* arbitrary large number */
+    border-top: 1px solid #ced5dd;
+}
+.accordion-entry {
+    padding: 0.5rem 1rem; /* CHANGED: Was p-3 sm:p-4 */
+    border-bottom: 1px solid #f1f5f9; /* border-slate-100 */
+}
+.accordion-entry:last-child {
+    border-bottom: none;
+}
+.accordion-entry .entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+.accordion-entry .entry-header p {
+    font-size: 0.875rem; /* CHANGED: Added text-sm */
+    font-weight: 600; /* font-semibold */
+    color: var(--color-text-base);
+}
+.accordion-entry .entry-header span {
+    font-size: 0.75rem; /* text-xs */
+    color: var(--color-text-subtle);
+}
+.entry-details {
+    font-size: 0.75rem; /* CHANGED: Was text-sm */
+    color: var(--color-text-muted);
+    line-height: 1.5;
+}
+
+/* Styles for Custom Symptom Tags */
+.custom-symptom-tag {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--color-tag-bg-selected);
+    color: var(--color-tag-text-selected);
+    border: 1px solid var(--color-tag-text-selected);
+    border-radius: 9999px; /* rounded-full */
+    padding: 0.25rem 0.75rem; /* py-1 px-3 */
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 600;
+    margin: 0.25rem; /* m-1 */
+}
+.custom-symptom-tag .remove-tag-btn {
+    margin-left: 0.5rem; /* ml-2 */
+    color: var(--color-tag-text-selected);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.875rem; /* text-sm */
+}
+.custom-symptom-tag .remove-tag-btn:hover {
+    color: var(--color-error);
+}
+
+/* Styles for API Key Accordion */
+.api-key-accordion {
+    border: none;
+    border-radius: 1rem; /* rounded-2xl */
+    background-color: #f8fafc; /* bg-slate-50 */
+    overflow: hidden;
+}
+.api-key-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem; /* p-3 sm:p-4 */
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.api-key-header h3 {
+     margin-bottom: 0; /* Override existing margin */
+}
+.api-key-header .api-key-icon {
+    transition: transform 0.3s ease-in-out;
+    font-size: 0.875rem; /* text-sm */
+    color: var(--color-primary);
+}
+.api-key-accordion.expanded .api-key-icon {
+    transform: rotate(180deg);
+}
+.api-key-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+    padding: 0 1rem; /* ONLY horizontal padding when collapsed */
+}
+.api-key-accordion.expanded .api-key-body {
+    max-height: 2000px; /* Adjust as needed */
+    padding-top: 0.5rem; /* Increased top padding */
+    padding-bottom: 0.75rem; /* Add vertical padding ONLY when expanded */
+}
+
+/* Styles for Custom Select Dropdown */
+.custom-select-container {
+    position: relative;
+}
+.custom-select-trigger {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0.625rem 0.75rem; /* p-2.5 pl-3 pr-3 */
+    border: 1px solid #cbd5e1; /* border-slate-300 */
+    border-radius: 0.75rem; /* rounded-xl */
+    background-color: #fff;
+    cursor: pointer;
+    text-align: left;
+    font-size: 1rem; /* text-base */
+    color: var(--color-text-base);
+}
+.custom-select-trigger.placeholder {
+    color: #94a3b8; /* text-slate-400 placeholder */
+    font-weight: 500;
+}
+.custom-select-trigger:focus {
+    box-shadow: 0 0 0 2px var(--color-pastel-blue);
+    border-color: var(--color-primary-text);
+    outline: none;
+}
+.custom-select-trigger .trigger-icon {
+    transition: transform 0.2s ease-in-out;
+    font-size: 0.875rem; /* text-sm */
+    color: var(--color-text-muted);
+}
+.custom-select-trigger.open .trigger-icon {
+    transform: rotate(180deg);
+}
+.custom-select-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border: 1px solid #ced5dd; /* border-slate-200 */
+    border-radius: 0.75rem; /* rounded-xl */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-top: 0.25rem; /* mt-1 */
+    z-index: 20;
+    max-height: 200px;
+    overflow-y: auto;
+    opacity: 0;
+    transform: scaleY(0.95);
+    visibility: hidden;
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0.15s ease-out;
+}
+.custom-select-options.open {
+    opacity: 1;
+    transform: scaleY(1);
+    visibility: visible;
+}
+.custom-select-option {
+    padding: 0.5rem 1rem; /* py-2 px-4 */
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+    font-size: 0.875rem; /* text-sm - THIS IS THE SMALLER FONT YOU WANTED */
+}
+.custom-select-option:hover {
+    background-color: #f1f5f9; /* bg-slate-100 */
+}
+.custom-select-option .option-title {
+    font-weight: 600;
+    color: var(--color-text-base);
+}
+.custom-select-option .option-examples {
+    font-size: 0.75rem; /* text-xs */
+    color: var(--color-text-muted);
+}
+
+/* Styles for new AI Chat Bar */
+.ai-chat-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* gap-2 */
+    padding: 0.5rem; /* p-2 */
+    background-color: #f1f5f9; /* bg-slate-100 */
+    border-radius: 9999px; /* rounded-full */
+    border: 1px solid #ced5dd; /* border-slate-200 */
+    position: relative; /* For the popup */
+}
+.ai-chat-bar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem; /* w-9 */
+    height: 2.25rem; /* h-9 */
+    border-radius: 9999px; /* rounded-full */
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+}
+.ai-attach-btn {
+    background-color: #ced5dd; /* bg-slate-200 */
+    color: var(--color-text-base);
+}
+.ai-attach-btn:hover {
+    background-color: #cbd5e1; /* bg-slate-300 */
+}
+.ai-send-btn {
+    background-color: var(--color-primary-text);
+    color: white;
+}
+.ai-send-btn:hover {
+    background-color: var(--color-secondary-text);
+}
+.ai-chat-input {
+    width: 100%;
+    border: none;
+    background: none;
+    padding: 0 0.5rem;
+    color: var(--color-text-base);
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 600;
+}
+.ai-chat-input:focus {
+    outline: none;
+}
+.ai-chat-input::placeholder {
+    color: #94a3b8; /* text-slate-400 */
+    font-weight: 500;
+}
+
+/* Styles for Attachment Popup */
+.ai-attach-popup {
+    position: absolute;
+    bottom: 120%; /* Position it above the chat bar */
+    left: 0;
+    background-color: white;
+    border-radius: 0.75rem; /* rounded-xl */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border: 1px solid #ced5dd;
+    width: 150px;
+    padding: 0.5rem; /* p-2 */
+    z-index: 10;
+    opacity: 0;
+    transform: translateY(10px);
+    visibility: hidden;
+    transition: all 0.2s ease-out;
+}
+.ai-attach-popup.open {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+}
+.ai-popup-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.5rem 0.75rem; /* py-2 px-3 */
+    border-radius: 0.5rem; /* rounded-lg */
+    cursor: pointer;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 600;
+    color: var(--color-text-base);
+    background: none;
+    border: none;
+    text-align: left;
+}
+.ai-popup-btn:hover {
+    background-color: #f1f5f9; /* bg-slate-100 */
+}
+.ai-popup-btn i {
+    width: 28px;
+    color: var(--color-primary-text);
+}
+
+/* Styles for Collapsible Log Form */
+#log-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+#log-form-header .form-toggle-icon {
+    transition: transform 0.3s ease-in-out;
+    font-size: 1rem;
+    color: var(--color-primary-text);
+}
+#add-log-entry-wrapper.expanded #log-form-header .form-toggle-icon {
+    transform: rotate(180deg);
+}
+#log-form-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+    padding-top: 0; /* Ensures no padding when collapsed */
+}
+#add-log-entry-wrapper.expanded #log-form-body {
+    max-height: 1000px; /* arbitrary large */
+    padding-top: 0.75rem; /* This is the original space-y-3 */
+}
+
+/* Styles for Log View Toggle */
+.log-view-toggle {
+    display: flex;
+    align-items: center;
+    background-color: #f1f5f9; /* bg-slate-100 */
+    border-radius: 9999px; /* rounded-full */
+    padding: 0.25rem; /* p-1 */
+}
+.log-view-toggle-btn {
+    padding: 0.375rem 0.75rem; /* py-1.5 px-3 */
+    border-radius: 9999px; /* rounded-full */
+    border: none;
+    background-color: transparent;
+    color: var(--color-text-muted);
+    font-size: 0.875rem; /* text-sm */
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.log-view-toggle-btn.active {
+    background-color: #fff;
+    color: var(--color-primary-text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+}
+.log-sort-btn {
+    background-color: #f1f5f9; /* bg-slate-100 */
+    border-radius: 9999px; /* rounded-full */
+    padding: 0.25rem 0.75rem; /* py-1 px-3 */
+    border: none;
+    color: var(--color-text-muted);
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.2s ease-in-out;
+}
+.log-sort-btn:hover {
+    background-color: #ced5dd; /* bg-slate-200 */
+    color: var(--color-primary-text);
+}
+
+/* Styles for Date Timeline View */
+.timeline-date-header {
+    font-size: 1.125rem; /* text-lg */
+    font-weight: 700;
+    color: var(--color-secondary-text);
+    padding: 0 0 0.5rem 0.25rem; /* pt-4 pb-2 px-1 */
+    background-color: var(--color-page-bg, #f8fafc); /* bg-slate-50 */
+    border-bottom: 1px solid #ced5dd; /* border-slate-200 */
+}
+body {
+     /* Define a variable for the page background */
+    --color-page-bg: #f8fafc; /* bg-slate-50 */
+    background-color: var(--color-page-bg);
+}
+.timeline-entry-card {
+    background-color: #fff;
+    border-radius: 1rem; /* rounded-2xl */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    padding: 0.5rem 1rem; /* p-2 sm:p-4 */
+    margin-top: 0.75rem; /* space-y-3 */
+}
+
+/* New Phase Bar Styles */
+#phase-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 15; /* Below header (z-20) but above content */
+    padding: 0.125rem 1rem; /* 2px vertical, 16px horizontal */
+    text-align: center;
+    transition: background-color 0.3s ease-in-out, top 0.3s ease-in-out;
+}
+
+#phase-bar-text {
+    color: white;
+    font-weight: 650; /* bold */
+    font-size: 0.75rem; /* text-xs */
+    text-transform: uppercase;
+    letter-spacing: 0.1em; /* slightly wider */
+}
+
+/* Dynamic Phase Background Colors */
+.phase-pre-treatment { background-color: var(--phase-color-pre); }
+.phase-restriction { background-color: var(--phase-color-restriction); }
+.phase-reintroduction { background-color: var(--phase-color-reintro); }
+.phase-personalization { background-color: var(--phase-color-personal); }
+
+/* New Phase Progress Bar Fills */
+.bg-phase-pre { background-color: var(--phase-color-pre); }
+.bg-phase-restrict { background-color: var(--phase-color-restriction); }
+
+/* New Personalization Summary Tags */
+.summary-tag {
+    display: inline-block;
+    padding: 0.25rem 0.75rem; /* py-1 px-3 */
+    border-radius: 9999px; /* rounded-full */
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600;
+}
+.summary-tag.tolerated {
+    background-color: var(--color-pastel-green);
+    color: var(--color-text-on-pastel);
+}
+.summary-tag.trigger {
+    background-color: #fecaca; /* bg-red-200 */
+    color: #991b1b; /* text-red-800 */
+}
+.summary-tag.unknown {
+    background-color: #f1f5f9; /* bg-slate-100 */
+    color: #475569; /* text-slate-600 */
+}
+
+/* New Progress Bar Text */
+.progress-bar-text {
+    font-size: 0.625rem; /* text-xxs */
+    line-height: 0.875rem; /* h-3.5 */
+    font-weight: 700;
+    color: var(--color-text-on-pastel);
+    /* Prevent text from wrapping */
+    white-space: nowrap; 
+    /* Hide text if bar is too small */
+    overflow: hidden; 
+}
+
+/* New Personalization Home Page List Styles */
+.p13n-food-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem; /* gap-1.5 */
+    padding: 0.5rem; /* p-2 */
+}
+.p13n-food-link {
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600;
+    padding: 0.25rem 0.75rem; /* py-1 px-3 */
+    border-radius: 9999px; /* rounded-full */
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    border: 1px solid transparent;
+}
+.p13n-food-link.tolerated {
+    color: var(--color-accent-text);
+    background-color: #f0f9eb; /* bg-green-50 */
+    border-color: #dcfce7; /* bg-green-100 */
+}
+.p13n-food-link.tolerated:hover {
+    background-color: #dcfce7; /* bg-green-100 */
+    border-color: var(--color-accent-text);
+}
+.p13n-food-link.trigger {
+    color: var(--color-error);
+    background-color: #ffebeb; /* bg-red-50 */
+    border-color: #fee2e2; /* bg-red-100 */
+}
+.p13n-food-link.trigger:hover {
+    background-color: #fee2e2; /* bg-red-100 */
+    border-color: var(--color-error);
+}
+.p13n-food-link.mixed {
+    color: #a16207; /* text-yellow-700 */
+    background-color: #fefce8; /* bg-yellow-50 */
+    border-color: #fef9c3; /* bg-yellow-100 */
+}
+.p13n-food-link.mixed:hover {
+    background-color: #fef9c3; /* bg-yellow-100 */
+    border-color: #a16207;
+}
+.p13n-food-link .dose-note {
+    font-size: 0.625rem; /* text-xxs */
+    font-weight: 700;
+    margin-left: 4px;
+    opacity: 0.7;
+}
+
+/* New Personalization Profile Editor Styles */
+
+/* Centered "Overall Status" container */
+.p13n-overall-status-container {
+    display: flex;
+    justify-content: center;
+    padding: 0.25rem 0 0.75rem 0; /* py-1 pb-3 */
+    border-bottom: 1px solid #ced5dd;
+    margin: 0.5rem 1rem 0 1rem;
+}
+.p13n-overall-status-container .p13n-editor-btn-group {
+    transform: scale(1.0); /* Reset scale */
+}
+
+/* Smaller toggles for food items */
+.p13n-editor-food-item .p13n-editor-btn-group {
+    transform: scale(0.9); /* Keep these smaller */
+}
+
+.p13n-editor-btn-group {
+    display: flex;
+    border-radius: 9999px; /* rounded-full */
+    overflow: hidden;
+    border: 1px solid #cbd5e1; /* border-slate-300 */
+}
+
+.p13n-editor-btn {
+    padding: 0.25rem 0.625rem; /* py-1 px-2.5 */
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 600;
+    background-color: #f1f5f9; /* bg-slate-100 */
+    color: var(--color-text-muted);
+    border-right: 1px solid #cbd5e1;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+.p13n-editor-btn:last-child { border-right: none; }
+.p13n-editor-btn:hover { background-color: #ced5dd; }
+
+.p13n-editor-btn.tolerated.selected {
+    background-color: var(--color-pastel-green);
+    color: var(--color-text-on-pastel);
+    border-color: var(--color-pastel-green-dark);
+}
+.p13n-editor-btn.trigger.selected {
+    background-color: #fecaca; /* bg-red-200 */
+    color: #991b1b; /* text-red-800 */
+    border-color: #fca5a5; /* bg-red-300 */
+}
+.p13n-editor-btn.mixed.selected {
+    background-color: #fef08a; /* bg-yellow-200 */
+    color: #854d0e; /* text-yellow-800 */
+    border-color: #eab308; /* border-yellow-500 */
+}
+
+.p13n-editor-food-list {
+    padding: 0 0.5rem 0.5rem 0.5rem; /* p-2 */
+}
+
+.p13n-editor-food-item {
+    padding: 0.5rem 0.25rem; /* py-2 px-1 */
+    border-bottom: 1px solid #f1f5f9; /* border-slate-100 */
+}
+.p13n-editor-food-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.p13n-food-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem; /* mb-2 */
+}
+
+.p13n-food-header .food-name {
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600;
+    color: var(--color-text-base);
+}
+
+.p13n-food-notes {
+    width: 100%;
+    font-size: 0.875rem; /* text-sm */
+    padding: 0.5rem 0.75rem; /* p-2 px-3 */
+    border-radius: 0.5rem; /* rounded-lg */
+    border: 1px solid #cbd5e1; /* border-slate-300 */
+}
+.p13n-food-notes:focus {
+    outline: none;
+    border-color: var(--color-primary-text);
+    box-shadow: 0 0 0 2px var(--color-pastel-blue);
+}
+
+.p13n-food-delete-btn {
+    background: none;
+    border: none;
+    color: var(--color-text-subtle);
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.25rem;
+}
+.p13n-food-delete-btn:hover {
+    color: var(--color-error);
+}
+
+.p13n-add-food-btn {
+    display: block;
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600;
+    color: var(--color-primary-text);
+    background-color: #fff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.p13n-add-food-btn:hover {
+    background-color: #f8fafc;
+    border-color: var(--color-primary-text);
+}
+
+/* Home Tab Personalization Styles */
+.p13n-home-item-header h3 {
+    font-size: 1rem; /* text-base */
+    font-weight: 600;
+    color: var(--color-secondary);
+}
+.p13n-home-item-header .status-text {
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 600;
+}
+
+.p13n-food-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem; /* text-sm */
+    padding: 0.25rem 0.5rem; /* py-1 px-2 */
+}
+.p13n-food-item .icon {
+    width: 20px; /* w-5 */
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 0.75rem; /* text-xs */
+}
+.p13n-food-tolerated {
+    color: var(--color-text-base); /* Use base text color for tolerated */
+}
+.p13n-food-trigger {
+    color: var(--color-error); /* Red */
+}
+.p13n-food-item .food-name {
+    font-weight: 600;
+}
+.p13n-food-item .notes {
+    font-size: 0.75rem; /* text-xs */
+    color: var(--color-text-subtle);
+    margin-left: 0.25rem;
+    font-style: italic;
+}
+
+/* New Personalization Tolerance View Styles */
+.p13n-tolerance-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem; /* text-sm */
+    padding: 0.25rem 0.5rem; /* py-1 px-2 */
+}
+.p13n-tolerance-item .icon {
+    width: 20px; /* w-5 */
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 0.75rem; /* text-xs */
+}
+.p13n-tolerance-item.tolerated {
+    color: var(--color-text-base);
+}
+.p13n-tolerance-item.tolerated .food-name {
+    font-weight: 600;
+}
+
+.p13n-tolerance-item.trigger {
+    color: var(--color-error); /* Red text */
+}
+.p13n-tolerance-item.trigger .food-name {
+    font-weight: 600;
+}
+.p13n-tolerance-item .notes {
+    font-size: 0.75rem; /* text-xs */
+    color: var(--color-text-subtle);
+    margin-left: 0.25rem;
+    font-style: italic;
+}
+
+/* --- START: Personalization Modal Additions --- */
+
+/* 1. Style for selected Tolerated/Trigger buttons (Request #1) */
+#food-modal-btn-tolerated.active {
+    background-color: var(--color-pastel-green);
+    color: var(--color-accent-text);
+    border-color: var(--color-pastel-green-dark);
+}
+
+#food-modal-btn-trigger.active {
+    background-color: #fecaca; /* bg-red-200 */
+    color: #991b1b; /* text-red-800 */
+    border-color: #fca5a5; /* bg-red-300 */
+}
+
+/* 2. Styles for new Dose Logic UI (Request #3) */
+.p13n-dose-trigger-btn {
+    width: 100%;
+    padding: 0.5rem 0.75rem; /* p-2 px-3 */
+    border-radius: 0.5rem; /* rounded-lg */
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    border: 1px dashed #cbd5e1; /* border-slate-300 */
+}
+.p13n-dose-trigger-btn:hover {
+    background-color: #f8fafc; /* bg-slate-50 */
+    border-color: var(--color-primary-text);
+}
+
+.p13n-dose-trigger-btn.tolerated {
+    color: var(--color-accent-text);
+}
+.p13n-dose-trigger-btn.trigger {
+    color: var(--color-error);
+}
+
+/* Wrapper for the dose input field and its 'X' button */
+#food-modal-dose-wrapper {
+    position: relative;
+    display: none; /* Will be shown by JS */
+}
+
+#food-modal-dose-clear-btn {
+    position: absolute;
+    right: 0.25rem; /* right-1 */
+    top: 0.25rem; /* top-1 */
+    bottom: 0.25rem; /* bottom-1 */
+    width: 2.25rem; /* w-9 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem; /* text-sm */
+    color: var(--color-text-subtle);
+    background-color: #f1f5f9; /* bg-slate-100 */
+    border-radius: 0.5rem; /* rounded-lg */
+    cursor: pointer;
+}
+#food-modal-dose-clear-btn:hover {
+    color: var(--color-error);
+    background-color: #ced5dd; /* bg-slate-200 */
+}
+
+/* Adjust padding on dose input so text doesn't go under the 'X' */
+#food-modal-dose {
+    padding-right: 3rem; /* pr-12 */
+}
+
+/* --- END: Personalization Modal Additions --- */
+
+/* --- START: Food View Modal Style Additions --- */
+.food-modal-view-item {
+    font-size: 1rem; /* text-base */
+    line-height: 1.6;
+    color: var(--color-text-base);
+}
+.food-modal-view-item .label {
+    font-size: 1rem; /* text-base */
+    color: var(--color-text-subtle);
+    font-weight: 600; /* font-semibold */
+    margin-right: 0.375rem; /* mr-1.5 */
+}
+.food-modal-view-item .value {
+    font-weight: 500; /* font-normal */
+    color: var(--color-text-base);
+}
+
+/* Special case for Notes (as requested) */
+.food-modal-view-item.notes-item .label {
+    display: block; /* Puts "Notes" label on its own line */
+    margin-bottom: 0.125rem; /* mb-0.5 */
+    margin-right: 0;
+}
+.food-modal-view-item.notes-item .value {
+    font-weight: 500; /* font-normal */
+    font-style: italic;
+    color: var(--color-text-muted);
+    white-space: pre-wrap; /* Respect newlines in notes */
+}
+/* --- END: Food View Modal Style Additions --- */
+
+/* --- START: Toast Warning Color --- */
+.bg-warning { 
+    background-color: var(--color-warning); 
+    color: white; /* High-contrast text for orange */
+    /* font-weight: 700; */
+}
+/* --- END: Toast Warning Color --- */
+
+/* --- START: Log Modal Fix --- */
+#log-entry-modal #log-form-cancel-edit {
+    display: inline-block; /* Always show the cancel button in the modal */
+}
+/* --- END: Log Modal Fix --- */
+
+/* --- START: Phase-Adaptive Toast Colors --- */
+.bg-toast-pre {
+    background-color: #fef3c7; /* amber-100 */
+    color: #d97706;
+    font-weight: 600;
+}
+.bg-toast-restriction {
+    background-color: #e9f8d5; /* green-100 */
+    color: #537429;
+    font-weight: 600;
+}
+.bg-toast-reintro {
+    background-color: #beccdf; /* blue-100 */
+    color: #283b6c;
+    font-weight: 600;
+}
+.bg-toast-personal {
+    background-color: #f3e8ff; /* purple-100 */
+    color: #4a0076;
+    font-weight: 600;
+}
+/* --- END: Phase-Adaptive Toast Colors --- */
+
+/* --- START: Medication Tracker Styles --- */
+
+/* Styles for the dynamic list in the settings modal */
+.medication-settings-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* gap-2 */
+    background-color: #f8fafc; /* bg-slate-50 */
+    padding: 0.5rem; /* p-2 */
+    border-radius: 0.5rem; /* rounded-lg */
+}
+.medication-settings-item input {
+    width: 100%;
+    border: 1px solid #cbd5e1; /* border-slate-300 */
+    border-radius: 0.5rem; /* rounded-lg */
+    padding: 0.5rem; /* p-2 */
+    font-size: 0.875rem; /* text-sm */
+}
+.medication-settings-item .time-input {
+    flex-basis: 110px; /* Give time input a fixed base size */
+}
+.medication-settings-item .name-input {
+    flex-grow: 1; /* Allow name input to grow */
+}
+.medication-remove-btn {
+    flex-shrink: 0;
+    width: 1.75rem; /* w-7 */
+    height: 1.75rem; /* h-7 */
+    border: none;
+    background-color: #ced5dd; /* bg-slate-200 */
+    color: var(--color-text-subtle);
+    border-radius: 9999px; /* rounded-full */
+    cursor: pointer;
+}
+.medication-remove-btn:hover {
+    background-color: #fecaca; /* bg-red-200 */
+    color: var(--color-error);
+}
+
+/* Styles for the checklist on the home page card */
+.medication-checklist-item {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    padding: 0.5rem 0.75rem; /* py-2 px-3 */
+    border-radius: 0.5rem; /* rounded-lg */
+    border: 1px solid #ced5dd; /* border-slate-200 */
+}
+.medication-checklist-item input[type="checkbox"] {
+    width: 1.25rem; /* w-5 */
+    height: 1.25rem; /* h-5 */
+    margin-right: 0.75rem; /* mr-3 */
+    flex-shrink: 0;
+    accent-color: var(--color-adaptive-bg); /* Use phase color */
+}
+.medication-checklist-item label {
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600;
+    color: var(--color-text-base);
+}
+.medication-checklist-item label .time {
+    font-weight: 700;
+}
+.medication-checklist-item label.strikethrough {
+    text-decoration: line-through;
+    color: var(--color-text-subtle);
+}
+.medication-checklist-item input[type="checkbox"]:checked + label {
+    text-decoration: line-through;
+    color: var(--color-text-subtle);
+}
+
+/* Styles for the log history */
+#medication-log-history p {
+    padding: 0.25rem 0.5rem;
+    border-bottom: 1px solid #f1f5f9; /* border-slate-100 */
+}
+#medication-log-history p:last-child {
+    border-bottom: none;
+}
+/* --- END: Medication Tracker Styles --- */
+/* --- START: Onboarding Modal Styles --- */
+#onboarding-modal-close {
+    padding: 0 0.5rem;
+}
+
+.onboarding-slide {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#onboarding-dots .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #cbd5e1; /* bg-slate-300 */
+    transition: all 0.2s ease-in-out;
+}
+
+#onboarding-dots .dot.active {
+    background-color: var(--color-adaptive-bg);
+    transform: scale(1.2);
+}
+
+/* Style for the re-used medication list in onboarding */
+#onboarding-medication-settings-list .medication-settings-item {
+    padding: 0.25rem;
+    background-color: #f1f5f9; /* bg-slate-100 */
+}
+#onboarding-medication-settings-list .medication-settings-item input {
+    padding: 0.375rem; /* p-1.5 */
+    font-size: 0.875rem; /* text-sm */
+}
+#onboarding-medication-settings-list .medication-remove-btn {
+    width: 1.5rem; /* w-6 */
+    height: 1.5rem; /* h-6 */
+}
+/* Style for new Phase Select Buttons */
+.onboarding-phase-btn {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e2e8f0; /* border-slate-200 */
+    border-radius: 0.75rem; /* rounded-xl */
+    text-align: left;
+    background-color: #f8fafc; /* bg-slate-50 */
+    transition: all 0.2s ease-in-out;
+}
+.onboarding-phase-btn:hover:not(.active) {
+    background-color: #fff;
+    border-color: #cbd5e1; /* border-slate-300 */
+}
+/* --- Active Phase Button States --- */
+
+/* Pre-Treatment */
+.onboarding-phase-btn[data-phase="pre-treatment"].active {
+    background-color: #fffbeb; /* bg-amber-50 */
+    border-color: #f59e0b; /* Phase Color */
+}
+.onboarding-phase-btn[data-phase="pre-treatment"].active h4 {
+    color: #b45309; /* text-amber-700 */
+}
+
+/* Restriction */
+.onboarding-phase-btn[data-phase="restriction"].active {
+    background-color: #f0f9eb; /* bg-green-50 */
+    border-color: #8bb744; /* Phase Color */
+}
+.onboarding-phase-btn[data-phase="restriction"].active h4 {
+    color: #4d7c0f; /* lime-700 */
+}
+
+/* Reintroduction */
+.onboarding-phase-btn[data-phase="reintroduction"].active {
+    background-color: #f0f9ff; /* bg-blue-50 */
+    border-color: #2d61a0; /* Phase Color */
+}
+.onboarding-phase-btn[data-phase="reintroduction"].active h4 {
+    color: #1e40af; /* text-blue-800 */
+}
+
+/* Personalization */
+.onboarding-phase-btn[data-phase="personalization"].active {
+    background-color: #fbf5ff; /* bg-purple-50 */
+    border-color: #4a0076; /* Phase Color */
+}
+.onboarding-phase-btn[data-phase="personalization"].active h4 {
+    color: #581c87; /* text-purple-800 */
+}
+/* --- END: Onboarding Modal Styles --- */
+
+/* --- Vertical Alignment Fix for Image/Text Slides --- */
+.onboarding-slide-spaced {
+    height: 100%; /* Ensure it fills the parent container */
+    display: grid;
+    /* Grid structure: 1st row for image, 2nd row for spacer/gap, 3rd row for text */
+    grid-template-rows: auto 1fr auto;
+    text-align: center;
+}
+.onboarding-slide-spaced img {
+    grid-row: 1; /* Place image at the top */
+    margin: 0 auto; /* Center the image */
+}
+.onboarding-slide-spaced p {
+    grid-row: 3; /* Place text at the bottom */
+}
+/* --- END Vertical Alignment Fix --- */

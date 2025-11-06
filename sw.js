@@ -14,7 +14,7 @@ self.addEventListener('install', (event) => {
       .then((cache) => {
         return cache.addAll(FILES_TO_CACHE);
       })
-      .then(() => self.skipWaiting()) // <-- ADD THIS LINE: Forces the new SW to activate
+      .then(() => self.skipWaiting()) // <-- Forces the new SW to activate
   );
 });
 
@@ -58,6 +58,6 @@ self.addEventListener('activate', (event) => {
           return caches.delete(key);
         }
       }));
-    }).then(() => self.clients.claim()) // <-- ADD THIS: Makes the active SW control the page immediately
+    }).then(() => self.clients.claim()) // <-- Makes the active SW control the page immediately
   );
 });

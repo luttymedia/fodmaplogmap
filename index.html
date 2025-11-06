@@ -7,721 +7,193 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-          /* New Wellness Palette */
-          --color-pastel-blue: #A8C5E5;
-          --color-pastel-blue-dark: #8BAFD4; /* Hover */
-          --color-pastel-green: #C5E0A5;
-          --color-pastel-green-dark: #B0D684; /* Hover */
-          --color-text-on-pastel: #283b6c; /* Dark text for accessibility */
-          
-          /* Tints for selected tags (from your example) */
-          --color-tag-bg: #f1f5f9; /* slate-100 */
-          --color-tag-bg-selected: #EAF0F7; /* Light blue tint */
-          --color-tag-text-selected: #2d61a0; /* Original primary blue for text */
-          
-          /* Old colors (now for text/specifics) */
-          --color-primary-text: #2d61a0; /* Original light blue */
-          --color-secondary-text: #283b6c; /* Original dark blue */
-          --color-accent-text: #8bb744; /* Original green */
-          
-          /* Semantic Colors (Unchanged) */
-          --color-error: #dc2626;
-          --color-error-dark: #b91c1c;
-          --color-warning: #f59e0b;
-          
-          /* Base Text Colors (Text on white) */
-          --color-text-base: #283b6c; 
-          --color-text-muted: #475569;
-          --color-text-subtle: #64748b;
-        }
-
-        body {
-            font-family: 'Quicksand', sans-serif;
-            font-weight: 500;
-            /* Fallback padding-top, JS will correct this */
-            padding-top: 100px; 
-            overscroll-behavior-x: none; /* Prevent browser back/forward swipe */
-            color: var(--color-text-base); /* Set base text color */
-        }
-        .nav-item.active {
-            border-bottom-color: var(--color-primary); 
-            color: var(--color-primary); 
-            font-weight: 600;
-        }
-        .nav-item {
-            border-bottom: 2px solid transparent;
-            padding-top: 0.5rem; 
-            padding-bottom: 0.5rem; 
-        }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        .gemini-modal-content, .ai-results-content { white-space: pre-wrap; }
-
-        /* New Skeleton Loader Styles */
-        .skeleton-wrapper {
-            width: 100%;
-        }
-        .skeleton-line {
-            height: 1rem; /* h-4 */
-            background-color: #e2e8f0; /* bg-slate-200 */
-            border-radius: 0.25rem; /* rounded-md */
-            position: relative;
-            overflow: hidden;
-        }
-        .skeleton-line + .skeleton-line {
-            margin-top: 0.75rem; /* space-y-3 */
-        }
-        .skeleton-line::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -150%;
-            width: 150%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, #f1f5f9, transparent); /* bg-slate-100 shimmer */
-            animation: shimmer-animation 1.5s infinite;
-        }
-        @keyframes shimmer-animation {
-            0% { left: -150%; }
-            100% { left: 150%; }
-        }
-        
-        /* New Text Loader for Modals */
-        .modal-loader-text {
-            font-size: 1.125rem; /* text-lg */
-            font-weight: 600;
-            color: var(--color-text-muted);
-            text-align: center;
-        }
-        .modal-loader-text .dot {
-            animation: modal-dot-blink 1.4s infinite;
-            animation-fill-mode: both;
-        }
-        .modal-loader-text .dot:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-        .modal-loader-text .dot:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-        @keyframes modal-dot-blink {
-            0%, 80%, 100% { opacity: 0; }
-            40% { opacity: 1; }
-        }
-
-        .log-item-body, .progress-item-body {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
-            padding: 0 1rem;
-        }
-        .log-item.expanded .log-item-body, .progress-item.expanded .progress-item-body {
-            max-height: 500px; 
-            padding: 0.5rem 1rem 0.5rem 1rem; 
-        }
-        .log-item.expanded .log-item-header .expand-icon, .progress-item.expanded .progress-item-header .expand-icon {
-            transform: rotate(90deg);
-        }
-        .profile-checkbox + label {
-            border-radius: 9999px;
-            background-color: var(--color-tag-bg);
-            border: 1px solid var(--color-tag-bg); /* Use border for consistent size */
-            color: var(--color-text-muted); /* Lighter text when unselected */
-            font-weight: 600;
-            transition: all 0.2s ease-in-out;
-        }
-        .profile-checkbox:checked + label {
-            background-color: var(--color-tag-bg-selected); 
-            border-color: var(--color-tag-text-selected); 
-            color: var(--color-tag-text-selected); 
-            border-radius: 9999px;
-        }
-        #side-menu-modal { transition: transform 0.3s ease-in-out; }
-        #side-menu-modal.hidden { transform: translateX(-100%); }
-        #side-menu-overlay { transition: opacity 0.3s ease-in-out; }
-        #side-menu-overlay.hidden { opacity: 0; pointer-events: none; }
-
-        /* Compact Info Modal Styles */
-        #info-modal-content h2 { font-size: 1.25rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.25rem; color: var(--color-secondary); }
-        #info-modal-content h3 { font-size: 1.1rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.25rem; color: var(--color-primary); }
-        #info-modal-content p { color: var(--color-text-muted); line-height: 1.5; margin-bottom: 0.25rem; }
-        #info-modal-content ul { margin-top: 0.25rem; }
-        #info-modal-content .fodmap-group-card { background-color: #f8fafc; border-left-width: 4px; padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.5rem; }
-        .progress-item-body p {
-            font-size: 0.75rem; /* text-xs */
-            line-height: 1rem; /* text-xs */
-            color: #475569; /* text-slate-600 */
-            border-bottom-width: 1px; /* border-b */
-            border-color: #e2e8f0; /* border-slate-200 */
-            padding-top: 0.25rem; /* py-1 */
-            padding-bottom: 0.25rem; /* py-1 */
-         }
-         .progress-item-body p:last-child {
-            border-bottom-width: 0px; /* border-b-0 */
-         }
-        #info-modal-content .info-note { background-color: #eaf0f7; border-color: #b9cbe0; margin-top: 1rem; padding: 0.75rem; }
-        #info-modal-content .info-note h3 { color: var(--color-secondary); }
-        main section > div { margin-bottom: 1rem; }
-        #log-entries { gap: 0.75rem; }
-        .log-item-header, .progress-item-header { padding: 0.75rem; }
-
-        /* New Utility Classes */
-        .text-primary { color: var(--color-primary-text); }
-        .text-secondary { color: var(--color-secondary-text); }
-        .text-accent { color: var(--color-accent-text); }
-        .text-error { color: var(--color-error); }
-        .text-warning { color: var(--color-warning); }
-        .text-muted { color: var(--color-text-muted); }
-        .text-subtle { color: var(--color-text-subtle); }
-
-        .bg-primary { 
-            background-color: var(--color-pastel-blue); 
-            color: var(--color-text-on-pastel);
-            font-weight: 700;
-        }
-        .hover\:bg-primary-dark:hover { 
-            background-color: var(--color-pastel-blue-dark); 
-            color: var(--color-text-on-pastel);
-        }
-        
-        .bg-accent { 
-            background-color: var(--color-pastel-green); 
-            color: var(--color-text-on-pastel);
-            font-weight: 700;
-        }
-        .hover\:bg-accent-dark:hover { 
-            background-color: var(--color-pastel-green-dark); 
-            color: var(--color-text-on-pastel);
-        }
-        
-        .bg-error { background-color: var(--color-error); }
-        .hover\:bg-error-dark:hover { background-color: var(--color-error-dark); }
-
-        .border-primary { border-color: var(--color-primary-text); }
-        .focus\:ring-primary:focus { box-shadow: 0 0 0 2px var(--color-pastel-blue); }
-
-        /* FODMAP Group cards in Info Modal */
-        #info-modal-content .border-l-blue-400 { border-color: #60a5fa; }
-        #info-modal-content .text-blue-700 { color: #1d4ed8; }
-        #info-modal-content .border-l-yellow-400 { border-color: #facc15; }
-        #info-modal-content .text-yellow-700 { color: #a16207; }
-        #info-modal-content .border-l-orange-400 { border-color: #fb923c; }
-        #info-modal-content .text-orange-700 { color: #c2410c; }
-        #info-modal-content .border-l-purple-400 { border-color: #c084fc; }
-        #info-modal-content .text-purple-700 { color: #7e22ce; }
-        #info-modal-content .border-l-teal-400 { border-color: #2dd4bf; }
-        #info-modal-content .text-teal-700 { color: #0f766e; }
-        #info-modal-content .border-l-green-400 { border-color: #4ade80; }
-        #info-modal-content .text-green-700 { color: #15803d; }
-        #info-modal-content .border-l-indigo-400 { border-color: #818cf8; }
-        #info-modal-content .text-indigo-700 { color: #4338ca; }
-
-        /* Styles for Severity Button Group */
-        .severity-btn-group {
-            display: flex;
-            border-radius: 9999px; /* rounded-full */
-            overflow: hidden;
-            border: 1px solid #cbd5e1; /* border-slate-300 */
-        }
-        .severity-btn {
-            flex: 1;
-            padding: 0.5rem 0.25rem; /* py-2 px-1 */
-            font-size: 0.875rem; /* text-sm */
-            font-weight: 500; /* font-medium */
-            text-align: center;
-            background-color: #f1f5f9; /* bg-slate-100 */
-            color: var(--color-text-muted);
-            border-right: 1px solid #cbd5e1;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-            -webkit-tap-highlight-color: transparent; /* Disable tap flash on mobile */
-        }
-        .severity-btn:last-child {
-            border-right: none;
-        }
-        .severity-btn:hover {
-            background-color: #e2e8f0; /* bg-slate-200 */
-        }
-        .severity-btn.selected {
-            background-color: var(--color-pastel-blue);
-            color: var(--color-text-on-pastel);
-            font-weight: 700;
-            border-color: var(--color-pastel-blue-dark);
-            border-radius: 9999px; /* This was missing */
-        }
-
-        /* Styles for Log Accordion */
-        .accordion-group {
-            background-color: #fff;
-            border-radius: 1rem; /* rounded-2xl */
-            box-shadow: 0 1px 3px rgba(0,0,0,0.07);
-            border: none;
-            overflow: hidden;
-            margin-bottom: 0.75rem; /* space-y-3 */
-        }
-        .accordion-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 1rem; /* CHANGED: Was p-4 */
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent; /* Disable tap flash on mobile */
-        }
-        .accordion-header h3 {
-            font-size: 1rem; /* CHANGED: Was text-lg */
-            font-weight: 600; /* font-semibold */
-            color: var(--color-secondary);
-        }
-        .accordion-header .accordion-icon {
-            transition: transform 0.3s ease-in-out;
-            font-size: 1rem;
-            color: var(--color-primary);
-        }
-        .accordion-group.expanded .accordion-icon {
-            transform: rotate(180deg);
-        }
-        .accordion-body {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-in-out;
-        }
-        .accordion-group.expanded .accordion-body {
-            max-height: 1000px; /* arbitrary large number */
-            border-top: 1px solid #e2e8f0;
-        }
-        .accordion-entry {
-            padding: 0.5rem 1rem; /* CHANGED: Was p-3 sm:p-4 */
-            border-bottom: 1px solid #f1f5f9; /* border-slate-100 */
-        }
-        .accordion-entry:last-child {
-            border-bottom: none;
-        }
-        .accordion-entry .entry-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.25rem;
-        }
-        .accordion-entry .entry-header p {
-            font-size: 0.875rem; /* CHANGED: Added text-sm */
-            font-weight: 600; /* font-semibold */
-            color: var(--color-text-base);
-        }
-        .accordion-entry .entry-header span {
-            font-size: 0.75rem; /* text-xs */
-            color: var(--color-text-subtle);
-        }
-        .entry-details {
-            font-size: 0.75rem; /* CHANGED: Was text-sm */
-            color: var(--color-text-muted);
-            line-height: 1.5;
-        }
-
-        /* Styles for Custom Symptom Tags */
-        .custom-symptom-tag {
-            display: inline-flex;
-            align-items: center;
-            background-color: var(--color-tag-bg-selected);
-            color: var(--color-tag-text-selected);
-            border: 1px solid var(--color-tag-text-selected);
-            border-radius: 9999px; /* rounded-full */
-            padding: 0.25rem 0.75rem; /* py-1 px-3 */
-            font-size: 0.75rem; /* text-xs */
-            font-weight: 600;
-            margin: 0.25rem; /* m-1 */
-        }
-        .custom-symptom-tag .remove-tag-btn {
-            margin-left: 0.5rem; /* ml-2 */
-            color: var(--color-tag-text-selected);
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 0;
-            font-size: 0.875rem; /* text-sm */
-        }
-        .custom-symptom-tag .remove-tag-btn:hover {
-            color: var(--color-error);
-        }
-
-        /* Styles for API Key Accordion */
-        .api-key-accordion {
-            border: none;
-            border-radius: 1rem; /* rounded-2xl */
-            background-color: #f8fafc; /* bg-slate-50 */
-            overflow: hidden;
-        }
-        .api-key-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 1rem; /* p-3 sm:p-4 */
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .api-key-header h3 {
-             margin-bottom: 0; /* Override existing margin */
-        }
-        .api-key-header .api-key-icon {
-            transition: transform 0.3s ease-in-out;
-            font-size: 0.875rem; /* text-sm */
-            color: var(--color-primary);
-        }
-        .api-key-accordion.expanded .api-key-icon {
-            transform: rotate(180deg);
-        }
-        .api-key-body {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-in-out;
-            padding: 0 1rem; /* ONLY horizontal padding when collapsed */
-        }
-        .api-key-accordion.expanded .api-key-body {
-            max-height: 500px; /* Adjust as needed */
-            padding-top: 0.5rem; /* Increased top padding */
-            padding-bottom: 0.75rem; /* Add vertical padding ONLY when expanded */
-        }
-
-        /* Styles for Custom Select Dropdown */
-        .custom-select-container {
-            position: relative;
-        }
-        .custom-select-trigger {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            padding: 0.625rem 0.75rem; /* p-2.5 pl-3 pr-3 */
-            border: 1px solid #cbd5e1; /* border-slate-300 */
-            border-radius: 0.75rem; /* rounded-xl */
-            background-color: #fff;
-            cursor: pointer;
-            text-align: left;
-            font-size: 1rem; /* text-base */
-            color: var(--color-text-base);
-        }
-        .custom-select-trigger.placeholder {
-            color: #94a3b8; /* text-slate-400 placeholder */
-            font-weight: 500;
-        }
-        .custom-select-trigger:focus {
-            box-shadow: 0 0 0 2px var(--color-pastel-blue);
-            border-color: var(--color-primary-text);
-            outline: none;
-        }
-        .custom-select-trigger .trigger-icon {
-            transition: transform 0.2s ease-in-out;
-            font-size: 0.875rem; /* text-sm */
-            color: var(--color-text-muted);
-        }
-        .custom-select-trigger.open .trigger-icon {
-            transform: rotate(180deg);
-        }
-        .custom-select-options {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background-color: #fff;
-            border: 1px solid #e2e8f0; /* border-slate-200 */
-            border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            margin-top: 0.25rem; /* mt-1 */
-            z-index: 20;
-            max-height: 200px;
-            overflow-y: auto;
-            opacity: 0;
-            transform: scaleY(0.95);
-            visibility: hidden;
-            transition: opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0.15s ease-out;
-        }
-        .custom-select-options.open {
-            opacity: 1;
-            transform: scaleY(1);
-            visibility: visible;
-        }
-        .custom-select-option {
-            padding: 0.5rem 1rem; /* py-2 px-4 */
-            cursor: pointer;
-            transition: background-color 0.15s ease-in-out;
-            font-size: 0.875rem; /* text-sm - THIS IS THE SMALLER FONT YOU WANTED */
-        }
-        .custom-select-option:hover {
-            background-color: #f1f5f9; /* bg-slate-100 */
-        }
-        .custom-select-option .option-title {
-            font-weight: 600;
-            color: var(--color-text-base);
-        }
-        .custom-select-option .option-examples {
-            font-size: 0.75rem; /* text-xs */
-            color: var(--color-text-muted);
-        }
-
-        /* Styles for new AI Chat Bar */
-        .ai-chat-bar {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem; /* gap-2 */
-            padding: 0.5rem; /* p-2 */
-            background-color: #f1f5f9; /* bg-slate-100 */
-            border-radius: 9999px; /* rounded-full */
-            border: 1px solid #e2e8f0; /* border-slate-200 */
-            position: relative; /* For the popup */
-        }
-        .ai-chat-bar-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 2.25rem; /* w-9 */
-            height: 2.25rem; /* h-9 */
-            border-radius: 9999px; /* rounded-full */
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            flex-shrink: 0;
-        }
-        .ai-attach-btn {
-            background-color: #e2e8f0; /* bg-slate-200 */
-            color: var(--color-text-base);
-        }
-        .ai-attach-btn:hover {
-            background-color: #cbd5e1; /* bg-slate-300 */
-        }
-        .ai-send-btn {
-            background-color: var(--color-primary-text);
-            color: white;
-        }
-        .ai-send-btn:hover {
-            background-color: var(--color-secondary-text);
-        }
-        .ai-chat-input {
-            width: 100%;
-            border: none;
-            background: none;
-            padding: 0 0.5rem;
-            color: var(--color-text-base);
-            font-family: 'Quicksand', sans-serif;
-            font-weight: 600;
-        }
-        .ai-chat-input:focus {
-            outline: none;
-        }
-        .ai-chat-input::placeholder {
-            color: #94a3b8; /* text-slate-400 */
-            font-weight: 500;
-        }
-
-        /* Styles for Attachment Popup */
-        .ai-attach-popup {
-            position: absolute;
-            bottom: 120%; /* Position it above the chat bar */
-            left: 0;
-            background-color: white;
-            border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            border: 1px solid #e2e8f0;
-            width: 150px;
-            padding: 0.5rem; /* p-2 */
-            z-index: 10;
-            opacity: 0;
-            transform: translateY(10px);
-            visibility: hidden;
-            transition: all 0.2s ease-out;
-        }
-        .ai-attach-popup.open {
-            opacity: 1;
-            transform: translateY(0);
-            visibility: visible;
-        }
-        .ai-popup-btn {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            padding: 0.5rem 0.75rem; /* py-2 px-3 */
-            border-radius: 0.5rem; /* rounded-lg */
-            cursor: pointer;
-            font-family: 'Quicksand', sans-serif;
-            font-weight: 600;
-            color: var(--color-text-base);
-            background: none;
-            border: none;
-            text-align: left;
-        }
-        .ai-popup-btn:hover {
-            background-color: #f1f5f9; /* bg-slate-100 */
-        }
-        .ai-popup-btn i {
-            width: 28px;
-            color: var(--color-primary-text);
-        }
-
-        /* Styles for Collapsible Log Form */
-        #log-form-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
-        #log-form-header .form-toggle-icon {
-            transition: transform 0.3s ease-in-out;
-            font-size: 1rem;
-            color: var(--color-primary-text);
-        }
-        #add-log-entry-wrapper.expanded #log-form-header .form-toggle-icon {
-            transform: rotate(180deg);
-        }
-        #log-form-body {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-in-out;
-            padding-top: 0; /* Ensures no padding when collapsed */
-        }
-        #add-log-entry-wrapper.expanded #log-form-body {
-            max-height: 1000px; /* arbitrary large */
-            padding-top: 0.75rem; /* This is the original space-y-3 */
-        }
-
-        /* Styles for Log View Toggle */
-        .log-view-toggle {
-            display: flex;
-            align-items: center;
-            background-color: #f1f5f9; /* bg-slate-100 */
-            border-radius: 9999px; /* rounded-full */
-            padding: 0.25rem; /* p-1 */
-        }
-        .log-view-toggle-btn {
-            padding: 0.375rem 0.75rem; /* py-1.5 px-3 */
-            border-radius: 9999px; /* rounded-full */
-            border: none;
-            background-color: transparent;
-            color: var(--color-text-muted);
-            font-size: 0.875rem; /* text-sm */
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .log-view-toggle-btn.active {
-            background-color: #fff;
-            color: var(--color-primary-text);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.07);
-        }
-        .log-sort-btn {
-            background-color: #f1f5f9; /* bg-slate-100 */
-            border-radius: 9999px; /* rounded-full */
-            padding: 0.25rem 0.75rem; /* py-1 px-3 */
-            border: none;
-            color: var(--color-text-muted);
-            font-size: 0.875rem; /* text-sm */
-            font-weight: 600;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-            transition: all 0.2s ease-in-out;
-        }
-        .log-sort-btn:hover {
-            background-color: #e2e8f0; /* bg-slate-200 */
-            color: var(--color-primary-text);
-        }
-
-        /* Styles for Date Timeline View */
-        .timeline-date-header {
-            font-size: 1.125rem; /* text-lg */
-            font-weight: 700;
-            color: var(--color-secondary-text);
-            padding: 1rem 0 0.5rem 0.25rem; /* pt-4 pb-2 px-1 */
-            position: sticky;
-            top: 100px; /* Adjust based on your sticky header height */
-            background-color: var(--color-page-bg, #f8fafc); /* bg-slate-50 */
-            z-index: 5;
-            border-bottom: 1px solid #e2e8f0; /* border-slate-200 */
-        }
-        body {
-             /* Define a variable for the page background */
-            --color-page-bg: #f8fafc; /* bg-slate-50 */
-            background-color: var(--color-page-bg);
-        }
-        .timeline-entry-card {
-            background-color: #fff;
-            border-radius: 1rem; /* rounded-2xl */
-            box-shadow: 0 1px 3px rgba(0,0,0,0.07);
-            padding: 0.5rem 1rem; /* p-2 sm:p-4 */
-            margin-top: 0.75rem; /* space-y-3 */
-        }
-    </style>
+    
+    <link rel="stylesheet" href="style.css">
+    
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2d61a0">
 </head>
 <body class="bg-slate-50">
 
     <div id="app" class="max-w-7xl mx-auto p-2 sm:p-4">
-        <header class="fixed top-0 left-0 right-0 z-20 bg-slate-50/90 backdrop-blur-sm px-2 sm:px-4 py-2 flex items-center justify-between border-b border-slate-200">
-             <button id="hamburger-btn" class="text-muted hover:text-primary text-2xl w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100">
+        <header class="fixed top-0 left-0 right-0 z-20 bg-slate-50/90 backdrop-blur-sm px-2 sm:px-4 py-1 flex items-center justify-between border-b border-slate-200">
+             <button id="hamburger-btn" class="text-muted hover:text-primary text-2xl w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100">
                 <i class="fas fa-bars"></i>
             </button>
              <div class="flex flex-col items-center">
-                 <img src="fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" class="h-9 sm:h-9">
+                 <img src="fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" class="h-8 sm:h-8">
              </div>
-             <div class="w-10"></div> 
+             <div class="w-9"></div> 
         </header>
 
-        <nav id="main-nav" class="fixed left-0 right-0 z-10 flex justify-center border-b border-slate-200 bg-white rounded-b-2xl shadow-sm max-w-3xl mx-auto">
-            <button data-page="home" class="nav-item flex-1 text-center px-2 sm:px-4 text-muted transition-colors duration-300 ease-in-out hover:bg-slate-100 rounded-bl-lg text-xs sm:text-base">
+        <div id="phase-bar">
+            <span id="phase-bar-text"></span>
+        </div>
+        <nav id="main-nav" class="fixed bottom-0 left-0 right-0 z-10 flex justify-center border-t border-slate-200 bg-white shadow-sm">
+            <button data-page="home" class="nav-item flex-1 text-center px-2 sm:px-4 text-muted transition-colors duration-300 ease-in-out hover:bg-slate-100 text-xs sm:text-base">
                 <i class="fas fa-home-alt sm:mr-2"></i><span class="hidden sm:inline">Home</span>
             </button>
             <button data-page="food-info" class="nav-item flex-1 text-center px-2 sm:px-4 text-muted transition-colors duration-300 ease-in-out hover:bg-slate-100 text-xs sm:text-base">
                 <i class="fas fa-brain sm:mr-2"></i><span class="hidden sm:inline">AI Assistant</span>
             </button>
-            <button data-page="reintroduction-log" class="nav-item flex-1 text-center px-2 sm:px-4 text-muted transition-colors duration-300 ease-in-out hover:bg-slate-100 text-xs sm:text-base">
+            <button data-page="daily-log" class="nav-item flex-1 text-center px-2 sm:px-4 text-muted transition-colors duration-300 ease-in-out hover:bg-slate-100 text-xs sm:text-base">
                 <i class="fas fa-clipboard-list sm:mr-2"></i><span class="hidden sm:inline">Reintro Log</span>
             </button>
-            <button data-page="profile" class="nav-item flex-1 text-center px-2 sm:px-4 text-muted transition-colors duration-300 ease-in-out hover:bg-slate-100 rounded-br-lg text-xs sm:text-base">
+            <button data-page="profile" class="nav-item flex-1 text-center px-2 sm:px-4 text-muted transition-colors duration-300 ease-in-out hover:bg-slate-100 text-xs sm:text-base">
                 <i class="fas fa-user-cog sm:mr-2"></i><span class="hidden sm:inline">Profile</span>
             </button>
         </nav>
 
         <main id="content"> 
             <section id="home" class="page hidden max-w-3xl mx-auto">
-                <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
+                <div id="home-progress-card" class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
                     <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary">📈 Reintroduction Progress</h2>
                     <div id="progress-summary" class="space-y-2"> 
                     </div>
                 </div>
-                 <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
+                 <div id="home-insights-card" class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
                     <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center">
                         <i class="fas fa-magic-sparkles text-warning mr-2"></i> 💡 AI Insights
                     </h2>
                     <div class="space-y-3"> 
-                        <button id="summarize-journey-btn" class="w-full bg-accent  font-semibold py-2.5 px-4 rounded-full hover:bg-accent-dark transition-colors duration-300 shadow flex items-center justify-center gap-2"> 
+                        <button id="summarize-journey-btn" class="w-full bg-ai-reintro font-semibold py-2.5 px-4 rounded-full hover:bg-ai-reintro-dark transition-colors duration-300 shadow flex items-center justify-center gap-2"> 
                             ✨ Summarize My Journey
                         </button>
-                         <p class="text-xs text-slate-400 text-center">Get an AI-powered summary of your reintroduction log to spot potential patterns.</p>
+                         <p class="text-xs text-slate-400 text-center">Get an AI-powered summary of your daily log to spot potential patterns.</p>
                     </div>
                 </div>
-            </section>
+
+                <div id="home-pre-treatment-card" class="hidden bg-white p-4 sm:p-6 rounded-2xl shadow-md space-y-4">
+                    <h2 class="text-xl sm:text-2xl font-semibold text-secondary flex items-center"><i class="fas fa-list-check text-primary mr-2"></i>Pre-Treatment Focus</h2>
+                    
+                    <div class="p-3 bg-slate-50 rounded-lg text-sm text-secondary">
+                        <p><strong>Goal:</strong> Follow your specific diet rules to calm symptoms before your treatment and the Restriction phase begin.</p>
+                    </div>
+                    <div class="relative p-3 bg-slate-100 rounded-lg">
+                        <button id="pretreatment-rules-settings-btn" class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200" title="Edit Diet Rules">
+                            <i class="fas fa-cog text-sm"></i>
+                        </button>
+                        <h3 class="font-semibold text-secondary mb-2">My Diet Rules:</h3>
+                        <ul id="home-pretreatment-rules-list" class="list-disc list-inside text-muted space-y-1 text-sm">
+                            </ul>
+                    </div>
+                    <div class="relative p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <button id="pretreatment-settings-btn" class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200" title="Edit Settings">
+                            <i class="fas fa-cog text-sm"></i>
+                        </button>
+                        <h3 class="font-semibold text-amber-700 mb-2 text-center">Phase Countdown</h3>
+                        <div id="home-pre-treatment-countdown-text" class="text-sm text-secondary text-center mb-2"></div>
+                        <div id="home-pre-treatment-progress-container" class="hidden w-full bg-slate-200 rounded-full h-3.5 relative">
+                            <div id="home-pre-treatment-progress-bar" class="bg-phase-pre h-3.5 rounded-full flex items-center justify-center">
+                                <span id="home-pre-treatment-progress-text" class="progress-bar-text"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="home-restriction-card" class="hidden bg-white p-4 sm:p-6 rounded-2xl shadow-md space-y-4">
+                    <h2 class="text-xl sm:text-2xl font-semibold text-secondary flex items-center"><i class="fas fa-shield-alt text-accent mr-2"></i>Restriction Phase</h2>
+                    <div class="p-3 bg-slate-50 rounded-lg text-sm text-secondary">
+                        <p><strong>Goal:</strong> Avoid all high-FODMAP foods to establish a baseline. Use the AI Assistant to check foods before you eat!</p>
+                    </div>
+                    <div id="medication-tracker-card" class="hidden">
+
+                        <div id="medication-tracker-empty" class="hidden">
+                            <div class="relative p-3 bg-slate-100 rounded-lg text-center">
+                                <h3 class="font-semibold text-secondary mb-2">💊 Medication Tracker</h3>
+                                <p class="text-sm text-subtle mb-3">Track your antibiotics or other medications.</p>
+                                <button id="medication-setup-btn" class="w-full bg-adaptive font-semibold py-2 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow">
+                                    Set Up Tracker
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="medication-tracker-full" class="hidden relative p-3 bg-slate-100 rounded-lg">
+                            <button id="medication-settings-btn" class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200" title="Edit Medication Settings">
+                                <i class="fas fa-cog text-sm"></i>
+                            </button>
+                            <h3 class="font-semibold text-secondary mb-3 text-center">💊 Today's Medication</h3>
+
+                            <div id="medication-checklist" class="space-y-2 mb-3">
+                                </div>
+
+                            <div id="medication-log-accordion" class="accordion-group bg-white">
+                                <div class="accordion-header" style="padding-top: 0.5rem; padding-bottom: 0.5rem;">
+                                    <h3 style="font-size: 0.875rem;">View Medication Log</h3>
+                                    <i class="fas fa-chevron-down accordion-icon" style="font-size: 0.875rem;"></i>
+                                </div>
+                                <div class="accordion-body">
+                                    <div id="medication-log-history" class="p-2 text-xs text-subtle">
+                                        </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <button id="restriction-settings-btn" class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200" title="Edit Settings">
+                            <i class="fas fa-cog text-sm"></i>
+                        </button>
+                        <h3 class="font-semibold text-green-700 mb-2 text-center">Phase Countdown</h3>
+                        <div id="home-restriction-countdown-text" class="text-sm text-secondary text-center mb-2"></div>
+                        <div id="home-restriction-progress-container" class="hidden w-full bg-slate-200 rounded-full h-3.5 relative">
+                            <div id="home-restriction-progress-bar" class="bg-phase-restrict h-3.5 rounded-full flex items-center justify-center">
+                                <span id="home-restriction-progress-text" class="progress-bar-text"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="home-personalization-card" class="hidden">
+                    <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
+                        <div class="flex justify-between items-center mb-3">
+                            <div>
+                                <h2 class="text-xl sm:text-2xl font-semibold text-secondary flex items-center"><i class="fas fa-clipboard-check mr-2" style="color: var(--phase-color-personal);"></i>My Final Diet</h2>
+                                <p class="text-sm text-subtle mt-1">Tap a food to view or edit.</p>
+                            </div>
+                            <div class="log-view-toggle">
+                                <button class="log-view-toggle-btn active" id="p13n-view-tolerance-btn" data-view="tolerance" title="View Alphabetically (by Tolerance)">
+                                    <i class="fas fa-sort-alpha-down"></i>
+                                </button>
+                                <button class="log-view-toggle-btn" id="p13n-view-group-btn" data-view="group" title="Group by FODMAP">
+                                    <i class="fas fa-layer-group"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 mb-3">
+                            <input type="text" id="p13n-search-input" class="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="Search foods...">
+                            <button id="p13n-autoscan-btn" class="log-sort-btn flex-shrink-0" title="Auto-Scan Log">
+                                <i class="fas fa-magic-wand-sparkles"></i>
+                            </button>
+                            <button id="p13n-add-food-btn" class="log-sort-btn flex-shrink-0" title="Add New Food">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        
+                        <div id="personalization-group-view" class="space-y-3">
+                            </div>
+
+                        <div id="personalization-tolerance-view" class="hidden space-y-3">
+                            </div>
+                    </div>
+                </div>
+                </section>
 
             <section id="food-info" class="page hidden max-w-3xl mx-auto">
                 <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
                     <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center">🧠 AI Food Assistant</h2>
                      <p class="text-subtle mb-3 text-sm">Get instant FODMAP info for any food or ingredient list based on your profile. This is not medical advice.</p>
                     
-                    <!-- Hidden inputs (we still need these) -->
                     <input type="file" id="image-upload-input" class="hidden" accept="image/*">
                     <input type="file" id="camera-upload-input" class="hidden" accept="image/*" capture="environment">
                         
-                    <!-- Staged Image Preview (Re-using old elements) -->
                     <div id="staged-image-container" class="hidden border-2 border-dashed border-slate-300 rounded-lg p-3 text-center mb-2 relative">
                         <img id="image-preview" class="max-h-32 sm:max-h-40 mx-auto mb-2 rounded-md" /> 
                         <p id="upload-prompt-text" class="text-subtle text-sm"></p>
-                        <!-- Button to clear the staged image -->
                         <button id="clear-staged-image-btn" class="absolute top-1 right-1 w-6 h-6 bg-black/50 text-white rounded-full flex items-center justify-center text-xs">&times;</button>
                     </div>
 
-                    <!-- New AI Chat Bar -->
                     <div class="ai-chat-bar">
-                        <!-- Attachment Popup -->
                         <div class="ai-attach-popup" id="ai-attach-popup">
                             <button class="ai-popup-btn" id="popup-gallery-btn">
                                 <i class="fas fa-images"></i> Gallery
@@ -731,29 +203,22 @@
                             </button>
                         </div>
                         
-                        <!-- Attach Button -->
                         <button class="ai-chat-bar-btn ai-attach-btn" id="ai-attach-btn">
                             <i class="fas fa-plus"></i>
                         </button>
 
-                        <!-- Text Input -->
                         <input type="text" class="ai-chat-input" id="ai-food-search-input" placeholder="e.g., 'avocado' or 'cashews'">
 
-                        <!-- Send Button -->
                         <button class="ai-chat-bar-btn ai-send-btn" id="ai-send-btn">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </button>
                     </div>
                     
-                    <div id="ai-results-loader" class="hidden p-4"> <!-- Changed padding -->
-                        <div class="skeleton-wrapper">
-                            <!-- Mimics "FODMAP Level:" and a line of text -->
+                    <div id="ai-results-loader" class="hidden p-4"> <div class="skeleton-wrapper">
                             <div class="skeleton-line" style="width: 40%; height: 0.875rem;"></div>
                             <div class="skeleton-line" style="width: 90%;"></div>
-                            <!-- Mimics "Safe Portion:" and a line of text -->
                             <div class="skeleton-line" style="width: 30%; height: 0.875rem;"></div>
                             <div class="skeleton-line" style="width: 80%;"></div>
-                            <!-- Mimics "Substitutes:" and a line of text -->
                             <div class="skeleton-line" style="width: 35%; height: 0.875rem;"></div>
                             <div class="skeleton-line" style="width: 85%;"></div>
                         </div>
@@ -763,166 +228,114 @@
                     </div>
                 </div>
             </section>
-
-            <section id="reintroduction-log" class="page hidden max-w-3xl mx-auto">
-                <!-- add-log-entry-wrapper is now the accordion container -->
-                <div id="add-log-entry-wrapper" class="bg-white p-4 sm:p-6 rounded-2xl shadow-md mb-4 max-w-3xl mx-auto"> 
-                    
-                    <!-- This header is now the click target -->
-                    <div id="log-form-header">
-                        <h2 class="text-xl sm:text-2xl font-semibold text-secondary">✏️ Add Log Entry</h2>
-                        <i class="fas fa-chevron-down form-toggle-icon"></i>
-                    </div>
-                    
-                    <!-- This body will collapse -->
-                    <div id="log-form-body">
-                        <form id="log-form" class="space-y-3"> 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3"> 
-                            <input type="date" id="log-date" class="w-full p-2.5 border border-slate-300 rounded-xl" required> 
-                             <div class="custom-select-container" id="custom-fodmap-select-container">
-                            <!-- This is the visible button -->
-                            <button type="button" class="custom-select-trigger placeholder" id="custom-fodmap-select-trigger">
-                                <span id="custom-fodmap-select-text">Select FODMAP Group...</span>
-                                <i class="fas fa-chevron-down trigger-icon"></i>
-                            </button>
-                            <!-- This is the hidden list of options -->
-                            <ul class="custom-select-options" id="custom-fodmap-select-options">
-                                <!-- Options will be injected by JS -->
-                            </ul>
-                            <!-- This hidden input holds the actual value for the form -->
-                            <input type="hidden" id="log-fodmap-group" name="log-fodmap-group" value="">
-                        </div>
-                        </div>
-                        <button type="button" id="plan-challenge-btn" class="w-full bg-accent  font-semibold py-2 px-4 rounded-full hover:bg-accent-dark transition-colors duration-300 shadow flex items-center justify-center gap-2">
-                           ✨ Plan My Challenge
-                        </button>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3"> 
-                            <input type="text" id="log-food" placeholder="Food Name" class="w-full p-2.5 border border-slate-300 rounded-xl" required> 
-                            <input type="text" id="log-dose" placeholder="Dose" class="w-full p-2.5 border border-slate-300 rounded-xl" required> 
-                        </div>
-                        
-                        <div>
-                            <label class="block mb-1.5 text-sm font-medium text-secondary">Symptoms</label>
-                            <div id="symptom-tags-container" class="flex flex-wrap gap-2">
-                                <!-- Predefined symptom tags will be injected here by JS -->
-                            </div>
-                        </div>
-
-                        <div>
-                            <!-- This label is now the trigger -->
-                            <label id="custom-symptom-trigger" class="block mb-1.5 text-sm font-medium text-secondary cursor-pointer hover:text-primary">
-                                Add Custom Symptom <i class="fas fa-plus-circle text-xs ml-1 opacity-70"></i>
-                            </label>
-                            <!-- This div is hidden by default -->
-                            <div id="custom-symptom-body" class="hidden space-y-2">
-                                <div class="flex gap-2">
-                                    <input type="text" id="custom-symptom-input" placeholder="e.g., Nausea" class="w-full p-2.5 border border-slate-300 rounded-xl">
-                                    <button type="button" id="add-custom-symptom-btn" class="bg-primary font-semibold py-2 px-4 rounded-full hover:bg-primary-dark transition-colors duration-300 shadow">Add</button>
-                                </div>
-                            </div>
-                            <div id="custom-symptom-tags-container" class="flex flex-wrap mt-2">
-                                <!-- Custom symptom tags will be injected here -->
-                            </div>
-                        </div> 
-
-                        <div id="severity-section" class="hidden pt-1"> 
-                            <label class="block mb-1 text-sm font-medium text-secondary">Severity</label> 
-                            <!-- This is the new button group container -->
-                            <div id="log-severity" class="severity-btn-group"> 
-                                <!-- Buttons will be injected by setupLogForm -->
-                            </div>
-                            <!-- Hidden input to store the value -->
-                            <input type="hidden" id="log-severity-value" value="1">
-                        </div>
-
-                        <textarea id="log-notes" rows="2" placeholder="Additional Notes (optional)" class="w-full p-2.5 border border-slate-300 rounded-xl"></textarea> 
-                        <button type="submit" class="w-full bg-primary  font-semibold py-2.5 px-4 rounded-full hover:bg-primary-dark transition-colors duration-300 shadow">Add Entry</button> 
-                    </form>
-                    </div> <!-- closes #log-form-body -->
-                </div>
+            <section id="daily-log" class="page hidden max-w-3xl mx-auto">
                  <div class="space-y-3 max-w-3xl mx-auto"> 
-                    <!-- Updated Header with Toggles -->
-                    <div class="px-2 space-y-2"> <!-- Added space-y-2 -->
-                        <div class="flex justify-between items-center"> <!-- Row 1: Title and View Toggle -->
-                            <div>
-                                <h2 class="text-xl sm:text-2xl font-semibold text-secondary">🧾 Reintroduction Log</h2>
+                    <div class="px-2 space-y-2"> <div class="flex justify-between items-center"> <div>
+                                <h2 class="text-xl sm:text-2xl font-semibold text-secondary">🧾 Daily Log</h2>
                                 <p id="log-subtitle" class="text-sm text-subtle">Tap a group to see entries.</p>
                             </div>
                             <div class="log-view-toggle">
-                                <button class="log-view-toggle-btn active" id="log-view-group-btn" data-view="group" title="Group by FODMAP">
-                                    <i class="fas fa-layer-group"></i>
-                                </button>
-                                <button class="log-view-toggle-btn" id="log-view-date-btn" data-view="date" title="View by Date">
-                                    <i class="fas fa-calendar-days"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="log-sort-container" class="flex justify-end hidden"> <!-- Row 2: Sort Button -->
-                            <button id="log-sort-btn" class="log-sort-btn">
-                                <!-- JS will fill this -->
+                            <button class="log-view-toggle-btn active" id="log-view-date-btn" data-view="date" title="View by Date">
+                                <i class="fas fa-calendar-alt"></i>
                             </button>
+                            <button class="log-view-toggle-btn" id="log-view-group-btn" data-view="group" title="Group by FODMAP">
+                                <i class="fas fa-layer-group"></i>
+                            </button>
+                        </div>
+                        </div>
+                        <div id="log-sort-container" class="flex justify-end hidden"> <button id="log-sort-btn" class="log-sort-btn">
+                                </button>
                         </div>
                     </div>
                     
-                    <!-- View 1: Group Container -->
                     <div id="log-accordion-container" class="space-y-3">
-                        <!-- Accordion groups will be injected here -->
-                    </div>
-                    <!-- View 2: Date Container -->
+                        </div>
                     <div id="log-date-container" class="hidden">
-                        <!-- Date timeline entries will be injected here -->
-                    </div>
+                        </div>
                  </div>
             </section>
             
             <section id="profile" class="page hidden max-w-3xl mx-auto">
                  <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
                     <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center">👤 Personalize Your Profile</h2>
-                    <p class="text-subtle mb-4 text-sm">Your selections here will customize the AI Assistant's advice to your specific needs.</p> 
+                    <p class="text-subtle mb-4 text-sm">Your selections here will customize the AI Assistant's advice to your specific needs.</p>
 
                     <form id="profile-form" class="space-y-4">
-                        <!-- API Key Accordion -->
                         <div id="api-key-accordion-container" class="api-key-accordion">
                             <div class="api-key-header">
                                 <h3 class="font-semibold text-secondary">API Key</h3>
                                 <i class="fas fa-chevron-down api-key-icon"></i>
                             </div>
                             <div class="api-key-body">
-                                <!-- Text is now FIRST, and has a bottom margin (mb-2) -->
                                 <p class="text-xs text-subtle mb-2">Get your key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-primary underline">Google AI Studio</a>. This is saved only in your browser.</p> 
                                 <input type="password" id="profile-api-key" placeholder="Enter your Google AI API Key" class="w-full p-2 border border-slate-300 rounded-xl"> 
                             </div>
                         </div>
+
+                        <!-- NEW: Phase Countdown Settings -->
+                        <div id="profile-phase-settings-card" class="api-key-accordion hidden">
+                            <div class="api-key-header">
+                                <h3 id="profile-phase-settings-title" class="font-semibold text-secondary">Phase Settings</h3>
+                                <i class="fas fa-chevron-down api-key-icon"></i>
+                            </div>
+                            <div class="api-key-body">
+                                <div class="space-y-3"> <!-- Added this wrapper for correct padding -->
+                                    <div>
+                                        <label for="profile-phase-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Phase Start Date</label>
+                                        <input type="date" id="profile-phase-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                                    </div>
+                                    <div>
+                                        <label class="block mb-1.5 text-sm font-medium text-secondary">Phase Duration</label>
+                                        <div class="flex gap-2">
+                                            <input type="number" id="profile-phase-duration-num" placeholder="e.g., 4" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
+                                            <select id="profile-phase-duration-unit" class="w-1/2 p-2.5 border border-slate-300 rounded-xl bg-white">
+                                                <option value="days">Days</option>
+                                                <option value="weeks" selected>Weeks</option>
+                                                <option value="months">Months</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id="profile-pretreatment-rules-container" class="hidden">
+                                        <label for="profile-pretreatment-rules" class="block mb-1.5 text-sm font-medium text-secondary">Pre-Treatment Diet Rules</label>
+                                        <textarea id="profile-pretreatment-rules" rows="4" class="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="List your rules, one per line..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- END: Phase Countdown Settings -->
+
                         <div>
-                            <h3 class="font-semibold text-secondary mb-1.5">Health Conditions</h3> 
+                        <div>
+                            <h3 class="font-semibold text-secondary mb-1.5">Health Conditions</h3>
                             <div id="profile-diagnoses" class="flex flex-wrap gap-2"> 
                             </div>
                         </div>
                         
                         <div>
-                            <h3 class="font-semibold text-secondary mb-1.5">Intolerances & Allergies</h3> 
+                            <h3 class="font-semibold text-secondary mb-1.5 mt-4">Intolerances & Allergies</h3> 
                             <div id="profile-intolerances" class="flex flex-wrap gap-2"> 
                             </div>
-                            <input type="text" id="profile-allergies-other" placeholder="List other allergies (comma separated)" class="mt-2 w-full p-2 border border-slate-300 rounded-xl"> 
+                            <input type="text" id="profile-allergies-other" placeholder="List other allergies (comma separated)" class="mt-2 w-full p-2 border border-slate-300 rounded-xl mt-4"> 
                         </div>
                         
                         <div>
-                            <h3 class="font-semibold text-secondary mb-1.5">Dietary Preferences</h3> 
+                            <h3 class="font-semibold text-secondary mb-1.5 mt-4">Dietary Preferences</h3> 
                             <div id="profile-preferences" class="flex flex-wrap gap-2"> 
                             </div>
                         </div>
                         
-                        <button type="submit" class="w-full bg-primary  font-semibold py-2.5 px-4 rounded-full hover:bg-primary-dark transition-colors duration-300 shadow">Save Profile</button> 
+                        <button type="submit" class="w-full bg-adaptive font-semibold py-2.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow mt-4">Save Profile</button> 
                     </form>
                 </div>
             </section>
         </main>
         
-        <div id="toast" class="fixed bottom-4 right-4 bg-accent  py-2 px-4 rounded-full shadow-xl opacity-0 transform translate-y-10 transition-all duration-500 ease-in-out text-sm z-50"> 
-            <p>Saved successfully!</p>
+        <div id="toast" class="fixed left-4 py-2 px-4 rounded-lg shadow-xl opacity-0 transform -translate-y-10 transition-all duration-500 ease-in-out text-sm z-50" style="top: 100px;">
+            Saved successfully!
         </div>
 
-        <div id="gemini-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60] hidden"> 
+        <div id="gemini-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[85] hidden"> 
             <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full">
                 <div class="p-4 border-b border-slate-200 flex justify-between items-center"> 
                     <h3 id="gemini-modal-title" class="text-lg font-semibold text-secondary">AI Assistant</h3> 
@@ -943,6 +356,167 @@
             </div>
         </div>
 
+        <div id="action-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[90] hidden"> 
+            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center"> 
+                    <h3 id="action-modal-title" class="text-lg font-semibold text-secondary">Action</h3> 
+                    <button id="action-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+                </div>
+                <div class="p-4 space-y-3"> 
+                    <p id="action-modal-message" class="text-sm text-secondary"></p>
+                    <div id="action-modal-input-container" class="hidden">
+                        <input type="text" id="action-modal-input" class="w-full p-2.5 border border-slate-300 rounded-xl" />
+                    </div>
+                </div>
+                 <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl"> 
+                    <button id="action-modal-btn-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button> 
+                    <button id="action-modal-btn-alt" class="hidden bg-error text-white font-semibold py-1.5 px-4 rounded-full hover:bg-error-dark transition-colors text-sm">Alternate</button> 
+                    <button id="action-modal-btn-confirm" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Confirm</button> 
+                </div>
+            </div>
+        </div>
+
+        <div id="food-edit-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[80] hidden">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                    <h3 id="food-modal-title" class="text-lg font-semibold text-secondary">View Food</h3>
+                    <button id="food-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+                </div>
+
+                <div id="food-modal-view" class="p-4 space-y-3">
+                    <div id="food-modal-view-content">
+                        </div>
+                    <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                        <button id="food-modal-delete-btn" class="bg-error text-white font-semibold py-1.5 px-4 rounded-full hover:bg-error-dark transition-colors text-sm">Delete</button>
+                        <button id="food-modal-edit-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Edit</button>
+                    </div>
+                </div>
+
+                <form id="food-modal-edit" class="hidden">
+                    <div class="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+                        <div>
+                            <label for="food-modal-name" class="block mb-1 text-sm font-medium text-secondary">Food Name*</label>
+                            <input type="text" id="food-modal-name" class="w-full p-2.5 border border-slate-300 rounded-xl" required>
+                        </div>
+                        
+                        <div>
+                            <label for="food-modal-group" class="block mb-1 text-sm font-medium text-secondary">Food Group</label>
+                            <select id="food-modal-group" class="w-full p-2.5 border border-slate-300 rounded-xl bg-white">
+                                </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-1 text-sm font-medium text-secondary">Status*</label>
+                            <div class="flex gap-2">
+                                <button type="button" id="food-modal-btn-tolerated" class="flex-1 p-2.5 rounded-xl border-2 font-semibold text-sm">✅ Tolerated</button>
+                                <button type="button" id="food-modal-btn-trigger" class="flex-1 p-2.5 rounded-xl border-2 font-semibold text-sm">⚠️ Trigger</button>
+                                <input type="hidden" id="food-modal-status" value="">
+                            </div>
+                        </div>
+
+                        <div id="food-modal-dose-logic-container" class="hidden space-y-2 p-3 bg-slate-50 rounded-lg">
+                            <label class="block text-sm font-medium text-secondary">Dose Logic (Optional)</label>
+                            
+                            <button type="button" id="food-modal-dose-trigger-tolerated" class="p13n-dose-trigger-btn tolerated hidden">
+                                + Tolerated up to...
+                            </button>
+                            <button type="button" id="food-modal-dose-trigger-trigger" class="p13n-dose-trigger-btn trigger hidden">
+                                + Trigger starting at...
+                            </button>
+                            
+                            <div id="food-modal-dose-wrapper">
+                                <input type="text" id="food-modal-dose" class="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="e.g., 1/2 cup">
+                                <button type="button" id="food-modal-dose-clear-btn" title="Clear dose">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            
+                            <input type="hidden" id="food-modal-doselogic" value="">
+                        </div>
+
+                        <div>
+                            <label for="food-modal-notes" class="block mb-1 text-sm font-medium text-secondary">Notes (Optional)</label>
+                            <textarea id="food-modal-notes" rows="2" class="w-full p-2.5 border border-slate-300 rounded-xl"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl">
+                        <button type="button" id="food-modal-cancel-btn" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button>
+                        <button type="submit" id="food-modal-save-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div id="pretreatment-settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[80] hidden">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                    <h3 id="pretreatment-modal-title" class="text-lg font-semibold text-secondary">Pre-Treatment Phase Settings</h3>
+                    <button id="pretreatment-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+                </div>
+
+                <form id="pretreatment-modal-form">
+                    <div class="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+                        <div>
+                            <label for="pretreatment-modal-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Phase Start Date</label>
+                            <input type="date" id="pretreatment-modal-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="block mb-1.5 text-sm font-medium text-secondary">Phase Duration</label>
+                            <div class="flex gap-2">
+                                <input type="number" id="pretreatment-modal-duration-num" placeholder="e.g., 4" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
+                                <select id="pretreatment-modal-duration-unit" class="w-1/2 p-2.5 border border-slate-300 rounded-xl bg-white">
+                                    <option value="days">Days</option>
+                                    <option value="weeks" selected>Weeks</option>
+                                    <option value="months">Months</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="pretreatment-modal-rules" class="block mb-1.5 text-sm font-medium text-secondary">Pre-Treatment Diet Rules</label>
+                            <textarea id="pretreatment-modal-rules" rows="4" class="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="List your rules, one per line..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl">
+                        <button type="button" id="pretreatment-modal-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button>
+                        <button type="submit" id="pretreatment-modal-save-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div id="restriction-settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[80] hidden">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                    <h3 id="restriction-modal-title" class="text-lg font-semibold text-secondary">Restriction Phase Settings</h3>
+                    <button id="restriction-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+                </div>
+
+                <form id="restriction-modal-form">
+                    <div class="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+                        <div>
+                            <label for="restriction-modal-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Phase Start Date</label>
+                            <input type="date" id="restriction-modal-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="block mb-1.5 text-sm font-medium text-secondary">Phase Duration</label>
+                            <div class="flex gap-2">
+                                <input type="number" id="restriction-modal-duration-num" placeholder="e.g., 4" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
+                                <select id="restriction-modal-duration-unit" class="w-1/2 p-2.5 border border-slate-300 rounded-xl bg-white">
+                                    <option value="days">Days</option>
+                                    <option value="weeks" selected>Weeks</option>
+                                    <option value="months">Months</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl">
+                        <button type="button" id="restriction-modal-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button>
+                        <button type="submit" id="restriction-modal-save-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
         <div id="info-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60] hidden"> 
             <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full">
                 <div class="p-4 border-b border-slate-200 flex justify-between items-center"> 
@@ -954,16 +528,18 @@
                     <p><strong>F</strong>ermentable <strong>O</strong>ligosaccharides, <strong>D</strong>isaccharides, <strong>M</strong>onosaccharides, <strong>A</strong>nd <strong>P</strong>olyols.</p>
                     <p>Short-chain carbs poorly absorbed in the small intestine. They draw water and ferment in the large intestine, causing gas, bloating, etc.</p>
                     
-                    <h2 class="mt-4">🗺️ The 3 Phases</h2> 
-                    <h3>Phase 1: Restriction (2-6 Weeks)</h3>
+                    <h2 class="mt-4">🗺️ The 4 Phases</h2> 
+                    <h3>Phase 1: Pre-Treatment</h3>
+                    <p>🛡️ Follow specific diet rules to calm symptoms before treatment.</p>
+                    <h3>Phase 2: Restriction</h3>
                     <p>🚫 Remove high-FODMAP foods to calm symptoms.</p>
-                    <h3>Phase 2: Reintroduction</h3>
+                    <h3>Phase 3: Reintroduction</h3>
                     <p>🧪 Systematically reintroduce groups to identify triggers (use the Reintro Log!).</p>
-                    <h3>Phase 3: Personalization</h3>
+                    <h3>Phase 4: Personalization</h3>
                     <p>🧘 Build a long-term diet including tolerated foods.</p>
 
                     <h2 class="mt-4">👥 Meet the Groups</h2> 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2"> 
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-1 mt-2"> 
                         <div class="fodmap-group-card border-l-yellow-400">
                             <h3 class="text-yellow-700 !mt-0">🍎 Fructose</h3>
                             <p>Honey, Apples, Mango, Agave, HFCS</p>
@@ -999,7 +575,7 @@
                     </div>
                 </div>
                  <div class="p-3 bg-slate-50 border-t border-slate-200 text-right rounded-b-xl"> 
-                    <button id="info-modal-close-btn" class="bg-primary  font-semibold py-1.5 px-4 rounded-full hover:bg-primary-dark transition-colors text-sm">Got it!</button> 
+                    <button id="info-modal-close-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Got it!</button> 
                 </div>
             </div>
         </div>
@@ -1022,1138 +598,34 @@
                             <i class="fas fa-download w-5 mr-2 text-primary"></i>Install App
                         </button>
                     </li>
+                    <li>
+                        <button id="open-onboarding-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
+                            <i class="fas fa-magic w-5 mr-2 text-primary"></i>Show Welcome Setup
+                        </button>
+                    </li>
+                    <li class="pt-2 mt-2 border-t border-slate-200">
+                        <h3 class="px-3 py-1 text-sm font-semibold text-secondary flex items-center">
+                            <i class="fas fa-list-ol w-5 mr-2 text-primary"></i>Phase Selector
+                        </h3>
+                        <div id="side-menu-phases" class="flex flex-col space-y-1 mt-1">
+                            <!-- We re-use .log-view-toggle-btn but in a vertical layout -->
+                            <button class="log-view-toggle-btn text-left justify-start" data-phase="pre-treatment">Pre-treatment</button>
+                            <button class="log-view-toggle-btn text-left justify-start" data-phase="restriction">Restriction</button>
+                            <button class="log-view-toggle-btn text-left justify-start" data-phase="reintroduction">Reintroduction</button>
+                            <button class="log-view-toggle-btn text-left justify-start" data-phase="personalization">Personalization</button>
+                        </div>
+                    </li>
                 </ul>
             </nav>
         </div>
     </div>
     
-    <button id="add-entry-fab" class="hidden fixed bottom-4 right-4 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-xl transition-transform hover:scale-110 z-50" 
-            style="background-color: var(--color-accent-text);" > 
+    <button id="add-entry-fab" class="hidden fixed bottom-12 right-4 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-xl transition-transform hover:scale-110 z-50"> 
         <i class="fas fa-plus"></i>
     </button>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-
-            let deferredPrompt; // This will store the event for later use
-            const installAppLi = document.getElementById('install-app-li');
-            const installAppBtn = document.getElementById('install-app-btn');
-
-             const FODMAP_GROUP_DATA = [ { value: "Fructose", name: "Fructose", examples: "(e.g., Honey, Mango)" }, { value: "Lactose", name: "Lactose", examples: "(e.g., Milk, Yogurt)" }, { value: "Fructans (Grains)", name: "Fructans - Grains", examples: "(e.g., Wheat, Rye)" }, { value: "Fructans (Veg & Fruit)", name: "Fructans - Veg & Fruit", examples: "(e.g., Onion, Garlic)" }, { value: "GOS", name: "Galactans (GOS)", examples: "(e.g., Beans, Lentils)" }, { value: "Polyols (Sorbitol)", name: "Polyols - Sorbitol", examples: "(e.g., Avocado, Blackberry)" }, { value: "Polyols (Mannitol)", name: "Polyols - Mannitol", examples: "(e.g., Cauliflower, Mushroom)" }, { value: "Restriction", name: "Daily Log", examples: "(A non-challenge or safe meal)" } ];
-             const FODMAP_STYLES = { "Fructose": { color: "bg-yellow-100 text-yellow-800", icon: "🍎" }, "Lactose": { color: "bg-blue-100 text-blue-800", icon: "🥛" }, "Fructans (Grains)": { color: "bg-orange-100 text-orange-800", icon: "🍞" }, "Fructans (Veg & Fruit)": { color: "bg-purple-100 text-purple-800", icon: "🧅" }, "GOS": { color: "bg-teal-100 text-teal-800", icon: "🫘" }, "Polyols (Sorbitol)": { color: "bg-green-100 text-green-800", icon: "🥑" }, "Polyols (Mannitol)": { color: "bg-indigo-100 text-indigo-800", icon: "🍄" }, "Restriction": { color: "bg-slate-100 text-slate-800", icon: "🍴" } };
-             const PROFILE_OPTIONS = { diagnoses: ["IMO", "SIBO", "IBS-D", "IBS-C", "IBS-M"], intolerances: ["Sorbitol", "Mannitol", "Lactose", "Fructose", "Gluten"], preferences: ["Vegetarian", "Vegan", "Pescatarian"] };
-             const SYMPTOM_OPTIONS = ["Bloating", "Gas", "Abdominal pain", "Diarrhea", "Constipation", "Fatigue", "Headache"];
-
-            const pages = document.querySelectorAll('.page');
-            const navItems = document.querySelectorAll('.nav-item');
-            const addEntryFab = document.getElementById('add-entry-fab');
-            let logEntries = JSON.parse(localStorage.getItem('fodmapLogEntries')) || [];
-            let userProfile = JSON.parse(localStorage.getItem('fodmapUserProfile')) || { diagnoses: [], intolerances: [], allergiesOther: '', preferences: [], apiKey: '' };            let currentFilter = 'All';
-            let currentPageIndex = 0;
-            let currentlyEditingId = null;
-            let stagedImageData = null; // To hold the base64 image data
-            let currentLogView = 'group'; // 'group' or 'date'
-            let currentDateSort = 'newest'; // 'newest' or 'oldest'
-            let openLogFormOnLoad = false; // Flag to auto-open the form
-
-            function navigateTo(pageId) {
-                const targetPage = document.getElementById(pageId);
-                if (!targetPage) return;
-
-                pages.forEach(page => page.classList.add('hidden'));
-                targetPage.classList.remove('hidden');
-                
-                navItems.forEach((item, index) => {
-                    const isActive = item.dataset.page === pageId;
-                    item.classList.toggle('active', isActive);
-                    if (isActive) {
-                        currentPageIndex = index;
-                    }
-                });
-                
-                // --- NEW LOGIC for collapsible form ---
-                const logFormWrapper = document.getElementById('add-log-entry-wrapper');
-                if (pageId === 'reintroduction-log') {
-                    if (openLogFormOnLoad) {
-                        logFormWrapper.classList.add('expanded'); // Expand it
-                        logFormWrapper.scrollIntoView({ behavior: 'smooth' }); // Scroll to it
-                        openLogFormOnLoad = false; // Reset the flag
-                    } else {
-                        logFormWrapper.classList.remove('expanded'); // Ensure it's collapsed
-                    }
-                }
-                // --- END NEW LOGIC ---
-
-                addEntryFab.classList.toggle('hidden', pageId === 'reintroduction-log');
-                window.scrollTo(0, 0);
-                 document.querySelectorAll('.nav-item span').forEach(span => { span.classList.remove('hidden', 'sm:inline'); span.classList.add('hidden', 'sm:inline'); });
-            }
-
-            function goToNextTab() {
-                const nextIndex = (currentPageIndex + 1) % navItems.length;
-                const nextPageId = navItems[nextIndex].dataset.page;
-                navigateTo(nextPageId);
-            }
-
-            function goToPrevTab() {
-                const prevIndex = (currentPageIndex - 1 + navItems.length) % navItems.length;
-                const prevPageId = navItems[prevIndex].dataset.page;
-                navigateTo(prevPageId);
-            }
-
-            navItems.forEach(item => item.addEventListener('click', () => navigateTo(item.dataset.page)));
-            addEntryFab.addEventListener('click', () => { 
-                openLogFormOnLoad = true; // Set the flag to auto-open
-                navigateTo('reintroduction-log'); 
-            });
-            
-            const toast = document.getElementById('toast');
-            function showToast(message = "Saved!", isError = false) {
-                toast.textContent = message;
-                toast.className = `fixed bottom-4 right-4  py-2 px-4 rounded-lg shadow-xl opacity-0 transform translate-y-10 transition-all duration-500 ease-in-out text-sm z-50 ${isError ? 'bg-error' : 'bg-accent'}`; 
-                toast.classList.remove('opacity-0', 'translate-y-10');
-                setTimeout(() => toast.classList.add('opacity-0', 'translate-y-10'), 3000);
-            }
-
-            const aiFoodSearchInput = document.getElementById('ai-food-search-input');
-            const imageUploadInput = document.getElementById('image-upload-input');
-            const cameraUploadInput = document.getElementById('camera-upload-input');
-            
-            // New Elements
-            const aiSendBtn = document.getElementById('ai-send-btn');
-            const aiAttachBtn = document.getElementById('ai-attach-btn');
-            const aiAttachPopup = document.getElementById('ai-attach-popup');
-            const popupGalleryBtn = document.getElementById('popup-gallery-btn');
-            const popupCameraBtn = document.getElementById('popup-camera-btn');
-            
-            // Staged Image Elements
-            const stagedImageContainer = document.getElementById('staged-image-container');
-            const imagePreview = document.getElementById('image-preview');
-            const uploadPromptText = document.getElementById('upload-prompt-text');
-            const clearStagedImageBtn = document.getElementById('clear-staged-image-btn');
-            
-            const aiResultsLoader = document.getElementById('ai-results-loader');
-            const aiResultsContainer = document.getElementById('ai-results-container');
-            const aiResultsContent = document.getElementById('ai-results-content');
-            
-            const buildProfileContext = () => {
-                let context = "User profile:"; let hasInfo = false;
-                if (userProfile.diagnoses.length > 0) { context += ` Diagnoses: ${userProfile.diagnoses.join(', ')}.`; hasInfo = true; }
-                const allIntolerances = [...userProfile.intolerances, userProfile.allergiesOther].filter(Boolean);
-                if (allIntolerances.length > 0) { context += ` Intolerances/Allergies: ${allIntolerances.join(', ')}.`; hasInfo = true; }
-                if (userProfile.preferences.length > 0) { context += ` Preferences: ${userProfile.preferences.join(', ')}.`; hasInfo = true; }
-                return hasInfo ? context : "User profile not specified.";
-            };
-
-            const getProfileForDisplay = () => {
-                let displayLines = [];
-                if (userProfile.diagnoses.length > 0) { displayLines.push(`<strong>Diagnoses:</strong> ${userProfile.diagnoses.join(', ')}`); }
-                const allIntolerances = [...userProfile.intolerances, userProfile.allergiesOther].filter(Boolean);
-                if (allIntolerances.length > 0) { displayLines.push(`<strong>Intolerances/Allergies:</strong> ${allIntolerances.join(', ')}`); }
-                if (userProfile.preferences.length > 0) { displayLines.push(`<strong>Preferences:</strong> ${userProfile.preferences.join(', ')}`); }
-                
-                if (displayLines.length === 0) return null;
-                return displayLines.join('<br>');
-            };
-
-            const populateFormForEdit = (entry) => {
-                document.getElementById('log-date').value = entry.date;
-                document.getElementById('log-fodmap-group').value = entry.group;
-                // Update the visible text of the custom dropdown
-                const groupData = FODMAP_GROUP_DATA.find(g => g.value === entry.group);
-                const style = FODMAP_STYLES[entry.group] || { icon: '❓' };
-                const triggerText = document.getElementById('custom-fodmap-select-text');
-                const trigger = document.getElementById('custom-fodmap-select-trigger');
-                
-                if (groupData) {
-                    triggerText.textContent = `${style.icon} ${groupData.name}`;
-                    trigger.classList.remove('placeholder');
-                } else {
-                    triggerText.textContent = 'Select FODMAP Group...';
-                    trigger.classList.add('placeholder');
-                }
-                document.getElementById('log-food').value = entry.food;
-                document.getElementById('log-dose').value = entry.dose;
-                document.getElementById('log-notes').value = entry.notes;
-
-                // --- Populate Symptoms ---
-                // 1. Reset all fields first
-                document.querySelectorAll('input[name="symptoms"]').forEach(cb => cb.checked = false);
-                const customTagsContainer = document.getElementById('custom-symptom-tags-container');
-                customTagsContainer.innerHTML = '';
-                
-                const symptoms = entry.symptoms || ['None'];
-                let hasSymptoms = false;
-
-                symptoms.forEach(symptom => {
-                    if (symptom === 'None') {
-                        document.getElementById('symptom-None').checked = true;
-                    } else {
-                        const predefined = document.getElementById(`symptom-${symptom}`);
-                        if (predefined) {
-                            predefined.checked = true; // Check the box
-                        } else {
-                            // It's a custom tag
-                            const tag = document.createElement('div');
-                            tag.className = 'custom-symptom-tag';
-                            tag.textContent = symptom;
-                            tag.innerHTML += `<button type="button" class="remove-tag-btn">&times;</button>`;
-                            customTagsContainer.appendChild(tag);
-                        }
-                        hasSymptoms = true;
-                    }
-                });
-                
-                // --- Populate Severity ---
-                const sevSect = document.getElementById('severity-section');
-                if (hasSymptoms) {
-                    sevSect.classList.remove('hidden');
-                    document.getElementById('log-severity-value').value = entry.severity;
-                    document.querySelectorAll('#log-severity .severity-btn').forEach(btn => {
-                        btn.classList.toggle('selected', btn.dataset.value == entry.severity);
-                    });
-                } else {
-                    sevSect.classList.add('hidden');
-                }
-
-                // --- Update UI ---
-                document.getElementById('log-form').querySelector('button[type="submit"]').textContent = 'Save Changes';
-                document.getElementById('add-log-entry-wrapper').scrollIntoView({ behavior: 'smooth' });
-            };
-
-            const handleAIQuery = (prompt, title, imageData = null) => {
-                 aiResultsLoader.classList.remove('hidden'); aiResultsContainer.classList.add('hidden'); aiResultsContent.innerHTML = '';
-                 callGeminiAPI(prompt, imageData)
-                    .then(response => {
-                        if (response) { 
-                            const profileHTML = getProfileForDisplay();
-                            const disclaimer = `Disclaimer: I am a FODMAP expert analysis tool, not a medical professional. This information is for educational purposes regarding dietary management only and is not a substitute for personalized medical advice or treatment. Always consult with your doctor or a registered dietitian before making dietary changes.`;
-
-                            // 1. Process the AI response
-                            let aiContent = response
-                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')   // Bold
-                                .replace(/\*(.*?)\*/g, '<em>$1</em>')     // Italics
-                                .replace(/\n/g, '<br>'); // Newlines
-
-                            // 2. Build the full response with header and footer
-                            let html = `
-                                <div class="space-y-3">
-                                    <div>
-                                        <p><strong>Food:</strong> ${title}</p>
-                                        ${profileHTML ? `<p>${profileHTML}</p>` : ''}
-                                    </div>
-                                    
-                                    <hr class="border-slate-200">
-                                    
-                                    <div>${aiContent}</div>
-
-                                    <hr class="border-slate-200">
-                                    
-                                    <p class="text-xs text-subtle italic">${disclaimer}</p>
-                                </div>
-                            `;
-                            
-                            aiResultsContent.innerHTML = html; 
-                            aiResultsContainer.classList.remove('hidden'); 
-                        }                    
-                        else { aiResultsContent.innerHTML = `<p class="text-error">Sorry, error.</p>`; aiResultsContainer.classList.remove('hidden'); }
-                    }).finally(() => {
-                        aiResultsLoader.classList.add('hidden');
-                        // Clear inputs after search
-                        aiFoodSearchInput.value = '';
-                        stagedImageData = null;
-                        stagedImageContainer.classList.add('hidden');
-                    });
-            };
-
-            aiSendBtn.addEventListener('click', () => {
-                const foodName = aiFoodSearchInput.value.trim();
-                
-                // Check if we have an image or text
-                if (!stagedImageData && !foodName) {
-                    showToast("Please enter food or upload an image.", true);
-                    return;
-                }
-
-                let prompt;
-                let title;
-
-                if (stagedImageData) {
-                    // We are searching with an image
-                    title = `Image${foodName ? ` (${foodName})` : ''}`; // Use text as a caption if it exists
-                    prompt = `FODMAP expert: Analyze ingredients in this image. ${buildProfileContext()}
-                    ${foodName ? `The user added this text: "${foodName}".` : ''}
-                    List all ingredients found. 
-                    For any high-FODMAP ingredient, explain why in one short sentence. Use *italics* or emojis for emphasis.
-                    Provide an **Overall Summary:** (Safe or Not Safe).
-                    Format *only* with **bold** headings, *italics*, newlines, and emojis. 
-                    Do NOT use tables, '###', '---', or '|'. Omit the disclaimer.`;
-                    
-                    handleAIQuery(prompt, title, stagedImageData);
-
-                } else if (foodName) {
-                    // We are searching with text only
-                    title = foodName;
-                    prompt = `FODMAP expert: Analyze '${foodName}'. ${buildProfileContext()}
-                    Provide a concise, 3-part answer. 
-                    Use this exact template:
-                    **FODMAP Level:** [Brief level & why. Use *italics* or emojis for emphasis, not full bold sentences.]
-                    **Safe Portion:** [Brief portion size. Use *italics* or emojis for emphasis.]
-                    **Substitutes:** [List 3-4 substitutes. Use *italics* or emojis for emphasis.]
-
-                    Do NOT use tables, '###', '---', or '|'. Omit the disclaimer.`;
-                    
-                    handleAIQuery(prompt, title, null);
-                }
-            });
-
-            // Add text input "Enter" key listener
-            aiFoodSearchInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    aiSendBtn.click(); // Trigger the send button click
-                }
-            });
-
-            // --- New AI Chat Bar Listeners ---
-            aiAttachBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Stop click from bubbling to the window
-                aiAttachPopup.classList.toggle('open');
-            });
-
-            popupGalleryBtn.addEventListener('click', () => {
-                imageUploadInput.click();
-            });
-
-            popupCameraBtn.addEventListener('click', () => {
-                cameraUploadInput.click();
-            });
-
-            clearStagedImageBtn.addEventListener('click', () => {
-                stagedImageData = null;
-                stagedImageContainer.classList.add('hidden');
-                imagePreview.src = '';
-            });
-
-            const handleFileSelect = (event) => {
-                const file = event.target.files[0]; if (!file) return; 
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    // 1. Get the base64 data
-                    stagedImageData = e.target.result.split(',')[1]; 
-                    
-                    // 2. Show the preview
-                    imagePreview.src = e.target.result;
-                    uploadPromptText.textContent = file.name;
-                    stagedImageContainer.classList.remove('hidden');
-
-                    // 3. Close the popup
-                    aiAttachPopup.classList.remove('open');
-                }; 
-                reader.readAsDataURL(file); 
-                event.target.value = null; 
-            };
-            
-            imageUploadInput.addEventListener('change', handleFileSelect);
-            cameraUploadInput.addEventListener('change', handleFileSelect);
-
-            const summaryContainer = document.getElementById('progress-summary');
-            const renderHomePage = () => {
-                summaryContainer.innerHTML = '';
-                let itemsAdded = 0; 
-
-                FODMAP_GROUP_DATA.forEach(groupData => {
-                    if (groupData.value === "Restriction") return; // Skip this group
-                    const entries = logEntries.filter(entry => entry.group === groupData.value); 
-                    const count = entries.length;
-                    
-                    if (count > 0) {
-                        itemsAdded++; 
-                        let statusText, icon, color;
-                        
-                        if (count >= 3) { 
-                            statusText = `Completed (${count})`; 
-                            icon = "fa-check-circle"; 
-                            color = "text-accent"; 
-                        } else { 
-                            statusText = `In Progress (${count})`; 
-                            icon = "fa-spinner fa-spin"; 
-                            color = "text-warning"; 
-                        }
-                        const style = FODMAP_STYLES[groupData.value] || { icon: '❓' };
-                        const item = document.createElement('div'); 
-                        item.className = 'progress-item bg-slate-100 rounded-lg transition-colors duration-300'; 
-                        item.dataset.group = groupData.value;
-                        
-                        // --- UPDATED INNERHTML for symptoms array ---
-                        item.innerHTML = `<div class="progress-item-header flex items-center justify-between p-3 cursor-pointer hover:bg-slate-200 rounded-lg"><div class="flex items-center gap-2"><i class="fas fa-chevron-right expand-icon text-slate-400 transition-transform duration-300 text-xs"></i><div><p class="font-semibold text-secondary text-sm"><span class="mr-1">${style.icon}</span>${groupData.name}</p><p class="text-xs text-subtle">${groupData.examples.slice(1, -1)}</p></div></div><div class="flex items-center gap-1.5 ${color}"><i class="fas ${icon} text-xs"></i><span class="text-xs font-medium">${statusText}</span></div></div><div class="progress-item-body border-t border-slate-200">${ entries.length > 0 ? entries.sort((a,b) => new Date(a.date) - new Date(b.date)).map(e => { 
-                            // --- START: UPDATED LOGIC ---
-                            const symptoms = e.symptoms || ['None']; 
-                            const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
-                            let symptomDisplay;
-
-                            if (hasSymptoms) {
-                                symptomDisplay = `${symptoms.join(', ')} (${e.severity}/5)`; // Added parentheses
-                            } else {
-                                symptomDisplay = 'No symptoms'; // Lowercase 's'
-                            }
-                            
-                            // Format date as "Oct 31, 25"
-                            const formattedDate = new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-                            // Return the new format
-                            return `<p><strong>${formattedDate}:</strong> ${e.food}, ${e.dose} - <em>${symptomDisplay}</em></p>`
-                            // --- END: UPDATED LOGIC ---
-                        }).join('') : '<p class="text-subtle italic p-3 text-xs">No entries.</p>' }</div>`;
-                        summaryContainer.appendChild(item);
-                    }
-                });
-
-                if (itemsAdded === 0) {
-                    summaryContainer.innerHTML = `<p class="text-center text-subtle italic text-sm p-4">Your progress will show here once you add your first log entry!</p>`;
-                }
-            };
-            summaryContainer.addEventListener('click', (e) => {
-                const header = e.target.closest('.progress-item-header'); if (header) { const item = header.parentElement; const expanded = item.classList.contains('expanded'); summaryContainer.querySelectorAll('.progress-item').forEach(i => i.classList.remove('expanded')); if (!expanded) item.classList.add('expanded'); }
-            });
-
-            const logForm = document.getElementById('log-form');
-            const logEntriesContainer = document.getElementById('log-entries');
-            const logFilter = document.getElementById('log-filter');
-            const symptomSelector = document.getElementById('log-symptom');
-            const otherSymptomInput = document.getElementById('log-symptom-other');
-
-            const setupLogForm = () => {
-                // --- NEW: Custom Select Dropdown Logic ---
-                const fodmapSelectContainer = document.getElementById('custom-fodmap-select-container');
-                const fodmapTrigger = document.getElementById('custom-fodmap-select-trigger');
-                const fodmapTriggerText = document.getElementById('custom-fodmap-select-text');
-                const fodmapOptions = document.getElementById('custom-fodmap-select-options');
-                const fodmapHiddenInput = document.getElementById('log-fodmap-group');
-
-                // Populate options list (only if it's empty)
-                if (fodmapOptions.children.length === 0) {
-                    FODMAP_GROUP_DATA.forEach(group => {
-                        const option = document.createElement('li');
-                        option.className = 'custom-select-option';
-                        option.dataset.value = group.value;
-                        
-                        // --- THIS IS THE FIX ---
-                        // The 'style' variable must be defined *before* it is used.
-                        // The duplicate/broken block has been removed.
-                        const style = FODMAP_STYLES[group.value] || { icon: '❓' };
-                        option.innerHTML = `
-                            <div class="option-title">${style.icon} ${group.name}</div>
-                            <div class="option-examples">${group.examples}</div>
-                        `;
-                        // --- END FIX ---
-
-                        fodmapOptions.appendChild(option);
-                    });
-                }
-
-                // Toggle dropdown
-                fodmapTrigger.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    fodmapOptions.classList.toggle('open');
-                    fodmapTrigger.classList.toggle('open');
-                });
-
-                // Handle option selection
-                fodmapOptions.addEventListener('click', (e) => {
-                    const option = e.target.closest('.custom-select-option');
-                    if (option) {
-                        fodmapHiddenInput.value = option.dataset.value; // Set hidden input
-                        fodmapTriggerText.textContent = option.querySelector('.option-title').textContent; // Set button text
-                        fodmapTrigger.classList.remove('placeholder'); // Remove placeholder styling
-                        fodmapOptions.classList.remove('open');
-                        fodmapTrigger.classList.remove('open');
-                    }
-                });
-                
-                // --- Severity Button Setup (Unchanged) ---
-                const sevCont = document.getElementById('log-severity'); 
-                const sevSect = document.getElementById('severity-section'); 
-                const sevInput = document.getElementById('log-severity-value');
-                sevCont.innerHTML = ''; // Clear container
-                for (let i = 1; i <= 5; i++) {
-                    const btn = document.createElement('button');
-                    btn.type = 'button'; btn.className = 'severity-btn';
-                    btn.textContent = i; btn.dataset.value = i;
-                    if (i === 1) { btn.classList.add('selected'); }
-                    sevCont.appendChild(btn);
-                }
-                sevCont.addEventListener('click', (e) => {
-                    const clickedButton = e.target.closest('.severity-btn');
-                    if (clickedButton) {
-                        sevCont.querySelectorAll('.severity-btn').forEach(btn => btn.classList.remove('selected'));
-                        clickedButton.classList.add('selected');
-                        sevInput.value = clickedButton.dataset.value;
-                    }
-                });
-
-                // --- NEW: Symptom Tag Setup ---
-                const symptomTagsContainer = document.getElementById('symptom-tags-container');
-                symptomTagsContainer.innerHTML = ''; // Clear container
-
-                // Add a "None" tag first
-                symptomTagsContainer.innerHTML += `<div class=inline-block><input type=checkbox id="symptom-None" value="None" name="symptoms" class="profile-checkbox hidden"><label for="symptom-None" class="cursor-pointer border rounded-full px-2.5 py-1.5 text-xs font-medium text-muted duration-200">None</label></div>`;
-
-                // Add predefined symptom tags
-                SYMPTOM_OPTIONS.forEach(symptom => {
-                    symptomTagsContainer.innerHTML += `<div class=inline-block><input type=checkbox id="symptom-${symptom}" value="${symptom}" name="symptoms" class="profile-checkbox hidden"><label for="symptom-${symptom}" class="cursor-pointer border rounded-full px-2.5 py-1.5 text-xs font-medium text-muted duration-200">${symptom}</label></div>`;
-                });
-
-                const customSymptomInput = document.getElementById('custom-symptom-input');
-                const addCustomSymptomBtn = document.getElementById('add-custom-symptom-btn');
-                const customSymptomTagsContainer = document.getElementById('custom-symptom-tags-container');
-                const customSymptomTrigger = document.getElementById('custom-symptom-trigger');
-                const customSymptomBody = document.getElementById('custom-symptom-body');
-
-                const addCustomTag = () => {
-                    const symptom = customSymptomInput.value.trim();
-                    if (symptom) {
-                        const tag = document.createElement('div');
-                        tag.className = 'custom-symptom-tag';
-                        tag.textContent = symptom;
-                        tag.innerHTML += `<button type="button" class="remove-tag-btn">&times;</button>`;
-                        customSymptomTagsContainer.appendChild(tag);
-                        customSymptomInput.value = '';
-                        updateSeverityVisibility();
-                    }
-                };
-
-                addCustomSymptomBtn.addEventListener('click', addCustomTag);
-                customSymptomInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addCustomTag();
-                    }
-                });
-
-                customSymptomTrigger.addEventListener('click', () => {
-                    customSymptomBody.classList.toggle('hidden');
-                    // Automatically focus the input field when shown
-                    if (!customSymptomBody.classList.contains('hidden')) {
-                        customSymptomInput.focus();
-                    }
-                });
-
-                customSymptomTagsContainer.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('remove-tag-btn')) {
-                        e.target.parentElement.remove();
-                        updateSeverityVisibility();
-                    }
-                });
-
-                const updateSeverityVisibility = () => {
-                    const hasPredefined = document.querySelectorAll('input[name="symptoms"]:checked').length > 0;
-                    const hasCustom = customSymptomTagsContainer.children.length > 0;
-                    const isNoneSelected = document.getElementById('symptom-None').checked;
-                    
-                    sevSect.classList.toggle('hidden', (!hasPredefined && !hasCustom) || isNoneSelected);
-                };
-
-                symptomTagsContainer.addEventListener('change', (e) => {
-                    const noneCheckbox = document.getElementById('symptom-None');
-                    // If "None" is checked, uncheck all others
-                    if (e.target.value === 'None' && e.target.checked) {
-                        document.querySelectorAll('input[name="symptoms"]:checked').forEach(cb => {
-                            if (cb.value !== 'None') cb.checked = false;
-                        });
-                        // Clear custom tags
-                        customSymptomTagsContainer.innerHTML = '';
-                        customSymptomBody.classList.add('hidden'); // Also hide the custom input
-                    } 
-                    
-                    // If another tag is checked, uncheck "None"
-                    else if (e.target.value !== 'None' && e.target.checked) {
-                        noneCheckbox.checked = false;
-                    }
-                    updateSeverityVisibility();
-                });
-            };
-            
-            // --- Renders the "Group by FODMAP" view (Your old renderLogEntries function) ---
-            const renderLogByGroup = () => {
-                const accordionContainer = document.getElementById('log-accordion-container');
-                accordionContainer.innerHTML = '';
-                let groupsWithEntries = 0;
-
-                FODMAP_GROUP_DATA.forEach(groupData => {
-                    const entriesForGroup = logEntries
-                        .filter(entry => entry.group === groupData.value)
-                        .sort((a, b) => new Date(b.date) - new Date(a.date)); 
-
-                    if (entriesForGroup.length > 0) {
-                        groupsWithEntries++;
-                        const style = FODMAP_STYLES[groupData.value] || { icon: '❓' };
-                        const groupDiv = document.createElement('div');
-                        groupDiv.className = 'accordion-group';
-                        
-                        const header = document.createElement('div');
-                        header.className = 'accordion-header';
-                        header.innerHTML = `
-                            <h3>${style.icon} ${groupData.name} (${entriesForGroup.length})</h3>
-                            <i class="fas fa-chevron-down accordion-icon"></i>
-                        `;
-                        
-                        const body = document.createElement('div');
-                        body.className = 'accordion-body';
-                        
-                        entriesForGroup.forEach(entry => {
-                            let symptomText;
-                            let severityText = '';
-                            let noteText = ''; 
-                            const symptoms = entry.symptoms || ['None'];
-                            const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
-                            if (hasSymptoms) {
-                                symptomText = `Symptoms: <strong>${symptoms.join(', ')}</strong>`;
-                                severityText = `<div>Severity: <strong>${entry.severity}/5</strong></div>`;
-                            } else {
-                                symptomText = 'Symptoms: <strong>None</strong>';
-                            }
-                            const trimmedNote = entry.notes ? entry.notes.trim() : '';
-                            if (trimmedNote !== '' && trimmedNote.toLowerCase() !== 'no notes') {
-                                noteText = `<div style="margin-top: 0.25rem;">Note: <em>${entry.notes.replace(/\n/g, '<br>')}</em></div>`;
-                            }
-                            const entryDiv = document.createElement('div');
-                            entryDiv.className = 'accordion-entry';
-                            entryDiv.innerHTML = `
-                                <div class="entry-header flex justify-between items-start">
-                                    <p class="font-semibold text-secondary text-sm">${entry.food}, ${entry.dose}</p>
-                                    <span class="text-xs text-subtle flex-shrink-0 ml-2">${new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                                </div>
-                                <div class="flex justify-between items-end">
-                                    <div class="entry-details">
-                                        <div>${symptomText}</div>
-                                        ${severityText}
-                                        ${noteText}
-                                    </div>
-                                    <div class="entry-actions text-right flex-shrink-0 ml-2">
-                                        <button class="edit-entry-btn text-accent hover:text-accent-dark text-xs p-1 rounded" data-id="${entry.id}">
-                                            <i class="fas fa-pen-to-square"></i>
-                                        </button>
-                                        <button class="delete-entry-btn text-error hover:text-error-dark text-xs p-1 rounded" data-id="${entry.id}">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            `;
-                            body.appendChild(entryDiv);
-                        });
-                        groupDiv.appendChild(header);
-                        groupDiv.appendChild(body);
-                        accordionContainer.appendChild(groupDiv);
-                    }
-                });
-                if (groupsWithEntries === 0) {
-                    accordionContainer.innerHTML = `<p class="text-subtle text-center py-6 bg-white rounded-lg shadow-sm col-span-full text-sm">No log entries yet. Add one above!</p>`;
-                }
-            };
-
-            // --- Renders the new "View by Date" timeline ---
-            const renderLogByDate = () => {
-                const dateContainer = document.getElementById('log-date-container');
-                dateContainer.innerHTML = '';
-                
-                if (logEntries.length === 0) {
-                    dateContainer.innerHTML = `<p class="text-subtle text-center py-6 bg-white rounded-lg shadow-sm col-span-full text-sm">No log entries yet. Add one above!</p>`;
-                    return;
-                }
-
-                // 1. Sort entries based on the global sort variable
-                const sortedEntries = [...logEntries].sort((a, b) => {
-                    const dateA = new Date(a.date);
-                    const dateB = new Date(b.date);
-                    return currentDateSort === 'newest' ? dateB - dateA : dateA - dateB;
-                });
-
-                let currentHeaderDate = null;
-                const today = new Date().toLocaleDateString('en-CA');
-                const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA');
-
-                // 2. Loop and build timeline
-                sortedEntries.forEach(entry => {
-                    const entryDate = new Date(entry.date).toLocaleDateString('en-CA');
-                    
-                    // 3. Add date header if it's a new day
-                    if (entryDate !== currentHeaderDate) {
-                        let dateHeaderText = new Date(entry.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-                        if (entryDate === today) dateHeaderText = 'Today';
-                        else if (entryDate === yesterday) dateHeaderText = 'Yesterday';
-                        
-                        const headerDiv = document.createElement('div');
-                        headerDiv.className = 'timeline-date-header';
-                        headerDiv.textContent = dateHeaderText;
-                        dateContainer.appendChild(headerDiv);
-                        currentHeaderDate = entryDate;
-                    }
-
-                    // 4. Build the entry card (similar to accordion, but as a standalone card)
-                    const style = FODMAP_STYLES[entry.group] || { icon: '❓' };
-                    const groupInfo = FODMAP_GROUP_DATA.find(g => g.value === entry.group);
-                    const groupName = groupInfo ? groupInfo.name : entry.group;
-                    
-                    let symptomText;
-                    let severityText = '';
-                    let noteText = ''; 
-                    const symptoms = entry.symptoms || ['None'];
-                    const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
-                    if (hasSymptoms) {
-                        symptomText = `Symptoms: <strong>${symptoms.join(', ')}</strong>`;
-                        severityText = `<div>Severity: <strong>${entry.severity}/5</strong></div>`;
-                    } else {
-                        symptomText = 'Symptoms: <strong>None</strong>';
-                    }
-                    const trimmedNote = entry.notes ? entry.notes.trim() : '';
-                    if (trimmedNote !== '' && trimmedNote.toLowerCase() !== 'no notes') {
-                        noteText = `<div style="margin-top: 0.25rem;">Note: <em>${entry.notes.replace(/\n/g, '<br>')}</em></div>`;
-                    }
-
-                    const entryDiv = document.createElement('div');
-                    entryDiv.className = 'timeline-entry-card'; // Use new card style
-                    entryDiv.innerHTML = `
-                        <div class="entry-header flex justify-between items-start">
-                            <p class="font-semibold text-secondary text-sm">${entry.food}, ${entry.dose}</p>
-                            <span class="text-xs font-semibold px-1.5 py-0.5 rounded-full ${style.color}">${style.icon} ${groupName.split(' ')[0]}</span>
-                        </div>
-                        <div class="flex justify-between items-end">
-                            <div class="entry-details">
-                                <div>${symptomText}</div>
-                                ${severityText}
-                                ${noteText}
-                            </div>
-                            <div class="entry-actions text-right flex-shrink-0 ml-2">
-                                <button class="edit-entry-btn text-accent hover:text-accent-dark text-xs p-1 rounded" data-id="${entry.id}">
-                                    <i class="fas fa-pen-to-square"></i>
-                                </button>
-                                <button class="delete-entry-btn text-error hover:text-error-dark text-xs p-1 rounded" data-id="${entry.id}">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    dateContainer.appendChild(entryDiv);
-                });
-            };
-
-            // --- This is the new MAIN render function ---
-            const renderLogEntries = () => {
-                if (currentLogView === 'group') {
-                    renderLogByGroup();
-                } else {
-                    renderLogByDate();
-                }
-            };
-
-            // --- Reusable Log Click Handler for Edit/Delete/Expand ---
-            const handleLogClick = (e) => {
-                const header = e.target.closest('.accordion-header');
-                const deleteBtn = e.target.closest('.delete-entry-btn');
-                const editBtn = e.target.closest('.edit-entry-btn');
-
-                if (editBtn) {
-                    // --- HANDLE EDIT ---
-                    const entryId = parseInt(editBtn.dataset.id);
-                    const entryToEdit = logEntries.find(entry => entry.id === entryId);
-                    if (entryToEdit) {
-                        currentlyEditingId = entryId; // Set global edit state
-                        populateFormForEdit(entryToEdit);
-                        // Ensure form is expanded
-                        document.getElementById('add-log-entry-wrapper').classList.add('expanded');
-                    }
-                } else if (deleteBtn) {
-                    // --- HANDLE DELETE ---
-                    const entryId = parseInt(deleteBtn.dataset.id);
-                    logEntries = logEntries.filter(entry => entry.id !== entryId);
-                    saveLogEntries(); // Re-render and save
-                    showToast("Entry deleted.");
-                } else if (header) {
-                    // --- HANDLE EXPAND ---
-                    header.parentElement.classList.toggle('expanded');
-                }
-            };
-
-            // Attach listener to both containers
-            document.getElementById('log-accordion-container').addEventListener('click', handleLogClick);
-            document.getElementById('log-date-container').addEventListener('click', handleLogClick);
-
-            // --- New View Toggle Listeners ---
-            const logViewToggleBtns = document.querySelectorAll('.log-view-toggle-btn');
-            const logSortBtn = document.getElementById('log-sort-btn');
-            // Set initial text for the sort button
-            logSortBtn.innerHTML = `<i class="fas fa-arrow-down-wide-short"></i> <span class="text-sm ml-1">Sort: Newest</span>`;
-            const logSubtitle = document.getElementById('log-subtitle');
-            const groupContainer = document.getElementById('log-accordion-container');
-            const dateContainer = document.getElementById('log-date-container');
-
-            logViewToggleBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    // Set active button
-                    logViewToggleBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-
-                    // Update state
-                    currentLogView = btn.dataset.view;
-
-                    // Get the new sort container
-                    const logSortContainer = document.getElementById('log-sort-container');
-
-                    // Toggle containers and sort button
-                    if (currentLogView === 'group') {
-                        groupContainer.classList.remove('hidden');
-                        dateContainer.classList.add('hidden');
-                        logSortContainer.classList.add('hidden'); // Hide the container
-                        logSubtitle.textContent = 'Tap a group to see entries.';
-                    } else {
-                        groupContainer.classList.add('hidden');
-                        dateContainer.classList.remove('hidden');
-                        logSortContainer.classList.remove('hidden'); // Show the container
-                        logSubtitle.textContent = 'Showing all entries by date.';
-                    }
-                    // Re-render the log
-                    renderLogEntries();
-                });
-            });
-
-            logSortBtn.addEventListener('click', () => {
-                // Flip the sort order
-                currentDateSort = (currentDateSort === 'newest') ? 'oldest' : 'newest';
-                
-                // Update the icon and text
-                logSortBtn.innerHTML = `<i class="fas ${currentDateSort === 'newest' ? 'fa-arrow-down-wide-short' : 'fa-arrow-up-wide-short'}"></i>
-                <span class="text-sm ml-1">Sort: ${currentDateSort === 'newest' ? 'Newest' : 'Oldest'}</span>`;
-                
-                // Re-render the date list
-                renderLogByDate();
-            });
-
-            const saveLogEntries = () => { localStorage.setItem('fodmapLogEntries', JSON.stringify(logEntries)); renderLogEntries(); renderHomePage(); };
-
-            logForm.addEventListener('submit', (e) => {
-                e.preventDefault(); 
-                const sev = document.getElementById('log-severity-value');
-                
-                // Get predefined symptoms
-                let selectedSymptoms = Array.from(document.querySelectorAll('input[name="symptoms"]:checked')).map(el => el.value);
-                
-                // Get custom symptoms
-                const customSymptoms = Array.from(document.querySelectorAll('.custom-symptom-tag')).map(tag => tag.firstChild.textContent);
-                
-                // Combine lists
-                let allSymptoms = [...selectedSymptoms, ...customSymptoms];
-
-                // If "None" is selected or list is empty, just use "None"
-                if (allSymptoms.includes('None') || allSymptoms.length === 0) {
-                    allSymptoms = ['None'];
-                }
-
-                const entryData = { 
-                    date: document.getElementById('log-date').value, 
-                    group: document.getElementById('log-fodmap-group').value, 
-                    food: document.getElementById('log-food').value, 
-                    dose: document.getElementById('log-dose').value, 
-                    symptoms: allSymptoms, // Save the new array
-                    severity: allSymptoms.includes('None') ? '1' : sev.value, // Save severity, or 1 if "None"
-                    notes: document.getElementById('log-notes').value 
-                };
-
-                if (currentlyEditingId) {
-                    // --- UPDATE EXISTING ENTRY ---
-                    const index = logEntries.findIndex(entry => entry.id === currentlyEditingId);
-                    if (index !== -1) {
-                        logEntries[index] = { ...entryData, id: currentlyEditingId }; // Keep original ID
-                    }
-                    currentlyEditingId = null; // Reset edit state
-                    showToast("Entry updated!");
-                } else {
-                    // --- ADD NEW ENTRY ---
-                    const newEntry = { ...entryData, id: Date.now() };
-                    logEntries.push(newEntry); 
-                    showToast("Added!");
-                }
-
-                saveLogEntries(); 
-                logForm.reset(); 
-                
-                // --- Reset all form fields ---
-                document.getElementById('log-date').valueAsDate = new Date(); 
-                // Reset custom dropdown
-                document.getElementById('custom-fodmap-select-text').textContent = 'Select FODMAP Group...';
-                document.getElementById('custom-fodmap-select-trigger').classList.add('placeholder');
-                document.getElementById('log-fodmap-group').value = '';
-
-                document.getElementById('custom-symptom-tags-container').innerHTML = '';
-                document.getElementById('custom-symptom-body').classList.add('hidden'); // Collapse the custom input
-                document.querySelectorAll('input[name="symptoms"]').forEach(cb => cb.checked = false);
-                document.getElementById('severity-section').classList.add('hidden'); 
-                document.getElementById('log-form').querySelector('button[type="submit"]').textContent = 'Add Entry'; // Reset button text
-                
-                // Reset severity button group
-                document.getElementById('log-severity-value').value = '1';
-                document.querySelectorAll('#log-severity .severity-btn').forEach(btn => {
-                    btn.classList.toggle('selected', btn.dataset.value === '1');
-                });
-            });
-            
-            const profileForm = document.getElementById('profile-form');
-            // Add click listener for the new API Key accordion
-            profileForm.addEventListener('click', (e) => {
-                const header = e.target.closest('.api-key-header');
-                if (header) {
-                    header.parentElement.classList.toggle('expanded');
-                }
-            });
-            const createCheckbox = (id, val, name, checked) => `<div class=inline-block><input type=checkbox id=${id} value="${val}" name=${name} class="profile-checkbox hidden" ${checked?'checked':''}><label for=${id} class="cursor-pointer border border-slate-300 rounded-full px-2.5 py-1.5 text-xs font-medium text-muted duration-200">${val}</label></div>`;
-
-            const setupProfilePage = () => {
-                document.getElementById('profile-diagnoses').innerHTML = PROFILE_OPTIONS.diagnoses.map(i => createCheckbox(`diag-${i}`, i, 'diagnoses', userProfile.diagnoses.includes(i))).join('');
-                document.getElementById('profile-intolerances').innerHTML = PROFILE_OPTIONS.intolerances.map(i => createCheckbox(`intol-${i}`, i, 'intolerances', userProfile.intolerances.includes(i))).join('');
-                document.getElementById('profile-preferences').innerHTML = PROFILE_OPTIONS.preferences.map(i => createCheckbox(`pref-${i}`, i, 'preferences', userProfile.preferences.includes(i))).join('');
-                document.getElementById('profile-allergies-other').value = userProfile.allergiesOther || '';
-                document.getElementById('profile-api-key').value = userProfile.apiKey || '';
-
-                // Smart-open the API key section if the key is missing
-                if (!userProfile.apiKey) {
-                    document.getElementById('api-key-accordion-container').classList.add('expanded');
-                }
-            };
-
-            profileForm.addEventListener('submit', (e) => {
-                e.preventDefault(); userProfile.diagnoses = Array.from(document.querySelectorAll('input[name=diagnoses]:checked')).map(el => el.value); userProfile.intolerances = Array.from(document.querySelectorAll('input[name=intolerances]:checked')).map(el => el.value); userProfile.preferences = Array.from(document.querySelectorAll('input[name=preferences]:checked')).map(el => el.value); userProfile.allergiesOther = document.getElementById('profile-allergies-other').value.trim();
-                userProfile.apiKey = document.getElementById('profile-api-key').value.trim();
-                localStorage.setItem('fodmapUserProfile', JSON.stringify(userProfile)); showToast("Profile Saved!");
-            });
-
-            const hamBtn = document.getElementById('hamburger-btn'); const sideMdl = document.getElementById('side-menu-modal'); const sideOvl = document.getElementById('side-menu-overlay'); const sideClose = document.getElementById('side-menu-close'); const openInfoBtn = document.getElementById('open-info-modal-btn'); const infoMdl = document.getElementById('info-modal'); const infoClose = document.getElementById('info-modal-close'); const infoCloseBtn = document.getElementById('info-modal-close-btn');
-            const openSide = () => { sideMdl.classList.remove('hidden'); sideOvl.classList.remove('hidden'); }; const closeSide = () => { sideMdl.classList.add('hidden'); sideOvl.classList.add('hidden'); }; const openInfo = () => { infoMdl.classList.remove('hidden'); }; const closeInfo = () => { infoMdl.classList.add('hidden'); };
-            hamBtn.addEventListener('click', openSide); sideClose.addEventListener('click', closeSide); sideOvl.addEventListener('click', closeSide); openInfoBtn.addEventListener('click', () => { closeSide(); openInfo(); }); infoClose.addEventListener('click', closeInfo); infoCloseBtn.addEventListener('click', closeInfo);
-
-            const geminiMdl = document.getElementById('gemini-modal'); const geminiTitle = document.getElementById('gemini-modal-title'); const geminiContent = document.getElementById('gemini-modal-content'); const geminiLoader = document.getElementById('gemini-modal-loader'); const geminiError = document.getElementById('gemini-modal-error'); const geminiClose = document.getElementById('gemini-modal-close');
-            const openGemini = (title) => { geminiTitle.textContent = title; geminiMdl.classList.remove('hidden'); geminiLoader.classList.remove('hidden'); geminiContent.classList.add('hidden'); geminiError.classList.add('hidden'); }; const closeGemini = () => geminiMdl.classList.add('hidden'); geminiClose.addEventListener('click', closeGemini);
-            const callGeminiAPI = async (prompt, imgData = null, retries = 3, delay = 1000) => {
-                const key = userProfile.apiKey || ""; 
-                if (!key) {
-                    console.error("API Key is missing. Please add it in the Profile tab.");
-                    showToast("API Key is missing. Add it in your Profile.", true);
-                    return null; // Stop the API call
-                }
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`; let parts = [{ text: prompt }]; if (imgData) parts.push({ inlineData: { mimeType: 'image/jpeg', data: imgData } }); const payload = { contents: [{ parts }] };
-                try {
-                    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                    if (!res.ok) { if (res.status === 429 && retries > 0) { await new Promise(r => setTimeout(r, delay)); return callGeminiAPI(prompt, imgData, retries - 1, delay * 2); } throw new Error(`${res.statusText} (${res.status})`); }
-                    const result = await res.json(); return result.candidates?.[0]?.content?.parts?.[0]?.text;
-                } catch (err) { console.error("API failed:", err); return null; }
-            };
-            document.getElementById('summarize-journey-btn').addEventListener('click', async () => {
-                if (logEntries.length === 0) { showToast("Need logs.", true); return; } 
-                openGemini('✨ Summary'); 
-                const logTxt = logEntries.map(e => `Date:${e.date},Grp:${e.group},Food:${e.food},Dose:${e.dose},Sym:${e.symptom==='Other'?e.otherSymptom:e.symptom},Sev:${e.severity}/5`).join('; '); 
-                
-                // 1. UPDATED PROMPT:
-                const prompt = `FODMAP helper (no medical advice). Analyze log based on profile: ${buildProfileContext()}. Log: ${logTxt}
-        
-                Provide a gentle, 3-part summary based *only* on the log entries and user profile.
-                Format *only* with **bold** headings, *italics* for emphasis, and newlines. Use bullet points (like - or *) for lists.
-                Do NOT use '###', '|', or tables. Omit the disclaimer.
-
-                Use this exact template:
-                **Overall Observation:** [A 1-2 sentence gentle observation about any potential patterns.]
-                **Potential Triggers:** [A bulleted list of foods/groups from the log that *consistently* show symptoms with a severity of 3-5. If none, say "No clear triggers noted yet."]
-                **Seemingly Well-Tolerated:** [A bulleted list of foods/groups from the log that *consistently* show "None" or low severity (1-2). If none, say "Keep logging to find your safe foods."]`
-
-                                const summary = await callGeminiAPI(prompt); 
-                                geminiLoader.classList.add('hidden'); 
-                                if (summary === null && !userProfile.apiKey) { geminiMdl.classList.add('hidden'); return; } 
-                                
-                                // 2. FIXED PARSER:
-                                if (summary) { 
-                                    // Add the same parser we use for the AI assistant
-                                    let html = summary
-                                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')   // Bold
-                                        .replace(/\*(.*?)\*/g, '<em>$1</em>')     // Italics
-                                        .replace(/(\n|^)[\-\*] (.*?)(?=\n|$)/g, '<br>• $2') // Bullets
-                                        .replace(/\n/g, '<br>'); // Newlines
-                                    geminiContent.innerHTML = html; // Use .innerHTML, not .textContent
-                                    geminiContent.classList.remove('hidden'); 
-                                } else { 
-                                    geminiError.textContent = 'Summary failed.'; 
-                                    geminiError.classList.remove('hidden'); 
-                                }
-                            });
-            document.getElementById('plan-challenge-btn').addEventListener('click', async () => {
-                const sel = document.getElementById('log-fodmap-group'); 
-                const val = sel.value; // This gets the clean value, e.g., "Fructose"
-                if (!val) { showToast("Select group.", true); return; } 
-                
-                // 1. Use `val` for the modal title, not the full text
-                openGemini(`✨ ${val} Plan`); 
-
-                // 2. Use `val` in the prompt for a cleaner request
-                const prompt = `FODMAP helper (no medical advice). User profile: ${buildProfileContext()}.
-Create a 3-day reintroduction challenge plan for '${val}'.
-Give a couple of specific foods and an increasing portion for each day.
-Briefly explain *why* these foods are good choices (e.g., "contains only this FODMAP").
-Include a "Washout Day" instruction after Day 3.
-Format *only* with **bold** headings, *italics* for emphasis, and newlines. Use bullet points (- or *).
-Do NOT use '###', '|', or tables. Omit the disclaimer.
-
-Use this exact template:
-**Foods:** [Food Names]
-*Why these foods?:* [Brief explanation]
-
-**Challenge Plan:**
-- **Day 1:** [Portion]
-- **Day 2:** [Larger Portion]
-- **Day 3:** [Largest Portion]
-
-**After Day 3:** Wait 2-3 "washout" days and log any delayed symptoms before starting your next challenge.`;
-
-                const plan = await callGeminiAPI(prompt); 
-                geminiLoader.classList.add('hidden'); 
-                if (plan === null && !userProfile.apiKey) { geminiMdl.classList.add('hidden'); return; } 
-                
-                // 3. Use the full parser to render HTML
-                if (plan) { 
-                    let html = plan
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')   // Bold
-                        .replace(/\*(.*?)\*/g, '<em>$1</em>')     // Italics
-                        .replace(/(\n|^)[\-\*] (.*?)(?=\n|$)/g, '<br>• $2') // Bullets
-                        .replace(/\n/g, '<br>'); // This line is now correct
-                    geminiContent.innerHTML = html; // Use .innerHTML
-                    geminiContent.classList.remove('hidden'); 
-                } else { 
-                    geminiError.textContent = 'Plan failed.'; 
-                    geminiError.classList.remove('hidden'); 
-                }
-            });
-
-            // Listen for the beforeinstallprompt event
-            window.addEventListener('beforeinstallprompt', (e) => {
-                // Prevent the default browser prompt from appearing
-                e.preventDefault();
-                // Stash the event so it can be triggered later.
-                deferredPrompt = e;
-                // Show our custom install button in the menu
-                if (installAppLi) {
-                    installAppLi.style.display = 'block'; // Make the list item visible
-                }
-            });
-
-            // Add click listener to our custom install button
-            if (installAppBtn) {
-                installAppBtn.addEventListener('click', () => {
-                    // Hide the button in the menu
-                    if (installAppLi) {
-                        installAppLi.style.display = 'none';
-                    }
-                    // Show the browser's installation prompt
-                    if (deferredPrompt) {
-                        deferredPrompt.prompt();
-                        // Wait for the user to respond to the prompt
-                        deferredPrompt.userChoice.then((choiceResult) => {
-                            if (choiceResult.outcome === 'accepted') {
-                                console.log('User accepted the install prompt');
-                            } else {
-                                console.log('User dismissed the install prompt');
-                            }
-                            // Clear the deferredPrompt variable, as it can only be used once
-                            deferredPrompt = null;
-                        });
-                    }
-                    // Close the side menu after clicking
-                    closeSide();
-                });
-            }
-
-            // Listen for the 'appinstalled' event to know when the user has successfully installed
-            window.addEventListener('appinstalled', () => {
-                console.log('PWA was successfully installed!');
-                // Hide the button if the app is installed
-                if (installAppLi) {
-                    installAppLi.style.display = 'none';
-                }
-                deferredPrompt = null;
-            });
-
-            // Hide the button if the app is already running in standalone mode
-            if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
-                if (installAppLi) {
-                    installAppLi.style.display = 'none';
-                }
-            }
-
-            // Dynamically set nav top and body padding
-            const calculatePadding = () => { 
-                const h = document.querySelector('header'); 
-                const n = document.getElementById('main-nav'); 
-                if (h && n) { 
-                    const headerHeight = h.offsetHeight;
-                    const navHeight = n.offsetHeight;
-                    n.style.top = `${headerHeight}px`; // Stick nav to header
-                    document.body.style.paddingTop = `${headerHeight + navHeight}px`; // Set body padding
-                } 
-            };
-            navigateTo('home'); setupLogForm(); renderLogEntries(); renderHomePage(); setupProfilePage(); document.getElementById('log-date').valueAsDate = new Date(); calculatePadding(); window.addEventListener('resize', calculatePadding);
-
-            // --- Swipe Navigation ---
-            const mainContent = document.getElementById('content');
-            let touchStartX = 0;
-            let touchEndX = 0;
-            let touchStartY = 0;
-            let touchEndY = 0;
-
-            mainContent.addEventListener('touchstart', (e) => {
-                touchStartX = e.changedTouches[0].screenX;
-                touchStartY = e.changedTouches[0].screenY;
-            }, { passive: true });
-
-            mainContent.addEventListener('touchend', (e) => {
-                touchEndX = e.changedTouches[0].screenX;
-                touchEndY = e.changedTouches[0].screenY;
-                handleSwipe();
-            }, { passive: true });
-
-            function handleSwipe() {
-                const deltaX = touchEndX - touchStartX;
-                const deltaY = touchEndY - touchStartY;
-                const minSwipeDistance = 50; // Minimum pixels for a swipe
-
-                // Check for horizontal swipe and ignore vertical scrolls
-                if (Math.abs(deltaX) > minSwipeDistance && Math.abs(deltaY) < minSwipeDistance) {
-                    if (deltaX > 0) {
-                        // Swipe Right (Go to Previous Tab)
-                        goToPrevTab();
-                    } else {
-                        // Swipe Left (Go to Next Tab)
-                        goToNextTab();
-                    }
-                }
-            }
-        });
-
-        // --- Click listener for Add Log Entry accordion ---
-            document.getElementById('log-form-header').addEventListener('click', () => {
-                document.getElementById('add-log-entry-wrapper').classList.toggle('expanded');
-            });
-        
-        // --- Global click listener to close popups ---
-            window.addEventListener('click', () => {
-                // Close custom select
-                const fodmapOptions = document.getElementById('custom-fodmap-select-options');
-                if (fodmapOptions.classList.contains('open')) { 
-                    fodmapOptions.classList.remove('open');
-                    document.getElementById('custom-fodmap-select-trigger').classList.remove('open');
-                }
-                
-                // Close attachment popup
-                if (aiAttachPopup.classList.contains('open')) {
-                    aiAttachPopup.classList.remove('open');
-                }
-            });
-
-    </script>
+    <script src="app.js"></script>
+    
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -2167,5 +639,327 @@ Use this exact template:
             });
         }
     </script>
-</body>
+<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+
+    <div id="log-entry-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[80] hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                <h3 id="log-modal-title" class="text-lg font-semibold text-secondary">Add Log Entry</h3>
+                <button id="log-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            </div>
+
+            <form id="log-form">
+                <div class="p-4 space-y-3 max-h-[70vh] overflow-y-auto">
+                    
+                    <div id="log-form-info-box" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-secondary space-y-1">
+                        </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input type="date" id="log-date" class="w-full p-2.5 border border-slate-300 rounded-xl" required>
+                        <div class="custom-select-container" id="custom-fodmap-select-container">
+                            <button type="button" class="custom-select-trigger placeholder" id="custom-fodmap-select-trigger">
+                                <span id="custom-fodmap-select-text">Select FODMAP Group...</span>
+                                <i class="fas fa-chevron-down trigger-icon"></i>
+                            </button>
+                            <ul class="custom-select-options" id="custom-fodmap-select-options">
+                                </ul>
+                            <input type="hidden" id="log-fodmap-group" name="log-fodmap-group" value="">
+                        </div>
+                    </div>
+                    
+                    <button type="button" id="plan-challenge-btn" class="w-full bg-ai-reintro font-semibold py-2 px-4 rounded-full hover:bg-ai-reintro-dark transition-colors duration-300 shadow flex items-center justify-center gap-2">
+                       ✨ Plan My Challenge
+                    </button>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input type="text" id="log-food" placeholder="Food Name" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        <input type="text" id="log-dose" placeholder="Dose" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                    </div>
+                    
+                    <div>
+                        <label class="block mb-1.5 text-sm font-medium text-secondary">Symptoms</label>
+                        <div id="symptom-tags-container" class="flex flex-wrap gap-2">
+                            </div>
+                    </div>
+
+                    <div>
+                        <label id="custom-symptom-trigger" class="block mb-1.5 text-sm font-medium text-secondary cursor-pointer hover:text-primary">
+                            Add Custom Symptom <i class="fas fa-plus-circle text-xs ml-1 opacity-70"></i>
+                        </label>
+                        <div id="custom-symptom-body" class="hidden space-y-2">
+                            <div class="flex gap-2">
+                                <input type="text" id="custom-symptom-input" placeholder="e.g., Nausea" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                                <button type="button" id="add-custom-symptom-btn" class="bg-adaptive font-semibold py-2 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow">Add</button>
+                            </div>
+                        </div>
+                        <div id="custom-symptom-tags-container" class="flex flex-wrap mt-2">
+                            </div>
+                    </div> 
+
+                    <div id="severity-section" class="hidden pt-1">
+                        <label class="block mb-1 text-sm font-medium text-secondary">Severity</label>
+                        <div id="log-severity" class="severity-btn-group">
+                            </div>
+                        <input type="hidden" id="log-severity-value" value="1">
+                    </div>
+
+                    <textarea id="log-notes" rows="2" placeholder="Additional Notes (optional)" class="w-full p-2.5 border border-slate-300 rounded-xl"></textarea>
+                </div>
+
+                <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl">
+                    <button type="button" id="log-form-cancel-edit" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button>
+                    <button type="submit" id="log-form-submit-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Add Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+        <div id="onboarding-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[95] hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full flex flex-col" style="height: 90vh; max-height: 700px;">
+            <div class="p-2 text-right">
+                <button id="onboarding-modal-close" class="text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto px-6 pb-6">
+                <div id="onboarding-slide-welcome" class="onboarding-slide flex flex-col justify-between h-full">
+                    <div class="text-center space-y-6">
+                        <img src="fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" class="h-10 mx-auto">
+                        
+                        <img src="onboarding1.png" alt="Welcome to FODMAP LOGMAP" class="w-full max-w-xs mx-auto rounded-2xl">
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <button id="onboarding-action-setup" class="w-full bg-adaptive font-semibold py-3 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow text-base">
+                            Start Setup
+                        </button>
+                        <button id="onboarding-action-know-more" class="w-full bg-slate-200 text-secondary font-semibold py-3 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">
+                            What does this app do?
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="onboarding-slide-know-more" class="onboarding-slide hidden space-y-4">
+                    <h2 class="text-2xl font-semibold text-secondary text-center mb-6">Your All-in-One Companion</h2>
+                    <p class="text-secondary text-base pb-2">This app is designed to help you at every stage of your journey with three key tools:</p>
+                    <ul class="space-y-5">
+                        <li class="flex items-start gap-3">
+                            <i class="fas fa-book-medical text-2xl text-primary w-8 text-center"></i>
+                            <div>
+                                <h3 class="font-semibold text-secondary">1. A Smart, Adaptive Log</h3>
+                                <p class="text-muted text-sm">Track meals, symptoms, and reintroduction challenges. The app's Home screen and log form adapt to your current phase.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fas fa-brain text-2xl text-primary w-8 text-center"></i>
+                            <div>
+                                <h3 class="font-semibold text-secondary">2. A Powerful AI Assistant</h3>
+                                <p class="text-muted text-sm">Instantly check if a food is safe, analyze ingredient lists from a photo, and get personalized advice based on your profile.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fas fa-clipboard-check text-2xl text-primary w-8 text-center"></i>
+                            <div>
+                                <h3 class="font-semibold text-secondary">3. A Personalization Hub</h3>
+                                <p class="text-muted text-sm">As you log your triggers and safe foods, the app "auto-scans" your history to build your final, long-term personalized diet.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div id="onboarding-slide-profile" class="onboarding-slide hidden space-y-4">
+                    <h2 class="text-2xl font-semibold text-secondary text-center mb-2">Let's Get to Know You</h2>
+                    <p class="text-muted text-sm text-center mb-4">This info helps the AI Assistant give you <strong>safer, more accurate</strong> advice. It's saved only in your browser.</p>
+                    
+                    <div>
+                        <h3 class="font-semibold text-secondary mb-1.5">Health Conditions</h3>
+                        <div id="onboarding-profile-diagnoses" class="flex flex-wrap gap-2"></div>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-secondary mb-1.5 mt-4">Intolerances & Allergies</h3> 
+                        <div id="onboarding-profile-intolerances" class="flex flex-wrap gap-2"></div>
+                        <input type="text" id="onboarding-profile-allergies-other" placeholder="List other allergies (comma separated)" class="mt-2 w-full p-2 border border-slate-300 rounded-xl mt-4"> 
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-secondary mb-1.5 mt-4">Dietary Preferences</h3> 
+                        <div id="onboarding-profile-preferences" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+
+                <div id="onboarding-slide-phase-select" class="onboarding-slide hidden space-y-4">
+                    <h2 class="text-2xl font-semibold text-secondary text-center mb-2">Where are you in your journey?</h2>
+                    <p class="text-muted text-sm text-center mb-4">Select your current phase to set up your Home screen. You can change this any time from the side menu.</p>
+
+                    <div id="onboarding-phase-btn-container" class="space-y-3">
+                        <input type="hidden" id="onboarding-phase-select-value" value="">
+
+                        <button type="button" class="onboarding-phase-btn" data-phase="pre-treatment">
+                            <h4 class="text-base font-semibold text-secondary">Pre-Treatment</h4>
+                            <p class="text-sm text-muted">Get your system ready for the diet.</p>
+                        </button>
+                        
+                        <button type="button" class="onboarding-phase-btn" data-phase="restriction">
+                            <h4 class="text-base font-semibold text-secondary">Restriction</h4>
+                            <p class="text-sm text-muted">A strict, temporary low-FODMAP diet.</p>
+                        </button>
+
+                        <button type="button" class="onboarding-phase-btn" data-phase="reintroduction">
+                            <h4 class="text-base font-semibold text-secondary">Reintroduction</h4>
+                            <p class="text-sm text-muted">Test FODMAP groups one by one to find triggers.</p>
+                        </button>
+
+                        <button type="button" class="onboarding-phase-btn" data-phase="personalization">
+                            <h4 class="text-base font-semibold text-secondary">Personalization</h4>
+                            <p class="text-sm text-muted">Build your final, long-term diet.</p>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="onboarding-slide-phase-setup" class="onboarding-slide hidden h-full">
+                    
+
+                    <div id="onboarding-setup-pre-treatment" class="onboarding-phase-content hidden space-y-3">
+                        <h3 class="font-semibold text-secondary">Pre-Treatment Setup</h3>
+                        <p class="text-sm text-muted">Let's set up your countdown and pre-treatment diet rules.</p>
+                        <div>
+                            <label for="onboarding-pretreatment-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Phase Start Date</label>
+                            <input type="date" id="onboarding-pretreatment-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="block mb-1.5 text-sm font-medium text-secondary">Phase Duration</label>
+                            <div class="flex gap-2">
+                                <input type="number" id="onboarding-pretreatment-duration-num" value="4" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
+                                <select id="onboarding-pretreatment-duration-unit" class="w-1/2 p-2.5 border border-slate-300 rounded-xl bg-white">
+                                    <option value="days">Days</option>
+                                    <option value="weeks" selected>Weeks</option>
+                                    <option value="months">Months</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="onboarding-pretreatment-rules" class="block mb-1.5 text-sm font-medium text-secondary">Diet Rules (one per line)</label>
+                            <textarea id="onboarding-pretreatment-rules" rows="6" class="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="e.g., Avoid: Lactose"></textarea>
+                        </div>
+                    </div>
+
+                    <div id="onboarding-setup-restriction" class="onboarding-phase-content hidden space-y-3">
+                        <h3 class="font-semibold text-secondary">Restriction Setup</h3>
+                        <p class="text-sm text-muted">Let's set up your countdown and (optional) medication tracker.</p>
+                        <div>
+                            <label for="onboarding-restriction-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Phase Start Date</label>
+                            <input type="date" id="onboarding-restriction-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="block mb-1.5 text-sm font-medium text-secondary">Phase Duration</label>
+                            <div class="flex gap-2">
+                                <input type="number" id="onboarding-restriction-duration-num" value="4" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
+                                <select id="onboarding-restriction-duration-unit" class="w-1/2 p-2.5 border border-slate-300 rounded-xl bg-white">
+                                    <option value="days">Days</option>
+                                    <option value="weeks" selected>Weeks</option>
+                                    <option value="months">Months</option>
+                                </select>
+                            </div>
+                        </div>
+                        <hr class="my-2">
+                        <h4 class="font-semibold text-secondary">Optional: Medication Tracker</h4>
+                        <div>
+                            <label for="onboarding-medication-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Medication Start Date</label>
+                            <input type="date" id="onboarding-medication-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        </div>
+                        <div>
+                            <label for="onboarding-medication-duration" class="block mb-1.5 text-sm font-medium text-secondary">Duration (in days)</label>
+                            <input type="number" id="onboarding-medication-duration" placeholder="e.g., 12" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        </div>
+                        <div id="onboarding-medication-settings-list" class="space-y-2">
+                             <p class="text-xs text-subtle text-center">No medications added.</p>
+                        </div>
+                        <button type="button" id="onboarding-medication-add-btn" class="w-full mt-1 p-2 text-sm font-semibold text-primary border-2 border-dashed border-slate-300 rounded-lg hover:bg-slate-50">
+                            <i class="fas fa-plus mr-1"></i> Add Medication
+                        </button>
+                    </div>
+
+                    <div id="onboarding-setup-reintroduction" class="onboarding-phase-content hidden onboarding-slide-spaced">
+                        
+                        <img src="onboarding2.png" alt="Ready for Reintroduction" class="w-full max-w-xs rounded-2xl">
+
+                        <p class="text-muted">No extra setup needed! Your goal is to log your challenges. When adding an entry, use the <strong>✨ Plan My Challenge</strong> button to get AI-powered ideas for your test foods.</p>
+                    </div>
+                    
+                    <div id="onboarding-setup-personalization" class="onboarding-phase-content hidden onboarding-slide-spaced">
+                        
+                        <img src="onboarding3.png" alt="Welcome to Your Final Diet" class="w-full max-w-xs rounded-2xl">
+
+                        <p class="text-muted">You're all set! A great place to start is the <strong>✨ Auto-Scan Log</strong> button on your Home screen. It will read your log history to help build your personal safe food list.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="onboarding-footer" class="p-4 bg-slate-50 border-t border-slate-200 rounded-b-2xl">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <button id="onboarding-btn-skip" class="text-slate-500 font-semibold py-2 px-3 rounded-full hover:bg-slate-200 transition-colors text-sm">Skip</button>
+                    </div>
+                    
+                    <div id="onboarding-dots" class="flex gap-1.5">
+                        </div>
+                    
+                    <div class="flex gap-2">
+                        <button id="onboarding-btn-back" class="hidden bg-slate-200 text-secondary font-semibold py-2 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Back</button>
+                        <button id="onboarding-btn-next" class="hidden bg-adaptive font-semibold py-2 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Next</button>
+                        <button id="onboarding-btn-finish" class="hidden bg-adaptive font-semibold py-2 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Finish</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        <div id="medication-settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[80] hidden">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                    <h3 id="medication-modal-title" class="text-lg font-semibold text-secondary">Medication Settings</h3>
+                    <button id="medication-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+                </div>
+
+                <form id="medication-modal-form">
+                    <div class="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+                        <div>
+                            <label for="medication-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Start Date</label>
+                            <input type="date" id="medication-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        </div>
+                        <div>
+                            <label for="medication-duration" class="block mb-1.5 text-sm font-medium text-secondary">Duration (in days)</label>
+                            <input type="number" id="medication-duration" placeholder="e.g., 12" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        </div>
+
+                        <hr>
+
+                        <div>
+                            <h4 class="text-sm font-medium text-secondary mb-2">Medication Schedule</h4>
+                            <div id="medication-settings-list" class="space-y-2">
+                                <p class="text-xs text-subtle text-center">No medications added.</p>
+                            </div>
+                            <button type="button" id="medication-add-btn" class="w-full mt-2 p-2 text-sm font-semibold text-primary border-2 border-dashed border-slate-300 rounded-lg hover:bg-slate-50">
+                                <i class="fas fa-plus mr-1"></i> Add Medication
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl">
+                        <button type="button" id="medication-modal-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button>
+                        <button type="submit" id="medication-modal-save-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Save Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </body>
 </html>
