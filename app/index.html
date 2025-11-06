@@ -622,23 +622,14 @@
                 <button id="side-menu-close" class="text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
             </div>
             <nav>
-                <ul>
+                <ul class="space-y-1">
                     <li>
                         <button id="open-info-modal-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm"> 
                             <i class="fas fa-book-open w-5 mr-2 text-primary"></i>Understand FODMAPS
                         </button>
                     </li>
-                    <li id="install-app-li" style="display: none;">
-                        <button id="install-app-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
-                            <i class="fas fa-download w-5 mr-2 text-primary"></i>Install App
-                        </button>
-                    </li>
-                    <li>
-                        <button id="open-onboarding-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
-                            <i class="fas fa-magic w-5 mr-2 text-primary"></i>Show Welcome Setup
-                        </button>
-                    </li>
-                    <li class="pt-2 mt-2 border-t border-slate-200">
+
+                    <li class="pt-2 border-t border-slate-200">
                         <h3 class="px-3 py-1 text-sm font-semibold text-secondary flex items-center">
                             <i class="fas fa-list-ol w-5 mr-2 text-primary"></i>Phase Selector
                         </h3>
@@ -650,7 +641,24 @@
                             <button class="log-view-toggle-btn text-left justify-start" data-phase="personalization">Personalization</button>
                         </div>
                     </li>
-                </ul>
+                    <li class="pt-2 border-t border-slate-200">
+                        <div class="flex flex-col space-y-1">
+                            <div id="install-app-li" style="display: none;">
+                                <button id="install-app-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
+                                    <i class="fas fa-download w-5 mr-2 text-primary"></i>Install App
+                                </button>
+                            </div>
+                            
+                            <button id="open-onboarding-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
+                                <i class="fas fa-magic w-5 mr-2 text-primary"></i>Welcome Setup
+                            </button>
+
+                            <a href="https://fodmaplogmap-web.onrender.com/" target="_blank" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm"> 
+                                <i class="fas fa-life-ring w-5 mr-2 text-primary"></i>Help & FAQ
+                            </a>
+                        </div>
+                    </li>
+                    </ul>
             </nav>
         </div>
     </div>
