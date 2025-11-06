@@ -101,6 +101,20 @@ document.addEventListener('DOMContentLoaded', () => {
         
     // --- Application State Object ---
 
+    const CHART_COLORS = {
+        "Fructose": "rgba(250, 204, 21, 1)", // Yellow
+        "Lactose": "rgba(96, 165, 250, 1)",  // Blue
+        "Fructans (Grains)": "rgba(251, 146, 60, 1)", // Orange
+        "Fructans (Veg & Fruit)": "rgba(192, 132, 252, 1)", // Purple
+        "GOS": "rgba(45, 212, 191, 1)", // Teal
+        "Polyols (Sorbitol)": "rgba(74, 222, 128, 1)", // Light Green
+        "Polyols (Mannitol)": "rgba(129, 140, 248, 1)", // Indigo
+        "Other": "rgba(236, 72, 153, 1)", // Pink (NEW)
+        "Safe Meal": "rgba(22, 163, 74, 1)" // Dark Green (NEW)
+    };
+
+    let symptomChart = null; // Holds the chart instance
+
     // Define the default profile structure
     const defaultProfile = { 
         diagnoses: [], 
@@ -729,6 +743,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (itemsAdded === 0) {
             summaryContainer.innerHTML = `<p class="text-center text-subtle italic text-sm p-4">Your progress will show here once you add your first log entry!</p>`;
         }
+
+        renderSymptomChart();
     };
     summaryContainer.addEventListener('click', (e) => {
         const header = e.target.closest('.progress-item-header'); if (header) { const item = header.parentElement; const expanded = item.classList.contains('expanded'); summaryContainer.querySelectorAll('.progress-item').forEach(i => i.classList.remove('expanded')); if (!expanded) item.classList.add('expanded'); }
@@ -3310,6 +3326,169 @@ Use this exact template:
                 goToNextTab();
             }
         }
+    }
+
+    /**
+     * Renders a multi-line chart dynamically scaled to the first and last
+     * symptomatic days within the last 14-day lookback window.
+     */
+    function renderSymptomChart() {
+        const ctx = document.getElementById('symptom-chart');
+        if (!ctx) return; // Canvas not found
+
+        // 1. Destroy old chart instance if it exists
+        if (symptomChart) {
+            symptomChart.destroy();
+            symptomChart = null;
+        }
+
+        // 2. Find all symptomatic entries in the last 14 days
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const lookbackDate = new Date(today);
+        lookbackDate.setDate(today.getDate() - 13); // 14-day window
+        const lookbackDateKey = lookbackDate.toLocaleDateString('en-CA');
+
+        const symptomEntries = appState.logEntries.filter(entry => 
+            hasSymptoms(entry) && entry.date >= lookbackDateKey
+        );
+
+        // 3. If no symptoms in the window, don't render a chart
+        if (symptomEntries.length === 0) {
+            return; // Exit function
+        }
+
+        // 4. Find the first and last symptom date from this list
+        symptomEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
+        const firstSymptomDate = new Date(symptomEntries[0].date + 'T00:00:00');
+        const lastSymptomDate = new Date(symptomEntries[symptomEntries.length - 1].date + 'T00:00:00');
+
+        // 5. Build the dynamic date keys and labels
+        const chartLabels = [];
+        const dateKeys = [];
+        let currentDate = new Date(firstSymptomDate);
+
+        while (currentDate <= lastSymptomDate) {
+            dateKeys.push(currentDate.toLocaleDateString('en-CA'));
+            chartLabels.push(currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        // 6. Create the nested Map: { "Fructose" => { "2025-11-01": 0, ... }, ... }
+        const groupMaxSeverity = new Map();
+        FODMAP_GROUP_DATA.forEach(group => {
+            if (group.value === "Restriction") return; // Skip
+
+            const dayMap = new Map();
+            dateKeys.forEach(key => dayMap.set(key, 0)); // Init all days in our new range
+            groupMaxSeverity.set(group.value, dayMap);
+        });
+
+        // 7. Process ONLY log entries that fall within our new dynamic date range
+        const firstDateKey = dateKeys[0];
+        const lastDateKey = dateKeys[dateKeys.length - 1];
+        
+        const relevantLogEntries = appState.logEntries.filter(entry => 
+            entry.date >= firstDateKey && entry.date <= lastDateKey
+        );
+        
+        relevantLogEntries.forEach(entry => {
+            const group = entry.group;
+            const dateKey = entry.date;
+            
+            if (groupMaxSeverity.has(group)) { // We know the date is valid
+                const currentMax = groupMaxSeverity.get(group).get(dateKey);
+                const entrySeverity = hasSymptoms(entry) ? parseInt(entry.severity, 10) : 0;
+
+                if (entrySeverity > currentMax) {
+                    groupMaxSeverity.get(group).set(dateKey, entrySeverity);
+                }
+            }
+        });
+
+        // 8. Format data for Chart.js datasets (only showing groups with symptoms)
+        const datasets = [];
+        for (const group of FODMAP_GROUP_DATA) {
+            if (group.value === "Restriction") continue;
+
+            const severityMap = groupMaxSeverity.get(group.value);
+            const data = Array.from(severityMap.values());
+            const color = CHART_COLORS[group.value] || 'rgba(0, 0, 0, 1)';
+            
+            const hasSymptomData = data.some(s => s > 0);
+            
+            if (hasSymptomData) {
+                datasets.push({
+                    label: group.name.replace("Polyols - ", ""), // Shorten label
+                    data: data,
+                    borderColor: color,
+                    backgroundColor: color.replace('1)', '0.1)'),
+                    fill: false,
+                    tension: 0.3,
+                    pointBackgroundColor: color
+                });
+            }
+        }
+        
+        // 9. If no datasets were created (e.g., only "Restriction" entries), exit
+        if (datasets.length === 0) {
+            return;
+        }
+
+        // 10. Render new multi-line chart
+        symptomChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            font: { size: 10 },
+                            usePointStyle: true, // Use the point style (our solid color)
+                            pointStyle: 'rect',  // Make the point style a rectangle
+                            boxWidth: 15         // Adjust size of the rectangle
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.dataset.label}: ${context.parsed.y} / 5`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        min: 0,
+                        max: 5,
+                        ticks: {
+                            stepSize: 1
+                        },
+                        grid: {
+                            display: false // Remove Y-axis grid
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: {
+                                size: 10 
+                            }
+                        },
+                        grid: {
+                            display: false // Remove X-axis grid
+                        }
+                    }
+                }
+            }
+        });
     }
 
     // --- FINAL: Check for onboarding ---

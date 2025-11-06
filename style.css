@@ -1323,3 +1323,11 @@ body {
     grid-row: 3; /* Place text at the bottom */
 }
 /* --- END Vertical Alignment Fix --- */
+
+/* --- START: Chart.js Styles --- */
+#chart-container {
+    position: relative;
+    height: 200px; /* Set a fixed height for the chart */
+    width: 100%;
+}
+/* --- END: Chart.js Styles --- */
