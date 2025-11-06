@@ -327,7 +327,6 @@ main section > div { margin-bottom: 1rem; }
 }
 .accordion-group.expanded .accordion-body {
     max-height: 1000px; /* arbitrary large number */
-    border-top: 1px solid #ced5dd;
     padding: 0.75rem 1rem; /* Add vertical padding ONLY when expanded */
 }
 .accordion-entry {

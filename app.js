@@ -1882,32 +1882,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add listener for personalization 'group' accordion
     const p13nGroupView = document.getElementById('personalization-group-view');
-    if (p13nGroupView) {
+        if (p13nGroupView) {
         p13nGroupView.addEventListener('click', (e) => {
-            const header = e.target.closest('.accordion-header');
             const foodLink = e.target.closest('.p13n-food-link');
 
             if (foodLink) {
                 const foodId = parseInt(foodLink.dataset.foodId, 10);
                 showFoodModal(foodId); // Open in VIEW mode
-            } else if (header) {
-                header.parentElement.classList.toggle('expanded');
             }
         });
     }
 
     // Add listener for personalization 'tolerance' accordion
     const p13nToleranceView = document.getElementById('personalization-tolerance-view');
-    if (p13nToleranceView) {
+        if (p13nToleranceView) {
         p13nToleranceView.addEventListener('click', (e) => {
-            const header = e.target.closest('.accordion-header');
             const foodLink = e.target.closest('.p13n-food-link');
-            
+
             if (foodLink) {
                 const foodId = parseInt(foodLink.dataset.foodId, 10);
                 showFoodModal(foodId); // Open in VIEW mode
-            } else if (header) {
-                header.parentElement.classList.toggle('expanded');
             }
         });
     }
