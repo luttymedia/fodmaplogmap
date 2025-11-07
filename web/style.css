@@ -9,6 +9,7 @@ body {
 :root {
     --color-brand: #2d61a0; /* Reintro Blue */
     --color-safe: #8bb744;  /* Restriction Green */
+    --color-safe-pastel: #b1d477;
     --color-limit: #f59e0b; /* Pre-treat Orange */
     --color-personal: #4a0076; /* Personal Purple */
 }

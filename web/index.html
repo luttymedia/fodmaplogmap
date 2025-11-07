@@ -251,8 +251,8 @@
                     </p>
                 </div>
                 
-                <div class="mt-12 overflow-x-auto animate-fade-in" data-animate>
-                    <table class="w-full min-w-max text-left border-collapse">
+                <div class="mt-12 animate-fade-in" data-animate>
+                    <table class="w-full min-w-max text-left border-collapse hidden md:table">
                         <thead>
                             <tr>
                                 <th class="p-4 text-lg font-bold text-slate-900">Feature</th>
@@ -312,7 +312,69 @@
                             </tr>
                         </tbody>
                     </table>
-                </div>
+
+                    <!-- 
+                      NEW: Mobile-Only "Two-Tone Card" Layout (Restyled)
+                      - `md:hidden` hides this entire block on desktop, showing the table instead.
+                    -->
+                    <div class="space-y-4 md:hidden">
+
+                        <div class="bg-white rounded-2xl shadow-lg overflow-hidden text-center">
+                            <div class="p-4 font-bold text-lg text-white" style="background-color: var(--color-safe-pastel);">Main Focus</div>
+                            <div class="p-4">
+                                <span class="font-semibold text-lg" style="color: var(--color-brand);">Reintroduction & Personal Logging</span>
+                            </div>
+                            <div class="p-4 bg-slate-100 border-t border-slate-200">
+                                <span class="block text-xs font-semibold text-slate-600 mb-1">Other Apps</span>
+                                <span class="font-medium text-slate-700">Exhaustive Food Database</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-lg overflow-hidden text-center">
+                            <div class="p-4 font-bold text-lg text-white" style="background-color: var(--color-safe-pastel);">AI Assistant</div>
+                            <div class="p-4">
+                                <span class="font-semibold text-lg" style="color: var(--color-brand);">Personalized AI food & camera scans</span>
+                            </div>
+                            <div class="p-4 bg-slate-100 border-t border-slate-200">
+                                <span class="block text-xs font-semibold text-slate-600 mb-1">Other Apps</span>
+                                <span class="font-medium text-slate-700">Static food database (no AI)</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-lg overflow-hidden text-center">
+                            <div class="p-4 font-bold text-lg text-white" style="background-color: var(--color-safe-pastel);">Logging System</div>
+                            <div class="p-4">
+                                <span class="font-semibold text-lg" style="color: var(--color-brand);">Fast Symptom Logging (1-5 Severity)</span>
+                            </div>
+                            <div class="p-4 bg-slate-100 border-t border-slate-200">
+                                <span class="block text-xs font-semibold text-slate-600 mb-1">Other Apps</span>
+                                <span class="font-medium text-slate-700">Complex charts, detailed forms</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-lg overflow-hidden text-center">
+                            <div class="p-4 font-bold text-lg text-white" style="background-color: var(--color-safe-pastel);">Guidance</div>
+                            <div class="p-4">
+                                <span class="font-semibold text-lg" style="color: var(--color-brand);">Guided, step-by-step reintro path</span>
+                            </div>
+                            <div class="p-4 bg-slate-100 border-t border-slate-200">
+                                <span class="block text-xs font-semibold text-slate-600 mb-1">Other Apps</span>
+                                <span class="font-medium text-slate-700">Clinical info, mostly self-directed</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-lg overflow-hidden text-center">
+                            <div class="p-4 font-bold text-lg text-white" style="background-color: var(--color-safe-pastel);">The "Feel"</div>
+                            <div class="p-4">
+                                <span class="font-semibold text-lg" style="color: var(--color-brand);">Motivational, simple, your companion</span>
+                            </div>
+                            <div class="p-4 bg-slate-100 border-t border-slate-200">
+                                <span class="block text-xs font-semibold text-slate-600 mb-1">Other Apps</span>
+                                <span class="font-medium text-slate-700">Clinical, academic, a "manual"</span>
+                            </div>
+                        </div>
+
+                    </div>
             </div>
         </section>
         
