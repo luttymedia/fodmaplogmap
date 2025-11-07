@@ -1,0 +1,56 @@
+/* Base styles */
+body {
+    font-family: 'Quicksand', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Define the 4 core colors for easy use */
+:root {
+    --color-brand: #2d61a0; /* Reintro Blue */
+    --color-safe: #8bb744;  /* Restriction Green */
+    --color-limit: #f59e0b; /* Pre-treat Orange */
+    --color-personal: #4a0076; /* Personal Purple */
+}
+
+/* Custom gradient for the brand */
+.brand-gradient {
+    background-image: linear-gradient(to right, var(--color-safe), var(--color-brand)); /* Green to Blue */
+}
+
+.brand-text-gradient {
+    background: linear-gradient(to right, var(--color-safe), var(--color-brand)); /* Green to Blue */
+    
+    /* --- THIS IS THE FIX --- */
+    /* 1. Vendor prefix for old browsers */
+    -webkit-background-clip: text;
+    /* 2. The standard, official property */
+    background-clip: text;
+    /* 3. Make the text color transparent */
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+/* --- Scroll Animations --- */
+
+/* Base state for animated elements */
+.animate-fade-in,
+.animate-slide-up {
+    opacity: 0;
+    transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.215, 0.610, 0.355, 1);
+}
+
+.animate-slide-up {
+    transform: translateY(40px);
+}
+
+/* Visible state */
+.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Staggered delay helpers */
+.delay-100 { transition-delay: 100ms; }
+.delay-200 { transition-delay: 200ms; }
+.delay-300 { transition-delay: 300ms; }
