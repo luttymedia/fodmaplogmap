@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support | FODMAP LOGMAP</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+<body class="bg-blue-50 text-slate-800 selection:bg-blue-100">
+
+    <header class="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/60">
+        <nav class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16 relative">
+                
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-slate-700 p-2 -ml-2">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <a class="flex-shrink-0 flex items-center gap-2 absolute left-1/2 -translate-x-1/2 md:relative md:left-0 md:translate-x-0" href="index.html" aria-label="FODMAP LOGMAP Home">
+                    <img src="images/fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" style="height: 40px; width: auto;">
+                </a>
+                
+                <div class="hidden md:flex md:items-center md:gap-6 lg:gap-8">
+                    <a href="index.html#features" class="font-medium text-slate-600 hover:text-blue-600 transition-colors">Features</a>
+                    <a href="index.html#why-us" class="font-medium text-slate-600 hover:text-blue-600 transition-colors">Why Us?</a>
+                    <a href="support.html" class="font-bold brand-text-gradient transition-colors">Support</a>
+                    <a href="index.html#download" class="inline-flex items-center justify-center px-5 py-2.5 rounded-full brand-gradient text-white font-semibold shadow-lg hover:shadow-blue-300 transition-all hover:scale-105 transform">
+                        Get the App
+                    </a>
+                </div>
+
+                <div class="md:hidden">
+                    <span class="w-6 h-6"></span> </div>
+
+            </div>
+        </nav>
+
+        <div id="mobile-menu-dropdown" class="hidden md:hidden shadow-lg border-t border-slate-200">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="index.html#features" class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">Features</a>
+                <a href="index.html#why-us" class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">Why Us?</a>
+                <a href="support.html" class="block px-3 py-2 rounded-md text-base font-medium text-blue-600 bg-blue-50">Support</a>
+                
+                <div class="pt-2">
+                    <a href="index.html#download" class="inline-flex items-center justify-center px-5 py-2.5 rounded-full brand-gradient text-white font-semibold shadow hover:opacity-90 transition-all transform hover:scale-105">
+                        Get the App
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="py-16 md:py-24">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto">
+                <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 animate-slide-up" data-animate>
+                        <span class="brand-text-gradient">User Guide & FAQ</span>
+                    </h2>
+                <p class="mt-4 text-lg text-slate-600">
+                    Find answers, guides, and tips on how to get the most out of <b>FODMAP LOGMAP</b>.
+                </p>
+            </div>
+            
+            <div class="mt-16 space-y-6">
+                
+                <details class="support-accordion" open>
+                    <summary class="support-question">
+                        User Guide
+                    </summary>
+                    <div class="support-answer" id="user-guide-content">
+                        <p><strong>Welcome to your personal FODMAP guide!</strong> This app is designed to be your partner, adapting to your journey. Let's break down the powerful features you've unlocked.</p>
+                        
+                        <h3>1. The First Step: The Welcome Setup</h3>
+                        <p>When you first open the app, you'll see a Welcome Setup. This is the most important step!</p>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><strong>Slide 1: Get to Know You.</strong> We ask for your conditions, intolerances, and preferences. This is used by the <strong>AI Assistant</strong> to give you safer, personalized advice.</li>
+                            <li><strong>Slide 2: Choose Your Phase.</strong> Select where you are in your journey to set up your app.</li>
+                            <li><strong>Slide 3: Phase Setup.</strong> Set your phase start date, duration, diet rules (for Pre-Treatment), or medication (for Restriction).</li>
+                        </ul>
+                        <br>
+                        <img src="images/guide_welcome.png" alt="The 3-slide welcome setup screen" class="rounded-xl shadow-lg border border-slate-200">
+
+                        <h3>2. The Big Idea: Your Adaptive Home Screen</h3>
+                        <p>Your <strong>Home</strong> tab is your dashboard, and it <em>changes</em> based on your active phase.</p>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Pre-Treatment:</strong> You'll see your <strong>Diet Rules</strong> and a <strong>Phase Countdown</strong>.</li>
+                            <li><strong>Restriction:</strong> You'll see your <strong>Phase Countdown</strong> and the <strong>Medication Tracker</strong>.</li>
+                            <li><strong>Reintroduction:</strong> This is the main hub! You'll see:
+                                <ul class="list-[circle] list-inside ml-4 mt-1">
+                                    <li><strong>Reintroduction Progress:</strong> A list of all your challenge logs, grouped by FODMAP.</li>
+                                    <li><strong>AI Insights:</strong> A button to get an AI-powered summary of your journey.</li>
+                                    <li><strong>Symptom Trends:</strong> A chart that plots your symptom severity over time.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Personalization:</strong> You'll see <strong>My Final Diet</strong>, your personal library of "safe" and "trigger" foods.</li>
+                        </ul>
+                        <br>
+                        <img src="images/guide_phases.png" alt="A collage showing the 4 different Home screen layouts" class="rounded-xl shadow-lg border border-slate-200">
+
+                        <h3>3. How to Use the AI Assistant 🤖</h3>
+                        <p>Go to the <strong>AI Assistant</strong> tab to get instant answers.</p>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Check a Single Food:</strong> Just type the name of a food (e.g., "Avocado" or "Honey") and hit send. The AI will give you a simple breakdown: FODMAP Level, Safe Portion, and Substitutes, all tailored to <em>your</em> profile.</li>
+                            <li><strong>Analyze a Photo:</strong> This is the killer feature.
+                                <ol class="list-decimal list-inside ml-4 mt-1">
+                                    <li>Tap the <strong>Plus icon</strong> (<i data-lucide="plus" class="inline-block w-4 h-4 -mt-1"></i>) in the chat bar.</li>
+                                    <li>Choose <strong>Camera</strong> to snap a photo of an ingredient label or <strong>Gallery</strong> to upload one.</li>
+                                    <li>The AI will analyze the image, list all ingredients, and warn you about any high-FODMAP items.</li>
+                                </ol>
+                            </li>
+                        </ul>
+                        <br>
+                        <img src="images/guide_ai_scan.png" alt="The AI Assistant page showing an analysis of an image of an ingredient label" class="rounded-xl shadow-lg border border-slate-200">
+
+                        <h3>4. How to Log (The Smart Way)</h3>
+                        <p>Tap the big <strong>Plus icon</strong> <i data-lucide="plus" class="inline-block w-4 h-4 -mt-1"></i> on any screen. This form is also adaptive!</p>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><strong>The FODMAP Selector:</strong> In the <strong>Reintroduction</strong> phase, this dropdown is <em>required</em>. In all other phases, it's hidden or optional.</li>
+                            <li><strong>Finding Your Food:</strong> As you type in the "Food Name" box, the app will show suggestions from your past entries to save time.</li>
+                            <li><strong>Tracking Symptoms:</strong> Tap the predefined symptom tags (e.g., "Bloating") or tap "<strong>Add Custom Symptom</strong>" to create your own (like "Nausea" or "Brain Fog"). The <strong>Severity</strong> slider (1-5) will appear when you select a symptom.</li>
+                        </ul>
+                        <br>
+                        <img src="images/guide_log_form.png" alt="The Log Entry form showing custom symptom tags" class="rounded-xl shadow-lg border border-slate-200">
+                        
+                        <h3>5. How to Plan a Reintroduction Challenge ✨</h3>
+                        <p>Not sure <em>how</em> to test Fructose? We've got you covered.</p>
+                        <ol class="list-decimal list-inside space-y-1">
+                            <li>Make sure you are in the <strong>Reintroduction</strong> phase.</li>
+                            <li>Open the <strong>Log Entry</strong> modal.</li>
+                            <li>Select the group you want to test (e.g., "Fructose").</li>
+                            <li>A new button will appear: <strong>"✨ Plan My Challenge"</strong>.</li>
+                            <li>Tap it! The AI will generate a 3-day test plan (e.g., Day 1: 1 tsp Honey...) right in a popup.</li>
+                        </ol>
+
+                        <h3>6. The End Goal: Building Your "Final Diet" 🗺️</h3>
+                        <p>The <strong>Personalization</strong> phase is where it all comes together. Your goal is to build a list of your personal triggers and safe foods. You have two ways to do this:</p>
+                        
+                        <h4 class="font-bold text-slate-800 mt-4">A. The Easy Way: Auto-Scan (The "Non-Obvious" Magic)</h4>
+                        <ol class="list-decimal list-inside space-y-1 mt-2">
+                            <li>First, make sure you've been logging your meals and symptoms for a while.</li>
+                            <li>Switch to the <strong>Personalization</strong> phase (from the side menu).</li>
+                            <li>On the Home screen, tap the <strong>Auto-Scan</strong> button (<i data-lucide="magic-wand" class="inline-block w-4 h-4 -mt-1"></i>).</li>
+                            <li>The app will read your <em>entire log history</em> and automatically create your food list. It will label foods as "Tolerated" if you never had symptoms, and "Trigger" if you did.</li>
+                        </ol>
+                        <br>
+                        <img src="images/guide_autoscan.png" alt="The Personalization Home screen, with an arrow pointing to the 'Auto-Scan' button" class="rounded-xl shadow-lg border border-slate-200">
+                        
+                        <h4 class="font-bold text-slate-800 mt-6">B. The Manual Way: Add & Edit Foods</h4>
+                        <p class="mt-2">You can also manage your list manually.</p>
+                        <ol class="list-decimal list-inside space-y-1 mt-2">
+                            <li>On the Personalization Home screen, tap "<strong>Add</strong>" to create a new food entry.</li>
+                            <li>Tap any food in your list to open the <strong>Food Modal</strong>.</li>
+                            <li>This modal lets you set the status (<strong>Tolerated</strong> or <strong>Trigger</strong>) and add complex <strong>Dose Logic</strong>.</li>
+                        </ol>
+                        <ul class="list-disc list-inside ml-5 mt-2 space-y-1">
+                            <li><em><strong>Example:</strong> You can mark "Avocado" as a "Trigger," but then add a dose logic of "<strong>starting at 1/4</strong>" to remind you how much causes a problem.</em></li>
+                            <li><em><strong>Example:</strong> You can mark "Sourdough Bread" as "Tolerated," but add a dose logic of "<strong>up to 2 slices</strong>" to define your safe limit.</em></li>
+                        </ul>
+                        <br>
+                        <img src="images/guide_food_modal.png" alt="The 'Food Edit Modal' showing the 'Tolerated/Trigger' buttons and the 'Dose Logic' section" class="rounded-xl shadow-lg border border-slate-200">
+
+                        <h3>7. Managing Your App</h3>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><strong>Change Your Phase:</strong> Tap the <strong>Side Menu</strong> <i data-lucide="menu" class="inline-block w-4 h-4 -mt-1"></i> and use the <strong>Phase Selector</strong>. This is the master control for your app experience.</li>
+                            <li><strong>Backup Your Data:</strong> Go to <strong>Profile</strong> <i data-lucide="user" class="inline-block w-4 h-4 -mt-1"></i> > <strong>Data Management</strong> and tap <strong>Export Data</strong>. Do this often!</li>
+                            <li><strong>Install as an App:</strong> If you see an "<strong>Install App</strong>" button in the Side Menu, tap it to save FODMAP LOGMAP to your phone's home screen.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details class="support-accordion">
+                    <summary class="support-question">
+                        Frequently Asked Questions (FAQ)
+                    </summary>
+                    <div class="support-answer" id="faq-content">
+                        <h3>General Questions</h3>
+                        <p><strong>What is FODMAP LOGMAP?</strong><br>
+                        FODMAP LOGMAP is your personal companion for navigating the 4-phase Low FODMAP diet. It's an adaptive tool that changes with you, offering a smart log, a powerful AI assistant, and a personalization hub to help you find your "final" long-term diet.</p>
+                        
+                        <p><strong>Is this app a replacement for a doctor or dietitian?</strong><br>
+                        <strong>No.</strong> This app is a powerful tool to <em>support</em> you and your healthcare team. It is designed for informational and tracking purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Always consult with your doctor or a registered dietitian.</p>
+                        
+                        <p><strong>Why does the app look different sometimes?</strong><br>
+                        That's the app's magic! 🪄 The Home screen and Log form automatically adapt to your <strong>current phase</strong>. The app shows you the tools you need for Pre-Treatment, Restriction, Reintroduction, or Personalization. You can see and change your current phase from the Side Menu.</p>
+
+                        <h3>Logging & Phases</h3>
+                        <p><strong>How do I log a "Safe Meal" or a meal that's not a challenge?</strong><br>
+                        During the <strong>Reintroduction</strong> phase, the log form <em>requires</em> you to pick a FODMAP group you are testing.
+                        <br>During the <strong>Pre-Treatment</strong>, <strong>Restriction</strong>, or <strong>Personalization</strong> phases, you can simply log your food. If you don't select a FODMAP group, the entry is automatically logged as a "Safe Meal."</p>
+                        
+                        <p><strong>How do I change my current phase?</strong><br>
+                        Tap the <strong>Side Menu</strong> icon <i data-lucide="menu" class="inline-block w-4 h-4 -mt-1"></i> (top-left corner). Under the "<strong>Phase Selector</strong>," tap the phase you want to switch to (e.g., "Reintroduction"). The app will instantly update.</p>
+                        
+                        <p><strong>What is the Medication Tracker?</strong><br>
+                        This is a special tool that appears on your Home screen during the <strong>Restriction</strong> phase. It's designed to help you track medications, like a 12-day course of antibiotics, which many people take before starting the diet. You can set it up from the Home screen or ignore it.</p>
+
+                        <h3>Data & Privacy</h3>
+                        <p><strong>Where is my data (logs, profile) stored?</strong><br>
+                        All your data is stored <strong>only on your device</strong> in your browser's local storage. It is never uploaded to a server, and we (the developers) cannot see it.</p>
+                        
+                        <p><strong>What happens if I clear my browser cache?</strong><br>
+                        <strong>You will lose all your data.</strong> 🛑 Because your data is stored locally, clearing your "Site Data" or "Cookies" for this app will delete your logs and profile.</p>
+                        
+                        <p><strong>How do I back up my data or move it to a new phone?</strong><br>
+                        This is very important!</p>
+                        <ol class="list-decimal list-inside space-y-1">
+                            <li><strong>On your old device:</strong> Go to the <strong>Profile</strong> tab <i data-lucide="user" class="inline-block w-4 h-4 -mt-1"></i> > <strong>Data Management</strong> > <strong>Export Data</strong>. This saves a backup file.</li>
+                            <li><strong>Move the file:</strong> Send that file to your new device (e.g., via email).</li>
+                            <li><strong>On your new device:</strong> Open the app, go to <strong>Profile</strong> <i data-lucide="user" class="inline-block w-4 h-4 -mt-1"></i> > <strong>Data Management</strong> > <strong>Import Data</strong>, and select the backup file. The app will reload with all your information.</li>
+                        </ol>
+                    </div>
+                </details>
+
+            </div>
+        </div>
+    </main>
+    <footer class="bg-white">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <a href="index.html">
+                    <img src="images/fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" style="height: 32px; width: auto;">
+                </a>
+            </div>
+            <div class="text-sm text-slate-500">
+                © 2025 FODMAP LOGMAP. All rights reserved.
+            </div>
+            <div class="flex gap-4 md:gap-6">
+                <a href="support.html" class="text-sm text-slate-500 hover:text-blue-600">Support</a>
+                <a href="#" class="text-sm text-slate-500 hover:text-blue-600">Privacy Policy</a>
+                <a href="#" class="text-sm text-slate-500 hover:text-blue-600">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js" defer></script>
+
+</body>
+</html>

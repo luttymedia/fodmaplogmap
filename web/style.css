@@ -55,3 +55,188 @@ body {
 .delay-100 { transition-delay: 100ms; }
 .delay-200 { transition-delay: 200ms; }
 .delay-300 { transition-delay: 300ms; }
+
+/* ======================= */
+/* NEW USER GUIDE       */
+/* ======================= */
+.guide-step {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    align-items: center;
+}
+
+@media (min-width: 768px) { /* md: */
+    .guide-step {
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+    }
+    
+    /* This rule handles the "reverse" layout */
+    .guide-step.reverse .guide-image-container {
+        order: 2;
+    }
+}
+
+.guide-image-container img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+.guide-text-container {
+    position: relative;
+}
+
+.guide-step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 1.125rem; /* text-lg */
+    color: white;
+    background-image: linear-gradient(to right, var(--color-safe), var(--color-brand));
+    margin-bottom: 1.5rem; /* mb-6 */
+}
+
+.guide-step-title {
+    font-size: 1.875rem; /* text-3xl */
+    font-weight: 700; /* font-bold */
+    letter-spacing: -0.025em; /* tracking-tight */
+    color: #1e293b; /* text-slate-900 */
+    margin-bottom: 1rem; /* mb-4 */
+}
+
+.guide-step-text {
+    font-size: 1.125rem; /* text-lg */
+    line-height: 1.75; /* leading-7 */
+    color: #475569; /* text-slate-600 */
+}
+
+
+/* ======================= */
+/* NEW FAQ          */
+/* ======================= */
+.faq-list {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: white;
+    border-radius: 1rem; /* rounded-2xl */
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); /* shadow-lg */
+    overflow: hidden;
+    border: 1px solid #e2e8f0; /* border-slate-200 */
+}
+
+.faq-item {
+    border-bottom: 1px solid #e2e8f0; /* border-slate-200 */
+}
+.faq-item:last-child {
+    border-bottom: 0;
+}
+
+.faq-question {
+    font-size: 1.125rem; /* text-lg */
+    font-weight: 600; /* font-semibold */
+    color: #1e293b; /* text-slate-900 */
+    padding: 1.25rem 1.5rem; /* p-5 sm:p-6 */
+}
+
+.faq-answer {
+    padding: 0 1.5rem 1.25rem 1.5rem; /* px-5 sm:px-6, pb-5 sm:pb-6 */
+    font-size: 1rem; /* text-base */
+    line-height: 1.75; /* leading-7 */
+    color: #475569; /* text-slate-600 */
+}
+
+.faq-answer p {
+    margin-top: 1rem;
+}
+
+/* ======================= */
+/* NEW SUPPORT PAGE       */
+/* ======================= */
+
+.support-accordion {
+    background-color: #fff;
+    border-radius: 1rem; /* rounded-2xl */
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); /* shadow-lg */
+    border: 1px solid #e2e8f0; /* border-slate-200 */
+    transition: margin 0.2s ease-out;
+}
+
+.support-accordion:last-of-type {
+     margin-bottom: 0;
+}
+
+.support-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Pushes chevron to the right */
+    width: 100%;
+    padding: 1.25rem 1.5rem; /* p-5 sm:p-6 */
+    font-size: 1.25rem; /* text-xl */
+    font-weight: 700; /* font-bold */
+    color: #1e293b; /* text-slate-900 */
+    cursor: pointer;
+    list-style: none; /* Removes default triangle */
+}
+
+.support-question::-webkit-details-marker {
+    display: none; /* Hides default triangle in Safari */
+}
+
+/* This is a simple chevron icon */
+.support-question::after {
+    content: '';
+    display: block;
+    margin-left: 1rem; /* ml-4 */
+    width: 1.5rem; /* w-6 */
+    height: 1.5rem; /* h-6 */
+    flex-shrink: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='lucide lucide-chevron-down'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    transition: transform 0.2s ease-in-out;
+}
+
+.support-accordion[open] > .support-question::after {
+    transform: rotate(180deg);
+}
+
+.support-answer {
+    padding: 1.5rem 1.5rem 1.5rem 1.5rem; /* p-6 */
+    font-size: 1rem; /* text-base */
+    line-height: 1.75; /* leading-7 */
+    color: #475569; /* text-slate-600 */
+    border-top: 1px solid #e2e8f0; /* border-t border-slate-200 */
+}
+
+/* Styles for the content *inside* the answer */
+.support-answer h3 {
+    font-size: 1.125rem; /* text-lg */
+    font-weight: 700; /* font-bold */
+    color: #1e293b; /* text-slate-900 */
+    margin-top: 1.5rem; /* mt-6 */
+    margin-bottom: 0.5rem; /* mb-2 */
+}
+.support-answer h3:first-child {
+    margin-top: 0;
+}
+.support-answer p {
+    margin-bottom: 1rem; /* mb-4 */
+}
+.support-answer ul, .support-answer ol {
+    list-style-position: inside;
+    margin-bottom: 1rem;
+    margin-left: 0.5rem;
+}
+.support-answer ul li {
+    list-style-type: disc;
+}
+.support-answer ol li {
+    list-style-type: decimal;
+}
