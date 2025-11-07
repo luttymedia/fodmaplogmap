@@ -798,7 +798,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
         FODMAP_GROUP_DATA.forEach(groupData => {
-            if (groupData.value === "Restriction") return; // Skip this group
+            // NEW: Skip non-challenge groups in this view
+            if (groupData.value === "Restriction" || groupData.value === "Other" || groupData.value === "Safe Meal") {
+                return; // Skip this group
+            }
             const entries = appState.logEntries.filter(entry => entry.group === groupData.value); 
             const count = entries.length;
             
