@@ -7,6 +7,45 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error('Lucide icons script did not load.');
     }
 
+    // --- NEW: Mobile Menu Toggle Logic ---
+    const menuBtn = document.getElementById('mobile-menu-btn');
+    const menuDropdown = document.getElementById('mobile-menu-dropdown');
+    const menuLinks = menuDropdown.querySelectorAll('a');
+
+    // Helper function to close the menu
+    const closeMenu = () => {
+        menuDropdown.classList.add('hidden');
+    };
+
+    if (menuBtn && menuDropdown) {
+        // Toggle menu when hamburger is clicked
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Stop this click from triggering the document listener
+            menuDropdown.classList.toggle('hidden');
+        });
+
+        // FIX 1: Close menu when a link inside it is clicked
+        menuLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                closeMenu();
+            });
+        });
+
+        // FIX 2: Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            // If the menu is open, and the click was NOT on the menu AND NOT on the button, close it.
+            if (
+                !menuDropdown.classList.contains('hidden') &&
+                !menuDropdown.contains(e.target) &&
+                !menuBtn.contains(e.target)
+            ) {
+                closeMenu();
+            }
+        });
+    }
+    // --- END: Mobile Menu Toggle Logic ---
+
+
     const animatedElements = document.querySelectorAll("[data-animate]");
 
     if ("IntersectionObserver" in window) {

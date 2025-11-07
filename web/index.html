@@ -20,11 +20,27 @@
 
     <header class="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/60">
         <nav class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <a class="flex-shrink-0 flex items-center gap-2" href="#" aria-label="FODMAP LOGMAP Home">
+            <!-- Added `relative` to allow the logo to be centered -->
+            <div class="flex justify-between items-center h-16 relative">
+                
+                <!-- 1. Mobile Menu Button (Left on Mobile) -->
+                <!--    - `md:hidden` hides it on desktop -->
+                <!--    - Added id="mobile-menu-btn" for JS -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-slate-700 p-2 -ml-2">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <!-- 2. Logo (Center on Mobile, Left on Desktop) -->
+                <!--    - `absolute` centers it on mobile -->
+                <!--    - `md:relative` resets it for desktop -->
+                <a class="flex-shrink-0 flex items-center gap-2 absolute left-1/2 -translate-x-1/2 md:relative md:left-0 md:translate-x-0" href="#" aria-label="FODMAP LOGMAP Home">
                     <img src="images/fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" style="height: 40px; width: auto;">
                 </a>
                 
+                <!-- 3. Desktop Nav (Right on Desktop) -->
+                <!--    - This is unchanged and works as before -->
                 <div class="hidden md:flex md:items-center md:gap-8">
                     <a href="#features" class="font-medium text-slate-600 hover:text-blue-600 transition-colors">Features</a>
                     <a href="#why-us" class="font-medium text-slate-600 hover:text-blue-600 transition-colors">Why Us?</a>
@@ -32,14 +48,36 @@
                         Get the App
                     </a>
                 </div>
-                
+
+                <!-- 4. Empty div for mobile layout -->
+                <!--    - This just fills the space on the right on mobile so the logo stays centered -->
                 <div class="md:hidden">
-                    <button class="text-slate-700">
-                        <i data-lucide="menu" class="w-6 h-6"></i>
-                    </button>
+                    <span class="w-6 h-6"></span> <!-- Invisible spacer -->
                 </div>
+
             </div>
         </nav>
+
+        <!-- 
+          NEW: Mobile Menu Dropdown
+          - This div is hidden by default and toggled by JS
+        -->
+        <div id="mobile-menu-dropdown" class="hidden md:hidden shadow-lg border-t border-slate-200">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#features" class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">Features</a>
+                <a href="#why-us" class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">Why Us?</a>
+                
+                <!-- 
+                  FIX: Wrapped the link in a div for padding,
+                  and changed <a> tag classes to be a pill button.
+                -->
+                <div class="pt-2">
+                    <a href="#download" class="inline-flex items-center justify-center px-5 py-2.5 rounded-full brand-gradient text-white font-semibold shadow hover:opacity-90 transition-all transform hover:scale-105">
+                        Get the App
+                    </a>
+                </div>
+            </div>
+        </div>
     </header>
 
     <main>
