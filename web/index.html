@@ -312,67 +312,98 @@
                     </table>
 
                     <!-- 
-                      NEW: Mobile-Only "Two-Tone Card" Layout (Restyled)
-                      - `md:hidden` hides this entire block on desktop, showing the table instead.
+                      NEW: Mobile-Only 2-Column Table Layout
+                      - `md:hidden` hides this table on desktop.
+                      - `w-full` and `border-collapse` ensure it fits.
                     -->
-                    <div class="space-y-4 md:hidden">
+                    <table class="w-full border-collapse md:hidden bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <tbody>
+                            <!-- Group 1: Main Focus -->
+                            <tr class="bg-slate-100">
+                                <th class="p-3 text-left text-base font-bold text-slate-900" colspan="2">
+                                    Main Focus
+                                </th>
+                            </tr>
+                            <tr>
+                                <td class="w-1/2 p-3 border-r border-slate-200 align-top">
+                                    <span class="block text-xs font-semibold mb-1" style="color: var(--color-safe);">FODMAP LOGMAP</span>
+                                    <span class="font-semibold" style="color: var(--color-brand);">Reintroduction & Personal Logging</span>
+                                </td>
+                                <td class="w-1/2 p-3 align-top">
+                                    <span class="block text-xs font-semibold text-slate-600 mb-1">Other Apps</span>
+                                    <span class="text-slate-700">Exhaustive Food Database</span>
+                                </td>
+                            </tr>
 
-                        <div class="bg-white rounded-2xl shadow-lg overflow-hidden text-center">
-                            <div class="p-4 font-bold text-lg text-white" style="background-color: var(--color-safe-pastel);">Main Focus</div>
-                            <div class="p-4">
-                                <span class="font-semibold text-lg" style="color: var(--color-brand);">Reintroduction & Personal Logging</span>
-                            </div>
-                            <div class="p-4 bg-slate-100 border-t border-slate-200">
-                                <span class="block text-xs font-semibold text-slate-600 mb-1">Other Apps</span>
-                                <span class="font-medium text-slate-700">Exhaustive Food Database</span>
-                            </div>
-                        </div>
+                            <!-- Group 2: AI Assistant -->
+                            <tr class="bg-slate-100">
+                                <th class="p-3 text-left text-base font-bold text-slate-900 border-t border-slate-200" colspan="2">
+                                    AI Assistant
+                                </th>
+                            </tr>
+                            <tr>
+                                <td class="w-1/2 p-3 border-r border-slate-200 align-top">
+                                    <span class="block text-xs font-semibold mb-1" style="color: var(--color-safe);">FODMAP LOGMAP</span>
+                                    <span class="font-semibold" style="color: var(--color-brand);">Personalized AI food & camera scans</span>
+                                </td>
+                                <td class="w-1/2 p-3 align-top">
+                                    <span class="block text-xs font-semibold text-slate-600 mb-1">Other Apps</span>
+                                    <span class="text-slate-700">Static food database (no AI)</span>
+                                </td>
+                            </tr>
 
-                        <div class="bg-white rounded-2xl shadow-lg overflow-hidden text-center">
-                            <div class="p-4 font-bold text-lg text-white" style="background-color: var(--color-safe-pastel);">AI Assistant</div>
-                            <div class="p-4">
-                                <span class="font-semibold text-lg" style="color: var(--color-brand);">Personalized AI food & camera scans</span>
-                            </div>
-                            <div class="p-4 bg-slate-100 border-t border-slate-200">
-                                <span class="block text-xs font-semibold text-slate-600 mb-1">Other Apps</span>
-                                <span class="font-medium text-slate-700">Static food database (no AI)</span>
-                            </div>
-                        </div>
+                            <!-- Group 3: Logging System -->
+                            <tr class="bg-slate-100">
+                                <th class="p-3 text-left text-base font-bold text-slate-900 border-t border-slate-200" colspan="2">
+                                    Logging System
+                                </th>
+                            </tr>
+                            <tr>
+                                <td class="w-1/2 p-3 border-r border-slate-200 align-top">
+                                    <span class="block text-xs font-semibold mb-1" style="color: var(--color-safe);">FODMAP LOGMAP</span>
+                                    <span class="font-semibold" style="color: var(--color-brand);">Fast Symptom Logging (1-5 Severity)</span>
+                                </td>
+                                <td class="w-1/2 p-3 align-top">
+                                    <span class="block text-xs font-semibold text-slate-600 mb-1">Other Apps</span>
+                                    <span class="text-slate-700">Complex charts, detailed forms</span>
+                                </td>
+                            </tr>
 
-                        <div class="bg-white rounded-2xl shadow-lg overflow-hidden text-center">
-                            <div class="p-4 font-bold text-lg text-white" style="background-color: var(--color-safe-pastel);">Logging System</div>
-                            <div class="p-4">
-                                <span class="font-semibold text-lg" style="color: var(--color-brand);">Fast Symptom Logging (1-5 Severity)</span>
-                            </div>
-                            <div class="p-4 bg-slate-100 border-t border-slate-200">
-                                <span class="block text-xs font-semibold text-slate-600 mb-1">Other Apps</span>
-                                <span class="font-medium text-slate-700">Complex charts, detailed forms</span>
-                            </div>
-                        </div>
+                            <!-- Group 4: Guidance -->
+                            <tr class="bg-slate-100">
+                                <th class="p-3 text-left text-base font-bold text-slate-900 border-t border-slate-200" colspan="2">
+                                    Guidance
+                                </th>
+                            </tr>
+                            <tr>
+                                <td class="w-1/2 p-3 border-r border-slate-200 align-top">
+                                    <span class="block text-xs font-semibold mb-1" style="color: var(--color-safe);">FODMAP LOGMAP</span>
+                                    <span class="font-semibold" style="color: var(--color-brand);">Guided, step-by-step reintro path</span>
+                                </td>
+                                <td class="w-1/2 p-3 align-top">
+                                    <span class="block text-xs font-semibold text-slate-600 mb-1">Other Apps</span>
+                                    <span class="text-slate-700">Clinical info, mostly self-directed</span>
+                                </td>
+                            </tr>
 
-                        <div class="bg-white rounded-2xl shadow-lg overflow-hidden text-center">
-                            <div class="p-4 font-bold text-lg text-white" style="background-color: var(--color-safe-pastel);">Guidance</div>
-                            <div class="p-4">
-                                <span class="font-semibold text-lg" style="color: var(--color-brand);">Guided, step-by-step reintro path</span>
-                            </div>
-                            <div class="p-4 bg-slate-100 border-t border-slate-200">
-                                <span class="block text-xs font-semibold text-slate-600 mb-1">Other Apps</span>
-                                <span class="font-medium text-slate-700">Clinical info, mostly self-directed</span>
-                            </div>
-                        </div>
-
-                        <div class="bg-white rounded-2xl shadow-lg overflow-hidden text-center">
-                            <div class="p-4 font-bold text-lg text-white" style="background-color: var(--color-safe-pastel);">The "Feel"</div>
-                            <div class="p-4">
-                                <span class="font-semibold text-lg" style="color: var(--color-brand);">Motivational, simple, your companion</span>
-                            </div>
-                            <div class="p-4 bg-slate-100 border-t border-slate-200">
-                                <span class="block text-xs font-semibold text-slate-600 mb-1">Other Apps</span>
-                                <span class="font-medium text-slate-700">Clinical, academic, a "manual"</span>
-                            </div>
-                        </div>
-
-                    </div>
+                            <!-- Group 5: The "Feel" -->
+                            <tr class="bg-slate-100">
+                                <th class="p-3 text-left text-base font-bold text-slate-900 border-t border-slate-200" colspan="2">
+                                    The "Feel"
+                                </th>
+                            </tr>
+                            <tr>
+                                <td class="w-1/2 p-3 border-r border-slate-200 align-top">
+                                    <span class="block text-xs font-semibold mb-1" style="color: var(--color-safe);">FODMAP LOGMAP</span>
+                                    <span class="font-semibold" style="color: var(--color-brand);">Motivational, simple, your companion</span>
+                                </td>
+                                <td class="w-1/2 p-3 align-top">
+                                    <span class="block text-xs font-semibold text-slate-600 mb-1">Other Apps</span>
+                                    <span class="text-slate-700">Clinical, academic, a "manual"</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
             </div>
         </section>
         
