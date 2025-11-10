@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us | FODMAP LOGMAP</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+<body class="bg-blue-50 text-slate-800 selection:bg-blue-100">
+
+    <header class="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-4 sm:px-6 lg:px-8">
+        <nav class="max-w-6xl mx-auto">
+            <div class="flex justify-between items-center h-16 relative">
+                
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-slate-700 p-2 -ml-2">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <a class="flex-shrink-0 flex items-center gap-2 absolute left-1/2 -translate-x-1/2 md:relative md:left-0 md:translate-x-0" href="index.html" aria-label="FODMAP LOGMAP Home">
+                    <img src="images/fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" style="height: 40px; width: auto; object-fit: contain;">
+                </a>
+                
+                <div class="hidden md:flex md:items-center md:gap-6 lg:gap-8">
+                    <a href="index.html#features" class="font-medium text-slate-600 hover:text-blue-600 transition-colors">Features</a>
+                    <a href="index.html#why-us" class="font-medium text-slate-600 hover:text-blue-600 transition-colors">Why Us?</a>
+                    <a href="support.html" class="font-medium text-slate-600 hover:text-blue-600 transition-colors">Support</a>
+                    <a href="index.html#download" class="inline-flex items-center justify-center px-5 py-2.5 rounded-full brand-gradient text-white font-semibold shadow-lg hover:shadow-blue-300 transition-all hover:scale-105 transform">
+                        Get the App
+                    </a>
+                </div>
+
+                <div class="md:hidden">
+                    <span class="w-6 h-6"></span> </div>
+
+            </div>
+        </nav>
+
+        <div id="mobile-menu-dropdown" class="hidden md:hidden shadow-lg border-t border-slate-200">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="index.html#features" class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">Features</a>
+                <a href="index.html#why-us" class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">Why Us?</a>
+                <a href="support.html" class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">Support</a>
+                
+                <div class="pt-2">
+                    <a href="index.html#download" class="inline-flex items-center justify-center px-5 py-2.5 rounded-full brand-gradient text-white font-semibold shadow hover:opacity-90 transition-all transform hover:scale-105">
+                        Get the App
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="py-16 md:py-24">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto">
+                <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 animate-slide-up" data-animate>
+                        <span class="brand-text-gradient">Contact Us</span>
+                    </h2>
+                <p class="mt-4 text-lg text-slate-600">
+                    We're here to help.
+                </p>
+            </div>
+            
+            <div class="mt-16">
+                <div class="static-content-box">
+                    <h3>Get in Touch</h3>
+                    <p>Have questions, feature requests, or bug reports? We'd love to hear from you. The best way to reach us is by email.</p>
+                    <p>For all inquiries, please email us at:</p>
+                    <p class="text-center text-lg md:text-xl font-bold my-6">
+                        <a href="mailto:contact@fodmaplogmap.com" class="brand-text-gradient hover:opacity-80 transition-opacity" style="text-decoration: none;">
+                            contact@fodmaplogmap.com
+                        </a>
+                    </p>
+                    <p>We'll do our best to get back to you as soon as possible.</p>
+
+                    <form action="https://formspree.io/f/YOUR_FORM_ENDPOINT_ID" method="POST" class="contact-form">
+                        <h3 style="margin-top: 0;">Or Send Us a Message</h3>
+                        <p style="margin-bottom: 1.5rem;"><strong>Note:</strong> For this form to work, you must first sign up for a free service like <a href="https://formspree.io/" target="_blank" rel="noopener noreferrer">Formspree</a>, create a new form pointed to your email, and replace the placeholder <code>action</code> URL in this HTML file with your unique endpoint URL.</p>
+
+                        <div class="form-group">
+                            <label for="name" class="form-label">Your Name</label>
+                            <input type="text" name="name" id="name" class="form-input" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email" class="form-label">Your Email</label>
+                            <input type="email" name="email" id="email" class="form-input" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="message" class="form-label">Message</label>
+                            <textarea name="message" id="message" class="form-textarea" rows="4" required></textarea>
+                        </div>
+                        
+                        <div>
+                            <button type="submit" class="w-full inline-flex items-center justify-center px-6 py-3 rounded-full brand-gradient text-white font-semibold shadow-lg hover:shadow-blue-300 transition-all hover:scale-[1.02] transform">
+                                Send Message
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <hr class="border-t border-slate-200 mt-12">
+                    
+                    <h3>Looking for help?</h3>
+                    <p>You might find an immediate answer in our <a href="support.html">User Guide & FAQ</a>. We've compiled answers to the most common questions about how the app works, from logging meals to managing your data.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer class="bg-white">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <a href="index.html">
+                    <img src="images/fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" style="height: 32px; width: auto; object-fit: contain;">
+                </a>
+            </div>
+            <div class="text-sm text-slate-500">
+                © 2025 FODMAP LOGMAP. All rights reserved.
+            </div>
+            <div class="flex gap-4 md:gap-6">
+                <a href="support.html" class="text-sm text-slate-500 hover:text-blue-600">Support</a>
+                <a href="privacy.html" class="text-sm text-slate-500 hover:text-blue-600">Privacy Policy</a>
+                <a href="contact.html" class="text-sm text-slate-500 hover:text-blue-600">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js" defer></script>
+
+</body>
+</html>
