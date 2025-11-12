@@ -198,6 +198,16 @@
                 <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
                     <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center">🧠 AI Food Assistant</h2>
                      <p class="text-subtle mb-3 text-sm">Get instant FODMAP info for any food or ingredient list based on your profile. This is not medical advice.</p>
+
+                     <div id="ai-upgrade-banner" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-lg text-center mb-3">
+                        <p class="text-sm font-semibold text-amber-700">You are out of free AI credits.</p>
+                        <button id="ai-premium-btn" class="mt-2 bg-amber-500 text-white font-bold py-1.5 px-4 rounded-full hover:bg-amber-600 text-sm">
+                            Go Premium
+                        </button>
+                    </div>
+
+                    <div id="ai-ad-placeholder" class="hidden w-full h-16 bg-slate-200 rounded-lg flex items-center justify-center text-subtle text-sm mb-3">
+                        </div>
                     
                     <input type="file" id="image-upload-input" class="hidden" accept="image/*">
                     <input type="file" id="camera-upload-input" class="hidden" accept="image/*" capture="environment">
@@ -629,6 +639,15 @@
                     <li>
                         <button id="open-info-modal-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm"> 
                             <i class="fas fa-book-open w-5 mr-2 text-primary"></i>Understand FODMAPS
+                        </button>
+                    </li>
+
+                    <li class="pt-2 border-t border-slate-200">
+                        <button id="menu-login-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
+                            <i class="fas fa-sign-in-alt w-5 mr-2 text-primary"></i>Login / Sign Up
+                        </button>
+                        <button id="menu-premium-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
+                            <i class="fas fa-star w-5 mr-2 text-amber-500"></i>Go Premium
                         </button>
                     </li>
 

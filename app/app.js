@@ -124,6 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
         preferences: [], 
         apiKey: '',
         hasCompletedOnboarding: false,
+        ratePopupStatus: 'not_asked', // 'not_asked', 'remind_later', 'declined', 'rated'
+        aiUsageCount: 0,
         currentPhase: 'reintroduction',
         phaseSettings: {
             "pre-treatment": {
@@ -435,6 +437,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // The floating action button is now always visible
         addEntryFab.classList.remove('hidden');
+        // --- TODO: Remove this block later ---
+        // --- This is just to make test UI visible ---
+        if (pageId === 'food-info') {
+            document.getElementById('ai-upgrade-banner').classList.remove('hidden');
+            document.getElementById('ai-ad-placeholder').classList.remove('hidden');
+        }
+        // --- END TODO ---
+
         window.scrollTo(0, 0);
          document.querySelectorAll('.nav-item span').forEach(span => { span.classList.remove('hidden', 'sm:inline'); span.classList.add('hidden', 'sm:inline'); });
     }
@@ -683,6 +693,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     aiResultsContent.innerHTML = html; 
                     aiResultsContainer.classList.remove('hidden'); 
+
+                    // --- NEW: Increment AI Count and check for rating ---
+                appState.userProfile.aiUsageCount = (appState.userProfile.aiUsageCount || 0) + 1;
+                localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+                checkAndShowRatePopup();
+                // --- END NEW ---
                 }                    
                 else { aiResultsContent.innerHTML = `<p class="text-error">Sorry, error.</p>`; aiResultsContainer.classList.remove('hidden'); }
             }).finally(() => {
@@ -1852,6 +1868,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         saveLogEntries(); 
+        checkAndShowRatePopup();
         
         // --- NEW: Close the modal (which also resets the form) ---
         closeLogModal();
@@ -2082,6 +2099,53 @@ document.addEventListener('DOMContentLoaded', () => {
     infoCloseBtn.addEventListener('click', closeInfo);
 
     const geminiMdl = document.getElementById('gemini-modal'); const geminiTitle = document.getElementById('gemini-modal-title'); const geminiContent = document.getElementById('gemini-modal-content'); const geminiLoader = document.getElementById('gemini-modal-loader'); const geminiError = document.getElementById('gemini-modal-error'); const geminiClose = document.getElementById('gemini-modal-close');
+    
+    /**
+     * Checks if the user has met the criteria to see the "Rate Us" popup.
+     */
+    function checkAndShowRatePopup() {
+        const status = appState.userProfile.ratePopupStatus;
+        const logCount = appState.logEntries.length;
+        const aiCount = appState.userProfile.aiUsageCount || 0;
+
+        // User has already given a final answer
+        if (status === 'rated' || status === 'declined') {
+            return;
+        }
+
+        let shouldShow = false;
+
+        if (status === 'not_asked' && (logCount === 5 || aiCount === 3)) {
+            shouldShow = true;
+        } else if (status === 'remind_later' && (logCount === 15 || aiCount === 10)) {
+            shouldShow = true;
+        }
+
+        if (shouldShow) {
+            showActionModal({
+                title: 'Enjoying the App?',
+                message: "If you've found this app helpful, please take a moment to rate it. Your feedback is what keeps it growing!",
+                confirmText: 'Rate Now',
+                onConfirm: () => {
+                    // Later, this will open the Play Store link
+                    appState.userProfile.ratePopupStatus = 'rated';
+                    localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+                    // window.open('YOUR_PLAY_STORE_LINK_HERE', '_blank');
+                },
+                altText: 'No, Thanks',
+                onAltConfirm: () => {
+                    appState.userProfile.ratePopupStatus = 'declined';
+                    localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+                },
+                cancelText: 'Remind Me Later',
+                onCancel: () => {
+                    appState.userProfile.ratePopupStatus = 'remind_later';
+                    localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+                }
+            });
+        }
+    }
+
     // --- NEW: Action Modal Elements ---
     const actionModal = document.getElementById('action-modal');
     const actionModalClose = document.getElementById('action-modal-close');
