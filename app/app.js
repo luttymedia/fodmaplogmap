@@ -709,13 +709,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (appState.stagedImageData) {
             // We are searching with an image
             title = `Image${foodName ? ` (${foodName})` : ''}`; // Use text as a caption if it exists
-            prompt = `FODMAP expert: Analyze ingredients in this image. ${buildProfileContext()}
-            ${foodName ? `The user added this text: "${foodName}".` : ''}
-            List all ingredients found. 
-            For any high-FODMAP ingredient, explain why in one short sentence. Use *italics* or emojis for emphasis.
-            Provide an **Overall Summary:** (Safe or Not Safe).
-            Format *only* with **bold** headings, *italics*, newlines, and emojis. 
-            Do NOT use tables, '###', '---', or '|'. Omit the disclaimer.`;
+            prompt = `FODMAP expert. Analyze image ingredients. ${buildProfileContext()}
+            ${foodName ? `User text: "${foodName}".` : ''}
+            List ingredients.
+            For high-FODMAP items, *briefly explain why*.
+            **Overall Summary:** (Safe or Not Safe).
+
+            Format: **bold** headings, *italics*, newlines, emojis.
+            No tables, '###', '---', or '|'. No disclaimer.`;
             
             handleAIQuery(prompt, title, appState.stagedImageData);
 
@@ -723,13 +724,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // We are searching with text only
             title = foodName;
             prompt = `FODMAP expert: Analyze '${foodName}'. ${buildProfileContext()}
-            Provide a concise, 3-part answer. 
             Use this exact template:
-            **FODMAP Level:** [Brief level & why. Use *italics* or emojis for emphasis, not full bold sentences.]
-            **Safe Portion:** [Brief portion size. Use *italics* or emojis for emphasis.]
-            **Substitutes:** [List 3-4 substitutes. Use *italics* or emojis for emphasis.]
+            **FODMAP Level:** [Brief level & why. Use *italics* or emojis. No bold sentences.]
+            **Safe Portion:** [Brief portion size. Use *italics* or emojis.]
+            **Substitutes:** [List 3-4. Use *italics* or emojis.]
 
-            Do NOT use tables, '###', '---', or '|'. Omit the disclaimer.`;
+            No tables, '###', '---', or '|'. No disclaimer.`;
             
             handleAIQuery(prompt, title, null);
         }
@@ -3363,16 +3363,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const logTxt = appState.logEntries.map(e => `Date:${e.date},Grp:${e.group},Food:${e.food},Dose:${e.dose},Sym:${e.symptom==='Other'?e.otherSymptom:e.symptom},Sev:${e.severity}/5`).join('; '); 
         
         // 1. UPDATED PROMPT:
-        const prompt = `FODMAP helper (no medical advice). Analyze log based on profile: ${buildProfileContext()}. Log: ${logTxt}
-
-        Provide a gentle, 3-part summary based *only* on the log entries and user profile.
-        Format *only* with **bold** headings, *italics* for emphasis, and newlines. Use bullet points (like - or *) for lists.
-        Do NOT use '###', '|', or tables. Omit the disclaimer.
+        const prompt = `FODMAP helper. No medical advice. Analyze log.
+        Profile: ${buildProfileContext()}. Log: ${logTxt}
 
         Use this exact template:
-        **Overall Observation:** [A 1-2 sentence gentle observation about any potential patterns.]
-        **Potential Triggers:** [A bulleted list of foods/groups from the log that *consistently* show symptoms with a severity of 3-5. If none, say "No clear triggers noted yet."]
-        **Seemingly Well-Tolerated:** [A bulleted list of foods/groups from the log that *consistently* show "None" or low severity (1-2). If none, say "Keep logging to find your safe foods."]`
+        **Overall Observation:** [1-2 sentence gentle observation on patterns.]
+        **Potential Triggers:** [Bulleted list of foods/groups with consistent severity 3-5. If none, say "No clear triggers noted yet."]
+        **Seemingly Well-Tolerated:** [Bulleted list of foods/groups with consistent "None" or severity 1-2. If none, say "Keep logging to find your safe foods."]
+
+        Format: **bold** headings, *italics*, newlines, bullets (- or *).
+        No '###', '|', tables, or disclaimer.`
 
                         const summary = await callGeminiAPI(prompt); 
                         geminiLoader.classList.add('hidden'); 
@@ -3402,24 +3402,23 @@ document.addEventListener('DOMContentLoaded', () => {
         openGemini(`✨ ${val} Plan`); 
 
         // 2. Use `val` in the prompt for a cleaner request
-        const prompt = `FODMAP helper (no medical advice). User profile: ${buildProfileContext()}.
-Create a 3-day reintroduction challenge plan for '${val}'.
-Give a couple of specific foods and an increasing portion for each day.
-Briefly explain *why* these foods are good choices (e.g., "contains only this FODMAP").
-Include a "Washout Day" instruction after Day 3.
-Format *only* with **bold** headings, *italics* for emphasis, and newlines. Use bullet points (- or *).
-Do NOT use '###', '|', or tables. Omit the disclaimer.
+        const prompt = `FODMAP helper. No medical advice. Profile: ${buildProfileContext()}.
+        Create a 3-day reintroduction challenge plan for '${val}'.
 
-Use this exact template:
-**Foods:** [Food Names]
-*Why these foods?:* [Brief explanation]
+        Use this exact template:
+        **Foods:** [List 2 specific foods for the challenge.]
+        *Why these foods?:* [Briefly explain why they are good test foods (e.g., "purely this FODMAP").]
+        *Other options:* [Suggest 1-2 alternative foods for variety.]
 
-**Challenge Plan:**
-- **Day 1:** [Portion]
-- **Day 2:** [Larger Portion]
-- **Day 3:** [Largest Portion]
+        **Challenge Plan:**
+        - **Day 1:** [1/2 Portion]
+        - **Day 2:** [1 Portion]
+        - **Day 3:** [1,5 Portion]
 
-**After Day 3:** Wait 2-3 "washout" days and log any delayed symptoms before starting your next challenge.`;
+        **After Day 3:** Wait 2-3 "washout" days and log any delayed symptoms before starting your next challenge.
+
+        Format: **bold** headings, *italics*, newlines, bullets (- or *).
+        No '###', '|', tables, or disclaimer.`;
 
         const plan = await callGeminiAPI(prompt); 
         geminiLoader.classList.add('hidden'); 
