@@ -1,3 +1,26 @@
+// --- START: Firebase v9 Compat SDK ---
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDqeMo-i8s1JlpeUk5aDRynPM8VVg7jHlg",
+  authDomain: "fodmaplogmap-app.firebaseapp.com",
+  projectId: "fodmaplogmap-app",
+  storageBucket: "fodmaplogmap-app.firebasestorage.app",
+  messagingSenderId: "616587045877",
+  appId: "1:616587045877:web:93e53301bba7b3350f4ebc"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+
+// Get handles to the services
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// --- END: Firebase v9 Compat SDK ---
+
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+
 document.addEventListener('DOMContentLoaded', () => {
 
     let deferredPrompt; // This will store the event for later use
@@ -51,6 +74,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const onboardingModal = document.getElementById('onboarding-modal');
     const onboardingModalClose = document.getElementById('onboarding-modal-close');
     const openOnboardingBtn = document.getElementById('open-onboarding-btn');
+
+    // --- Auth Modal Elements ---
+    const authModal = document.getElementById('auth-modal');
+    const authModalClose = document.getElementById('auth-modal-close');
+    const authModalTitle = document.getElementById('auth-modal-title');
+    const authGoogleBtn = document.getElementById('auth-google-btn');
+    const authForm = document.getElementById('auth-form');
+    const authNameField = document.getElementById('auth-name-field');
+    const authEmailInput = document.getElementById('auth-email');
+    const authPasswordInput = document.getElementById('auth-password');
+    const authNameInput = document.getElementById('auth-name');
+    const authError = document.getElementById('auth-error');
+    const authSubmitBtn = document.getElementById('auth-submit-btn');
+    const authSwitchBtn = document.getElementById('auth-switch-btn');
+    const authSwitchLink = document.getElementById('auth-switch-link');
+    const menuLoginBtn = document.getElementById('menu-login-btn');
+    const menuLoginLi = document.getElementById('menu-login-li');
+    const menuPremiumLi = document.getElementById('menu-premium-li');
+    const menuLogoutLi = document.getElementById('menu-logout-li');
+    const menuLogoutBtn = document.getElementById('menu-logout-btn');
     
     // Slides
     const onboardingSlides = document.querySelectorAll('.onboarding-slide');
@@ -178,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
         openLogFormOnLoad: false,
         currentMedicationIdCounter: 0, // Helper for unique med IDs
         notificationFallbackData: null, // Stores data from a notification click
+        currentAuthMode: 'login', // 'login' or 'signup'
         // --- Onboarding State ---
         onboardingHistory: [], // To track slide navigation for 'Back' button
         currentOnboardingSlide: 0,
@@ -2090,13 +2134,214 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeSide = () => { sideMdl.classList.add('hidden'); sideOvl.classList.add('hidden'); }; 
     const openInfo = () => { infoMdl.classList.remove('hidden'); }; 
     const closeInfo = () => { infoMdl.classList.add('hidden'); };
-    
+
+    /**
+     * Opens the Auth modal and configures it for 'login' or 'signup'
+     * @param {string} mode - 'login' or 'signup'
+     */
+    function openAuthModal(mode = 'login') {
+        appState.currentAuthMode = mode;
+        authError.classList.add('hidden'); // Hide old errors
+        authForm.reset(); // Clear old inputs
+
+        if (mode === 'signup') {
+            authModalTitle.textContent = 'Sign Up';
+            authNameField.classList.remove('hidden');
+            authSubmitBtn.textContent = 'Sign Up';
+            authSwitchLink.innerHTML = 'Already have an account? <button id="auth-switch-btn" class="font-bold text-primary underline">Log In</button>';
+        } else {
+            // Default to login
+            authModalTitle.textContent = 'Log In';
+            authNameField.classList.add('hidden');
+            authSubmitBtn.textContent = 'Log In';
+            authSwitchLink.innerHTML = 'Don\'t have an account? <button id="auth-switch-btn" class="font-bold text-primary underline">Sign Up</button>';
+        }
+
+        authModal.classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+        authModal.classList.add('hidden');
+        authForm.reset();
+    }
+
+    /**
+     * Shows a loading state on the auth modal
+     * @param {boolean} isLoading - Whether to show the loading state
+     */
+    function setAuthLoading(isLoading) {
+        authError.classList.add('hidden'); // Hide old errors
+        authSubmitBtn.disabled = isLoading;
+        if (isLoading) {
+            authSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        } else {
+            // Restore text based on the current mode
+            authSubmitBtn.textContent = (appState.currentAuthMode === 'login') ? 'Log In' : 'Sign Up';
+        }
+    }
+
+    /**
+     * Shows an error message in the auth modal
+     * @param {string} message - The error message to display
+     */
+    function showAuthError(message) {
+        setAuthLoading(false);
+        authError.textContent = message;
+        authError.classList.remove('hidden');
+    }
+        
     hamBtn.addEventListener('click', openSide); 
     sideClose.addEventListener('click', closeSide); 
     sideOvl.addEventListener('click', closeSide); 
     openInfoBtn.addEventListener('click', () => { closeSide(); openInfo(); }); 
     infoClose.addEventListener('click', closeInfo); 
     infoCloseBtn.addEventListener('click', closeInfo);
+
+    // --- Auth Modal Listeners ---
+    menuLoginBtn.addEventListener('click', () => {
+        closeSide(); // Close side menu first
+        openAuthModal('login'); // Open modal in login mode
+    });
+
+    authModalClose.addEventListener('click', closeAuthModal);
+
+    // Event delegation for the dynamic switch button
+    authSwitchLink.addEventListener('click', (e) => {
+        if (e.target.id === 'auth-switch-btn') {
+            const newMode = (appState.currentAuthMode === 'login') ? 'signup' : 'login';
+            openAuthModal(newMode);
+        }
+    });
+
+    // --- Handle Email/Password Form Submit ---
+authForm.addEventListener('submit', (e) => {
+    e.preventDefault(); // Stop the form from reloading
+    setAuthLoading(true);
+
+    const email = authEmailInput.value;
+    const password = authPasswordInput.value;
+
+    if (appState.currentAuthMode === 'signup') {
+        // --- SIGN UP ---
+        const name = authNameInput.value;
+        if (!name) {
+            showAuthError('Please enter your name.');
+            return;
+        }
+
+        auth.createUserWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                // Update the user's Firebase profile with their name
+                return userCredential.user.updateProfile({
+                    displayName: name
+                });
+            })
+            .then(() => {
+                // User is created and name is set
+                // We will add the data sync logic here later
+                console.log('User signed up:', auth.currentUser);
+                setAuthLoading(false);
+                closeAuthModal();
+                // TODO: Trigger data merge/sync
+            })
+            .catch((error) => {
+                let message = 'An unknown error occurred.';
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        message = 'This email is already in use. Try logging in.';
+                        break;
+                    case 'auth/weak-password':
+                        message = 'Password should be at least 6 characters.';
+                        break;
+                    case 'auth/invalid-email':
+                        message = 'Please enter a valid email address.';
+                        break;
+                    default:
+                        message = error.message;
+                }
+                showAuthError(message);
+            });
+
+    } else {
+        // --- LOG IN ---
+        auth.signInWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                // User is logged in
+                // We will add the data sync logic here later
+                console.log('User logged in:', userCredential.user);
+                setAuthLoading(false);
+                closeAuthModal();
+                // TODO: Trigger data download/sync
+            })
+            .catch((error) => {
+                let message = 'An unknown error occurred.';
+                // This is the new, generic error code for v9+
+                if (error.code === 'auth/invalid-login-credentials' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                    message = 'Invalid email or password.';
+                } else {
+                    message = error.message;
+                }
+                showAuthError(message);
+            });
+    }
+});
+
+    // --- Handle Google Sign-In Button ---
+    authGoogleBtn.addEventListener('click', () => {
+        auth.signInWithPopup(googleProvider)
+            .then((result) => {
+                // User is logged in
+                // We will add the data sync logic here later
+                console.log('User logged in with Google:', result.user);
+                closeAuthModal();
+                // TODO: Trigger data merge/download/sync
+            })
+            .catch((error) => {
+                // We don't use showAuthError here as the popup handles its own errors
+                console.error('Google sign-in error:', error.message);
+            });
+    });
+    // --- END: Auth Modal Listeners ---
+
+    // --- Handle Logout Button ---
+    menuLogoutBtn.addEventListener('click', () => {
+        auth.signOut().then(() => {
+            // Wipe local data for privacy (as we decided)
+            localStorage.removeItem('fodmapLogEntries');
+            localStorage.removeItem('fodmapUserProfile');
+            // Reload the page
+            location.reload();
+        }).catch((error) => {
+            console.error('Logout Error:', error);
+        });
+    });
+
+    // --- CENTRAL AUTH LISTENER ---
+    // This function runs on page load and whenever the auth state changes
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            // --- USER IS LOGGED IN ---
+            console.log('User is logged in:', user.uid);
+            // Update UI
+            menuLoginLi.classList.add('hidden');
+            menuPremiumLi.classList.remove('hidden');
+            menuLogoutLi.classList.remove('hidden');
+
+            // TODO: This is where we will trigger the data sync
+            // syncUserData(user);
+
+        } else {
+            // --- USER IS LOGGED OUT ---
+            console.log('User is logged out.');
+            // Update UI
+            menuLoginLi.classList.remove('hidden');
+            menuPremiumLi.classList.remove('hidden');
+            menuLogoutLi.classList.add('hidden');
+
+            // TODO: Handle anonymous/guest user state
+            // (For now, it will just keep using localStorage)
+        }
+    });
 
     const geminiMdl = document.getElementById('gemini-modal'); const geminiTitle = document.getElementById('gemini-modal-title'); const geminiContent = document.getElementById('gemini-modal-content'); const geminiLoader = document.getElementById('gemini-modal-loader'); const geminiError = document.getElementById('gemini-modal-error'); const geminiClose = document.getElementById('gemini-modal-close');
     

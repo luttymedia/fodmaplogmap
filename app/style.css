@@ -1391,3 +1391,23 @@ body {
     padding-right: 3rem; /* pr-12 */
 }
 /* --- END: Log Food Confirm Button Styles --- */
+
+/* --- START: Auth Modal Styles --- */
+#auth-switch-link button {
+    font-weight: 700;
+    color: var(--color-primary-text);
+    text-decoration: underline;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+#auth-switch-link button:hover {
+    color: var(--color-adaptive-bg);
+}
+
+#auth-modal input:focus {
+    border-color: var(--color-primary-text);
+    box-shadow: 0 0 0 2px var(--color-pastel-blue);
+    outline: none;
+}
+/* --- END: Auth Modal Styles --- */
