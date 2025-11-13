@@ -2901,7 +2901,6 @@ authForm.addEventListener('submit', (e) => {
         actionModalBtnConfirm.textContent = confirmText;
         actionModalBtnCancel.textContent = cancelText;
 
-        // Get the new alt button
         const actionModalBtnAlt = document.getElementById('action-modal-btn-alt');
 
         // Configure for prompt
@@ -2912,8 +2911,6 @@ authForm.addEventListener('submit', (e) => {
         } else {
             actionModalInputContainer.classList.add('hidden');
         }
-
-        // --- NEW: Configure Alt & Confirm Buttons ---
         
         // Configure Alt Button (Red)
         if (altText && onAltConfirm) {
@@ -2924,7 +2921,7 @@ authForm.addEventListener('submit', (e) => {
         }
 
         // Configure Confirm Button (Blue)
-        if (onConfirm) { // Check if an onConfirm function was provided
+        if (onConfirm) {
             actionModalBtnConfirm.textContent = confirmText;
             actionModalBtnConfirm.classList.remove('hidden');
         } else {
@@ -2946,37 +2943,46 @@ authForm.addEventListener('submit', (e) => {
             closeModal();
         };
 
-        const handleCancel = () => {
+        // --- NEW: Explicit handlers for Cancel and Close ---
+        const handleCancelBtn = () => {
             if (onCancel) {
-                onCancel();
+                onCancel(); // Run the specific cancel logic (e.g., auth.signOut())
             }
             closeModal();
         };
 
-        // --- NEW: Alt Confirm Handler ---
         const handleAltConfirm = () => {
             if (onAltConfirm) {
                 onAltConfirm();
             }
             closeModal();
         };
+        
+        // This handler is for the 'X' button
+        const handleCloseX = () => {
+            if (onCancel) {
+                onCancel(); // ALSO run the cancel logic
+            }
+            closeModal();
+        };
+        // --- END NEW HANDLERS ---
 
         const closeModal = () => {
             actionModal.classList.add('hidden');
-            actionModalBtnConfirm.classList.remove('hidden'); // Always reset on close
-            actionModalBtnAlt.classList.add('hidden'); // Always reset on close
-            // Remove the temporary listeners to avoid memory leaks
+            actionModalBtnConfirm.classList.remove('hidden');
+            actionModalBtnAlt.classList.add('hidden');
+            // Remove the temporary listeners
             actionModalBtnConfirm.removeEventListener('click', handleConfirm);
-            actionModalBtnCancel.removeEventListener('click', handleCancel);
-            actionModalClose.removeEventListener('click', handleCancel);
-            actionModalBtnAlt.removeEventListener('click', handleAltConfirm); // NEW
+            actionModalBtnCancel.removeEventListener('click', handleCancelBtn); // Use new handler
+            actionModalClose.removeEventListener('click', handleCloseX);     // Use new handler
+            actionModalBtnAlt.removeEventListener('click', handleAltConfirm);
         };
         
         // Attach the new, one-time listeners
         actionModalBtnConfirm.addEventListener('click', handleConfirm);
-        actionModalBtnCancel.addEventListener('click', handleCancel);
-        actionModalClose.addEventListener('click', handleCancel);
-        actionModalBtnAlt.addEventListener('click', handleAltConfirm); // NEW
+        actionModalBtnCancel.addEventListener('click', handleCancelBtn); // Use new handler
+        actionModalClose.addEventListener('click', handleCloseX);     // Use new handler
+        actionModalBtnAlt.addEventListener('click', handleAltConfirm);
     }
 
     // --- NEW: Pre-Treatment Settings Modal Functions ---
