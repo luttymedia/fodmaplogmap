@@ -20,7 +20,7 @@
 <body class="bg-slate-50">
 
     <div id="app" class="max-w-7xl mx-auto p-2 sm:p-4">
-        <header class="fixed top-0 left-0 right-0 z-20 bg-slate-50/90 backdrop-blur-sm px-2 sm:px-4 py-1 flex items-center justify-between border-b border-slate-200">
+        <header class="fixed top-0 left-0 right-0 z-20 bg-slate-50/90 backdrop-blur-sm px-2 sm:px-4 py-1 flex items-center justify-between border-b border-slate-200 md:max-w-3xl md:mx-auto">
              <button id="hamburger-btn" class="text-muted hover:text-primary text-2xl w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100">
                 <i class="fas fa-bars"></i>
             </button>
@@ -30,10 +30,10 @@
              <div class="w-9"></div> 
         </header>
 
-        <div id="phase-bar">
+        <div id="phase-bar" class="relative md:max-w-3xl md:mx-auto">
             <span id="phase-bar-text"></span>
         </div>
-        <nav id="main-nav" class="fixed bottom-0 left-0 right-0 z-10 flex justify-center border-t border-slate-200 bg-white shadow-sm">
+        <nav id="main-nav" class="fixed bottom-0 left-0 right-0 z-10 flex justify-center border-t border-slate-200 bg-white shadow-sm md:max-w-3xl md:mx-auto md:border-t-0 md:rounded-tl-lg md:rounded-tr-lg">
             <button data-page="home" class="nav-item flex-1 text-center px-2 sm:px-4 text-muted transition-colors duration-300 ease-in-out hover:bg-slate-100 text-xs sm:text-base">
                 <i class="fas fa-home-alt sm:mr-2"></i><span class="hidden sm:inline">Home</span>
             </button>
@@ -811,7 +811,7 @@
         </div>
     </div>
     
-    <button id="add-entry-fab" class="hidden fixed bottom-12 right-4 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-xl transition-transform hover:scale-110 z-50"> 
+    <button id="add-entry-fab" class="hidden fixed bottom-12 right-2 sm:right-4 md:right-[calc((100vw-theme(maxWidth.3xl))/2+theme(spacing.4))] text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-xl transition-transform hover:scale-110 z-50"> 
         <i class="fas fa-plus"></i>
     </button>
 
