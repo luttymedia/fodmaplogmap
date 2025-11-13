@@ -2365,7 +2365,7 @@ authForm.addEventListener('submit', (e) => {
 
             showActionModal({
                 title: 'Reset Password',
-                message: `This will send a password reset link to ${email}. Are you sure?`,
+                message: `This will send a password reset link to ${email}. Please check your inbox and spam folder.`,
                 confirmText: 'Send Link',
                 onConfirm: () => {
                     auth.sendPasswordResetEmail(email)
