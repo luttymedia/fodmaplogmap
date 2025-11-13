@@ -169,6 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         hasCompletedOnboarding: false,
         ratePopupStatus: 'not_asked', // 'not_asked', 'remind_later', 'declined', 'rated'
         aiUsageCount: 0,
+        isPremium: false,
         currentPhase: 'reintroduction',
         phaseSettings: {
             "pre-treatment": {
@@ -204,6 +205,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedProfile = localStorage.getItem('fodmapUserProfile') ? JSON.parse(localStorage.getItem('fodmapUserProfile')) : {};
 
     const appState = {
+        logEntries: JSON.parse(localStorage.getItem('fodmapLogEntries')) || [],
+        isSyncing: false,
         logEntries: JSON.parse(localStorage.getItem('fodmapLogEntries')) || [],
         // Merge saved profile over defaults
         userProfile: { 
@@ -2238,11 +2241,11 @@ authForm.addEventListener('submit', (e) => {
             })
             .then(() => {
                 // User is created and name is set
-                // We will add the data sync logic here later
-                console.log('User signed up:', auth.currentUser);
+                console.log('User signed up and profile updated:', auth.currentUser);
+                // Manually trigger the data sync *after* profile update
+                syncUserData(auth.currentUser);
                 setAuthLoading(false);
                 closeAuthModal();
-                // TODO: Trigger data merge/sync
             })
             .catch((error) => {
                 let message = 'An unknown error occurred.';
@@ -2267,11 +2270,11 @@ authForm.addEventListener('submit', (e) => {
         auth.signInWithEmailAndPassword(email, password)
             .then((userCredential) => {
                 // User is logged in
-                // We will add the data sync logic here later
                 console.log('User logged in:', userCredential.user);
+                // Manually trigger the data sync
+                syncUserData(userCredential.user);
                 setAuthLoading(false);
                 closeAuthModal();
-                // TODO: Trigger data download/sync
             })
             .catch((error) => {
                 let message = 'An unknown error occurred.';
@@ -2291,10 +2294,10 @@ authForm.addEventListener('submit', (e) => {
         auth.signInWithPopup(googleProvider)
             .then((result) => {
                 // User is logged in
-                // We will add the data sync logic here later
                 console.log('User logged in with Google:', result.user);
+                // Manually trigger the data sync
+                syncUserData(result.user);
                 closeAuthModal();
-                // TODO: Trigger data merge/download/sync
             })
             .catch((error) => {
                 // We don't use showAuthError here as the popup handles its own errors
@@ -2316,30 +2319,123 @@ authForm.addEventListener('submit', (e) => {
         });
     });
 
+    /**
+     * Handles the core logic of merging local and cloud data.
+     * @param {firebase.User} user - The authenticated user.
+     * @param {firebase.firestore.DocumentSnapshot} doc - The user's document snapshot.
+     */
+    async function handleDataSync(user, doc) {
+        const userDocRef = db.collection('users').doc(user.uid);
+
+        if (doc.exists) {
+            // --- SCENARIO A: EXISTING USER ---
+            // User exists in the cloud, download their data
+            console.log('Existing user found, downloading cloud data...');
+            const cloudData = doc.data();
+
+            // Load cloud data into appState
+            appState.logEntries = cloudData.logEntries || [];
+            appState.userProfile = { ...defaultProfile, ...(cloudData.userProfile || {}) };
+
+            // Save cloud data to localStorage (overwriting guest data)
+            localStorage.setItem('fodmapLogEntries', JSON.stringify(appState.logEntries));
+            localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+
+            showToast('Sync complete!', 'success');
+
+        } else {
+            // --- SCENARIO B/C: NEW USER ---
+            // No document found, this is a new account
+            console.log('New user, checking for guest data...');
+            const localLogs = JSON.parse(localStorage.getItem('fodmapLogEntries')) || [];
+            let localProfile = JSON.parse(localStorage.getItem('fodmapUserProfile')) || defaultProfile;
+
+            // Ensure profile has user's name from auth
+            // We use "|| null" to ensure we never try to save "undefined"
+            localProfile.displayName = user.displayName || null;
+            localProfile.email = user.email || null;
+
+            // Upload local data (or defaults) to the cloud
+            try {
+                await userDocRef.set({
+                    logEntries: localLogs,
+                    userProfile: localProfile
+                });
+                console.log('Guest data uploaded to new cloud account.');
+                showToast('Account created & data backed up!', 'success');
+
+                // Load this merged data into the current app state
+                appState.logEntries = localLogs;
+                appState.userProfile = localProfile;
+
+            } catch (error)
+            {
+                console.error("Error creating new user document:", error);
+                showToast('Error saving data to cloud.', 'error');
+            }
+        }
+
+        // --- FINAL STEP: Re-render the entire app ---
+        // This ensures the UI reflects the newly synced data
+        updateUiForPhase(appState.userProfile.currentPhase); 
+        setupProfilePage(); 
+
+        appState.isSyncing = false; // Clear the flag
+    }
+
+    /**
+     * Main entry point for user data synchronization.
+     * Called by onAuthStateChanged.
+     * @param {firebase.User} user - The authenticated user.
+     */
+    function syncUserData(user) {
+        if (!user) return; // Safety check
+        appState.isSyncing = true; // Set the flag
+
+        const userDocRef = db.collection('users').doc(user.uid);
+
+        // Get the user's document
+        userDocRef.get().then((doc) => {
+            handleDataSync(user, doc);
+        }).catch((error) => {
+            console.error("Error getting user document:", error);
+            showToast('Could not connect to cloud.', 'error');
+        });
+    }
+
     // --- CENTRAL AUTH LISTENER ---
     // This function runs on page load and whenever the auth state changes
     auth.onAuthStateChanged((user) => {
+        // If we are already handling a sync (from a modal click), don't do anything.
+        // This prevents a double-sync.
+        if (appState.isSyncing) {
+            console.log('Auth state changed, but sync is already in progress. Skipping.');
+            return;
+        }
+
         if (user) {
-            // --- USER IS LOGGED IN ---
-            console.log('User is logged in:', user.uid);
+            // --- USER IS LOGGED IN (on page load) ---
+            console.log('User is logged in on page load:', user.uid);
+
             // Update UI
             menuLoginLi.classList.add('hidden');
-            menuPremiumLi.classList.remove('hidden');
             menuLogoutLi.classList.remove('hidden');
 
-            // TODO: This is where we will trigger the data sync
-            // syncUserData(user);
+            // Trigger the data sync
+            syncUserData(user); 
 
         } else {
             // --- USER IS LOGGED OUT ---
             console.log('User is logged out.');
+
             // Update UI
             menuLoginLi.classList.remove('hidden');
-            menuPremiumLi.classList.remove('hidden');
+            menuPremiumLi.classList.remove('hidden'); 
             menuLogoutLi.classList.add('hidden');
 
-            // TODO: Handle anonymous/guest user state
-            // (For now, it will just keep using localStorage)
+            // User is a guest, so just render whatever is in localStorage
+            updateUiForPhase(appState.userProfile.currentPhase);
+            setupProfilePage();
         }
     });
 
