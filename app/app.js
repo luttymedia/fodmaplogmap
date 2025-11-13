@@ -16,10 +16,10 @@ firebase.initializeApp(firebaseConfig);
 // Get handles to the services
 const auth = firebase.auth();
 const db = firebase.firestore();
+db.enablePersistence();
+const googleProvider = new firebase.auth.GoogleAuthProvider();
 
 // --- END: Firebase v9 Compat SDK ---
-
-const googleProvider = new firebase.auth.GoogleAuthProvider();
 
 document.addEventListener('DOMContentLoaded', () => {
 
