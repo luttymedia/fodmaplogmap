@@ -90,11 +90,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const authSubmitBtn = document.getElementById('auth-submit-btn');
     const authSwitchBtn = document.getElementById('auth-switch-btn');
     const authSwitchLink = document.getElementById('auth-switch-link');
+    const authPasswordToggle = document.getElementById('auth-password-toggle');
+    const authForgotPasswordLink = document.getElementById('auth-forgot-password-link');
     const menuLoginBtn = document.getElementById('menu-login-btn');
     const menuLoginLi = document.getElementById('menu-login-li');
     const menuPremiumLi = document.getElementById('menu-premium-li');
     const menuLogoutLi = document.getElementById('menu-logout-li');
     const menuLogoutBtn = document.getElementById('menu-logout-btn');
+
+    // --- NEW: Account Settings Elements ---
+    const menuAccountLi = document.getElementById('menu-account-li');
+    const menuAccountBtn = document.getElementById('menu-account-btn');
+    const menuAccountEmail = document.getElementById('menu-account-email');
+    const accountSettingsPage = document.getElementById('account-settings');
+    const accountBackBtn = document.getElementById('account-back-btn');
+    const accountSettingsForm = document.getElementById('account-settings-form');
+    const accountNameInput = document.getElementById('account-name');
+    const accountEmailInput = document.getElementById('account-email');
+    const accountSaveNameBtn = document.getElementById('account-save-name-btn');
+    const accountPasswordResetBtn = document.getElementById('account-password-reset-btn');
+    const accountDeleteBtn = document.getElementById('account-delete-btn');
     
     // Slides
     const onboardingSlides = document.querySelectorAll('.onboarding-slide');
@@ -416,6 +431,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- NEW: Update the log form UI ---
         updateLogFormForPhase(phase);
+
+        // Recalculate padding AFTER rendering the phase bar
+        calculatePadding();
     }
 
     /**
@@ -2166,15 +2184,21 @@ document.addEventListener('DOMContentLoaded', () => {
         authError.classList.add('hidden'); // Hide old errors
         authForm.reset(); // Clear old inputs
 
+        // Reset password visibility on modal open
+        if (authPasswordInput) authPasswordInput.type = 'password';
+        if (authPasswordToggle) authPasswordToggle.innerHTML = '<i class="fas fa-eye"></i>';
+
         if (mode === 'signup') {
             authModalTitle.textContent = 'Sign Up';
             authNameField.classList.remove('hidden');
+            authForgotPasswordLink.classList.add('hidden'); // Hide for signup
             authSubmitBtn.textContent = 'Sign Up';
             authSwitchLink.innerHTML = 'Already have an account? <button id="auth-switch-btn" class="font-bold text-primary underline">Log In</button>';
         } else {
             // Default to login
             authModalTitle.textContent = 'Log In';
             authNameField.classList.add('hidden');
+            authForgotPasswordLink.classList.remove('hidden'); // Show for login
             authSubmitBtn.textContent = 'Log In';
             authSwitchLink.innerHTML = 'Don\'t have an account? <button id="auth-switch-btn" class="font-bold text-primary underline">Sign Up</button>';
         }
@@ -2317,6 +2341,47 @@ authForm.addEventListener('submit', (e) => {
                 console.error('Google sign-in error:', error.message);
             });
     });
+    // --- NEW: Auth Helper Listeners ---
+    if (authPasswordToggle) {
+        authPasswordToggle.addEventListener('click', () => {
+            if (authPasswordInput.type === 'password') {
+                authPasswordInput.type = 'text';
+                authPasswordToggle.innerHTML = '<i class="fas fa-eye-slash"></i>';
+            } else {
+                authPasswordInput.type = 'password';
+                authPasswordToggle.innerHTML = '<i class="fas fa-eye"></i>';
+            }
+        });
+    }
+
+    if (authForgotPasswordLink) {
+        authForgotPasswordLink.addEventListener('click', () => {
+            const email = authEmailInput.value.trim();
+            if (!email) {
+                showAuthError("Please enter your email address above.");
+                authEmailInput.focus();
+                return;
+            }
+
+            showActionModal({
+                title: 'Reset Password',
+                message: `This will send a password reset link to ${email}. Are you sure?`,
+                confirmText: 'Send Link',
+                onConfirm: () => {
+                    auth.sendPasswordResetEmail(email)
+                        .then(() => {
+                            showToast("Password reset email sent! Check your inbox and spam folder.", "success");
+                            closeAuthModal();
+                        })
+                        .catch((error) => {
+                            // Close the action modal, show error in the auth modal
+                            console.error("Password reset error:", error);
+                            showAuthError("Error: " + error.message);
+                        });
+                }
+            });
+        });
+    }
     // --- END: Auth Modal Listeners ---
 
     // --- Handle Logout Button ---
@@ -2433,12 +2498,29 @@ authForm.addEventListener('submit', (e) => {
                 localStorage.setItem('fodmapLogEntries', JSON.stringify(appState.logEntries));
                 localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
 
+                // --- Populate Account UI (FIX for stale UI) ---
+                // We show/hide premium based on the userProfile data
+                // (Future logic would go here)
+
+                // Note: The main side menu links are now handled
+                // by onAuthStateChanged to prevent race conditions.
+                // This listener *only* populates DB-driven content.
+
                 // --- Re-render the entire app ---
                 // This ensures the UI reflects the newly synced data
                 updateUiForPhase(appState.userProfile.currentPhase);
                 setupProfilePage();
                 // We MUST also render log entries, as this updates the "By Date" view
-                renderLogEntries(); 
+                renderLogEntries();
+
+                // This ensures we land on the home page after a successful
+                // login or refresh, preventing the "stuck page" issue.
+                
+                // Only navigate if no other page is visible (i.e., on first load/login)
+                if (!document.querySelector('.page:not(.hidden)')) {
+                    navigateTo('home');
+                }
+                
             } else {
                 // This can happen if the user deletes their account
                 console.warn("User document does not exist.");
@@ -2449,6 +2531,117 @@ authForm.addEventListener('submit', (e) => {
         });
     }
 
+    // --- NEW: Account Settings Page Listeners ---
+
+    // Button in side menu to open the page
+    if (menuAccountBtn) {
+        menuAccountBtn.addEventListener('click', () => {
+            closeSide();
+            navigateTo('account-settings');
+        });
+    }
+
+    // Back button on the settings page
+    if (accountBackBtn) {
+        accountBackBtn.addEventListener('click', () => {
+            // We go back to the 'profile' tab as it's the most logical place
+            navigateTo('profile');
+        });
+    }
+
+    // Save Display Name
+    if (accountSettingsForm) {
+        accountSettingsForm.addEventListener('submit', (e) => {
+            e.preventDefault(); // Prevents form reload
+            const newName = accountNameInput.value.trim();
+            const user = auth.currentUser;
+
+            if (newName && user) {
+                accountSaveNameBtn.disabled = true;
+                accountSaveNameBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                
+                user.updateProfile({
+                    displayName: newName
+                }).then(() => {
+                    showToast("Name updated!", "success");
+                    // Update the profile page form just in case
+                    if (authNameInput) authNameInput.value = newName;
+                }).catch((error) => {
+                    console.error("Error updating name:", error);
+                    showToast("Error saving name.", "error");
+                }).finally(() => {
+                    accountSaveNameBtn.disabled = false;
+                    accountSaveNameBtn.textContent = 'Save';
+                });
+            }
+        });
+    }
+
+    // Send Password Reset
+    if (accountPasswordResetBtn) {
+        accountPasswordResetBtn.addEventListener('click', () => {
+            const user = auth.currentUser;
+            if (!user || !user.email) {
+                showToast("Error: No user found.", "error");
+                return;
+            }
+
+            showActionModal({
+                title: 'Reset Password',
+                message: `This will send a password reset link to ${user.email}. Please check your inbox and spam folder.`,
+                confirmText: 'Send Link',
+                onConfirm: () => {
+                    auth.sendPasswordResetEmail(user.email)
+                        .then(() => {
+                            showToast("Password reset email sent!", "success");
+                        })
+                        .catch((error) => {
+                            console.error("Password reset error:", error);
+                            showToast("Error: " + error.message, "error");
+                        });
+                }
+            });
+        });
+    }
+
+    // Delete Account
+    if (accountDeleteBtn) {
+        accountDeleteBtn.addEventListener('click', () => {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            showActionModal({
+                title: 'Delete Account',
+                message: `This is permanent and cannot be undone. All your cloud data will be deleted. Are you sure you want to delete your account?`,
+                altText: 'Delete Forever', // Red button
+                onAltConfirm: () => {
+                    // Step 1: Delete the user's Firestore document
+                    db.collection('users').doc(user.uid).delete()
+                        .then(() => {
+                            // Step 2: Delete the user's auth account
+                            return user.delete();
+                        })
+                        .then(() => {
+                            // This block now runs AFTER user.delete() is successful
+                            showToast("Account deleted. Logging you out.", "success");
+                            // Manually clear local data and reload, just like the logout button
+                            localStorage.removeItem('fodmapLogEntries');
+                            localStorage.removeItem('fodmapUserProfile');
+                            location.reload(); // Force a full page reload
+                        })
+                        .catch((error) => {
+                            console.error("Error deleting account:", error);
+                            // This can fail if the user needs to re-authenticate
+                            showToast("Error: " + error.message, "error");
+                            if (error.code === 'auth/requires-recent-login') {
+                                showToast("Please log out and log back in to delete your account.", "warning");
+                            }
+                        });
+                }
+            });
+        });
+    }
+
     // --- CENTRAL AUTH LISTENER ---
     // This function runs on page load and whenever the auth state changes
     auth.onAuthStateChanged((user) => {
@@ -2456,13 +2649,19 @@ authForm.addEventListener('submit', (e) => {
             // --- USER IS LOGGED IN ---
             console.log('User is logged in:', user.uid);
 
-            // Update UI
+            // --- 1. RENDER AUTH-DEPENDENT UI IMMEDIATELY ---
+            // This fixes the soft refresh race condition for the side menu.
             menuLoginLi.classList.add('hidden');
             menuLogoutLi.classList.remove('hidden');
-            // We show/hide premium based on the userProfile data,
-            // which will be loaded by the listener.
-
-            // Set up the real-time sync
+            menuAccountLi.classList.remove('hidden');
+            
+            // Populate account details from the auth object (which we have now)
+            if (menuAccountEmail) menuAccountEmail.textContent = user.email || 'Account Settings';
+            if (accountNameInput) accountNameInput.value = user.displayName || '';
+            if (accountEmailInput) accountEmailInput.value = user.email || '';
+            
+            // --- 2. SET UP DATABASE SYNC ---
+            // This will now *add* the database-driven content when it loads.
             setupRealtimeListener(user); 
 
         } else {
@@ -2480,6 +2679,7 @@ authForm.addEventListener('submit', (e) => {
             menuLoginLi.classList.remove('hidden');
             menuPremiumLi.classList.remove('hidden'); 
             menuLogoutLi.classList.add('hidden');
+            menuAccountLi.classList.add('hidden');
 
             // User is a guest.
             // We need to re-load from localStorage in case they just logged out
@@ -2490,6 +2690,11 @@ authForm.addEventListener('submit', (e) => {
             // Render the guest UI
             updateUiForPhase(appState.userProfile.currentPhase);
             setupProfilePage();
+            
+            // Only navigate if no other page is visible (i.e., on first load)
+            if (!document.querySelector('.page:not(.hidden)')) {
+                navigateTo('home');
+            }
         }
     });
 
@@ -3989,14 +4194,15 @@ authForm.addEventListener('submit', (e) => {
             document.documentElement.style.setProperty('--header-height', `${totalTopHeight}px`);
         } 
     };
-    navigateTo('home');
-    setupLogForm();
-    // renderLogEntries(); // <-- REMOVED
-    // renderHomePage(); // <-- REMOVED
-    setupProfilePage();
-    updateUiForPhase(appState.userProfile.currentPhase); // This now handles all initial rendering
-    document.getElementById('log-date').valueAsDate = new Date();
+    setupLogForm(); // Set up listeners in the (hidden) log modal
+    document.getElementById('log-date').valueAsDate = new Date(); // Set default date in log modal
 
+    // --- REMOVED setupProfilePage() and updateUiForPhase() ---
+    // All rendering is now handled *exclusively* by the onAuthStateChanged
+    // listener, which is the single source of truth for whether the
+    // user is a guest (loads from localStorage) or logged in (loads from cloud).
+
+    // --- Global click listener to close popups ---
     // --- Calculate Padding ---
     // Run on DOM load for a fast first paint
     calculatePadding(); 

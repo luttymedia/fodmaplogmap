@@ -1411,3 +1411,13 @@ body {
     outline: none;
 }
 /* --- END: Auth Modal Styles --- */
+
+/* Truncate long emails in the side menu */
+#menu-account-email {
+    display: inline-block;
+    max-width: 150px; /* Adjust as needed */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle; /* Aligns text with icon */
+}

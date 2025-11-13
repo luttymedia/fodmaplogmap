@@ -380,7 +380,50 @@
                     </div>
                 </div>
             </section>
-        </main>
+
+            <section id="account-settings" class="page hidden max-w-3xl mx-auto">
+                 <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
+                    <div class="flex items-center mb-3">
+                        <button id="account-back-btn" class="text-muted hover:text-primary text-xl w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 -ml-2 mr-2">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <h2 class="text-xl sm:text-2xl font-semibold text-secondary">Account Settings</h2>
+                    </div>
+                    
+                    <p class="text-subtle mb-4 text-sm">Manage your account details and preferences.</p>
+
+                    <form id="account-settings-form" class="space-y-4">
+                        <div>
+                            <label for="account-name" class="block mb-1.5 text-sm font-medium text-secondary">Name</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="account-name" placeholder="Your Name" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                                <button type="submit" id="account-save-name-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm flex-shrink-0">
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="account-email" class="block mb-1.5 text-sm font-medium text-secondary">Email</label>
+                            <input type="email" id="account-email" class="w-full p-2.5 border border-slate-300 rounded-xl bg-slate-100 text-subtle" disabled>
+                        </div>
+
+                        <hr>
+
+                        <div class="space-y-2">
+                            <h3 class="font-semibold text-secondary">Account Actions</h3>
+                            <button type="button" id="account-password-reset-btn" class="w-full text-center p-2.5 font-semibold text-primary bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200">
+                                <i class="fas fa-key mr-2"></i> Send Password Reset Email
+                            </button>
+                            
+                            <button type="button" id="account-delete-btn" class="w-full text-center p-2.5 font-semibold text-error bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 mt-2">
+                                <i class="fas fa-trash-alt mr-2"></i> Delete My Account
+                            </button>
+                        </div>
+                    </form>
+                 </div>
+            </section>
+            </main>
         
         <div id="toast" class="fixed left-4 py-2 px-4 rounded-lg shadow-xl opacity-0 transform -translate-y-10 transition-all duration-500 ease-in-out text-sm z-50" style="top: 100px;">
             Saved successfully!
@@ -407,7 +450,7 @@
             </div>
         </div>
 
-        <div id="action-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[90] hidden"> 
+        <div id="action-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[99] hidden"> 
             <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
                 <div class="p-4 border-b border-slate-200 flex justify-between items-center"> 
                     <h3 id="action-modal-title" class="text-lg font-semibold text-secondary">Action</h3> 
@@ -458,7 +501,18 @@
                         </div>
                         <div>
                             <label for="auth-password" class="block mb-1.5 text-sm font-medium text-secondary">Password</label>
-                            <input type="password" id="auth-password" placeholder="••••••••" class="w-full p-2.5 border border-slate-300 rounded-xl" required>
+                            <div class="relative">
+                                <input type="password" id="auth-password" placeholder="••••••••" class="w-full p-2.5 pr-10 border border-slate-300 rounded-xl" required>
+                                <button type="button" id="auth-password-toggle" class="absolute top-0 right-0 bottom-0 w-10 flex items-center justify-center text-subtle hover:text-primary">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end mt-1">
+                            <button type="button" id="auth-forgot-password-link" class="text-xs font-semibold text-primary hover:underline hidden">
+                                Forgot password?
+                            </button>
                         </div>
 
                         <p id="auth-error" class="text-error text-sm hidden"></p>
@@ -703,12 +757,7 @@
                             <i class="fas fa-star w-5 mr-2 text-amber-500"></i>Go Premium
                         </button>
                     </li>
-                    <li id="menu-logout-li" class="hidden pt-1">
-                        <button id="menu-logout-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
-                            <i class="fas fa-sign-out-alt w-5 mr-2 text-subtle"></i>Log Out
-                        </button>
-                    </li>
-
+                    
                     <li class="pt-2 border-t border-slate-200">
                         <h3 class="px-3 py-1 text-sm font-semibold text-secondary flex items-center">
                             <i class="fas fa-list-ol w-5 mr-2 text-primary"></i>Phase Selector
@@ -737,6 +786,25 @@
                                 <i class="fas fa-life-ring w-5 mr-2 text-primary"></i>User Guide & FAQ
                             </a>
                         </div>
+                    </li>
+
+                    <li class="pt-2 border-t border-slate-200">
+                        <a href="https://fodmaplogmap-web.onrender.com/contact.html" target="_blank" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm flex items-center">
+                            <i class="fas fa-envelope w-5 mr-2 text-primary"></i>Contact Support
+                        </a>
+                    </li>
+
+                    <li id="menu-logout-li" class="hidden pt-1">
+                        <button id="menu-logout-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
+                            <i class="fas fa-sign-out-alt w-5 mr-2 text-subtle"></i>Log Out
+                        </button>
+                    </li>
+
+                    <li id="menu-account-li" class="hidden pt-2 border-t border-slate-200">
+                        <button id="menu-account-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
+                            <i id="menu-account-icon" class="fas fa-cog w-5 mr-2 text-subtle"></i>
+                            <span id="menu-account-email" class="truncate text-xs font-bold">Not logged in</span>
+                        </button>
                     </li>
                     </ul>
             </nav>
