@@ -2461,10 +2461,62 @@ authForm.addEventListener('submit', (e) => {
                 });
             } else {
                 // --- SCENARIO A: EXISTING USER ---
-                // The document already exists, so just attach the listener.
-                // It will fire immediately with the current cloud data.
-                console.log('Existing user found, attaching real-time listener...');
-                attachListener(userDocRef);
+                console.log('Existing user found, checking for local data...');
+                const localLogs = JSON.parse(localStorage.getItem('fodmapLogEntries')) || [];
+                const cloudLogData = doc.data().logEntries;
+
+                // Check if user has local logs AND cloud logs.
+                // If cloudLogData is empty, the guest-merge logic handles it.
+                // This is specifically for a logged-out user adding to "guest" data.
+                if (localLogs.length > 0 && cloudLogData && cloudLogData.length > 0) {
+                    
+                    // User is logged in, has cloud data, AND has local data.
+                    // This is the merge scenario.
+                    const entryText = localLogs.length === 1 ? '1 log entry' : `${localLogs.length} log entries`;
+                    showActionModal({
+                        title: 'Local Data Found',
+                        message: `You have ${entryText} saved on this device. Would you like to merge them with your cloud account?`,
+                        confirmText: 'Merge',
+                        onConfirm: async () => {
+                            try {
+                                const cloudLogs = doc.data().logEntries || [];
+                                
+                                // Merge logic: Use a Map to de-duplicate based on log ID
+                                const cloudLogMap = new Map(cloudLogs.map(log => [log.id, log]));
+                                localLogs.forEach(log => { cloudLogMap.set(log.id, log); });
+                                const mergedLogs = Array.from(cloudLogMap.values());
+
+                                // Save the merged list back to the cloud
+                                await userDocRef.set({ logEntries: mergedLogs }, { merge: true });
+                                showToast('Local logs merged!', 'success');
+                                
+                                // Now, attach the listener
+                                attachListener(userDocRef);
+                            } catch (e) {
+                                console.error("Merge failed:", e);
+                                showToast("Merge failed. Discarding local data.", "error");
+                                // Fallback: just attach the listener
+                                attachListener(userDocRef);
+                            }
+                        },
+                        altText: 'Discard',
+                        onAltConfirm: () => {
+                            showToast('Discarding local entries...', 'warning');
+                            // Attach listener, which will overwrite local data with cloud data
+                            attachListener(userDocRef);
+                        },
+                        cancelText: 'Log Out',
+                        onCancel: () => {
+                            auth.signOut(); // Safest option is to log out
+                        }
+                    });
+
+                } else {
+                    // No local logs to merge, or no cloud logs (fresh account)
+                    // Just attach the listener.
+                    console.log('No local data to merge, attaching listener...');
+                    attachListener(userDocRef);
+                }
             }
         }).catch(error => {
             console.error("Error checking user document:", error);
