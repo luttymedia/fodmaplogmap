@@ -24,6 +24,7 @@ const googleProvider = new firebase.auth.GoogleAuthProvider();
 document.addEventListener('DOMContentLoaded', () => {
 
     let deferredPrompt; // This will store the event for later use
+    let unsubscribeFromFirestore = null; // Holds our real-time listener
     const installAppLi = document.getElementById('install-app-li');
     const installAppBtn = document.getElementById('install-app-btn');
 
@@ -2260,8 +2261,6 @@ authForm.addEventListener('submit', (e) => {
             .then(() => {
                 // User is created and name is set
                 console.log('User signed up and profile updated:', auth.currentUser);
-                // Manually trigger the data sync *after* profile update
-                syncUserData(auth.currentUser);
                 setAuthLoading(false);
                 closeAuthModal();
             })
@@ -2289,8 +2288,6 @@ authForm.addEventListener('submit', (e) => {
             .then((userCredential) => {
                 // User is logged in
                 console.log('User logged in:', userCredential.user);
-                // Manually trigger the data sync
-                syncUserData(userCredential.user);
                 setAuthLoading(false);
                 closeAuthModal();
             })
@@ -2313,8 +2310,6 @@ authForm.addEventListener('submit', (e) => {
             .then((result) => {
                 // User is logged in
                 console.log('User logged in with Google:', result.user);
-                // Manually trigger the data sync
-                syncUserData(result.user);
                 closeAuthModal();
             })
             .catch((error) => {
@@ -2361,120 +2356,138 @@ authForm.addEventListener('submit', (e) => {
     }
 
     /**
-     * Handles the core logic of merging local and cloud data.
+     * Sets up a real-time listener for the user's data.
+     * This handles all data syncing (initial load, guest-merge, and live updates).
      * @param {firebase.User} user - The authenticated user.
-     * @param {firebase.firestore.DocumentSnapshot} doc - The user's document snapshot.
      */
-    async function handleDataSync(user, doc) {
+    function setupRealtimeListener(user) {
+        if (!user) return;
+
         const userDocRef = db.collection('users').doc(user.uid);
 
-        if (doc.exists) {
-            // --- SCENARIO A: EXISTING USER ---
-            // User exists in the cloud, download their data
-            console.log('Existing user found, downloading cloud data...');
-            const cloudData = doc.data();
+        // First, check if this is a new user needing to upload guest data.
+        // We do this *before* attaching the listener to avoid a race condition.
+        userDocRef.get().then(doc => {
+            if (!doc.exists) {
+                // --- SCENARIO B: NEW USER ---
+                // No document found, this is a new account.
+                // We upload local guest data *once*.
+                console.log('New user, checking for guest data...');
+                const localLogs = JSON.parse(localStorage.getItem('fodmapLogEntries')) || [];
+                let localProfile = JSON.parse(localStorage.getItem('fodmapUserProfile')) || defaultProfile;
 
-            // Load cloud data into appState
-            appState.logEntries = cloudData.logEntries || [];
-            appState.userProfile = { ...defaultProfile, ...(cloudData.userProfile || {}) };
+                // Ensure profile has user's name/email from auth
+                localProfile.displayName = user.displayName || null;
+                localProfile.email = user.email || null;
+                localProfile.isPremium = false; // Default
 
-            // Save cloud data to localStorage (overwriting guest data)
-            localStorage.setItem('fodmapLogEntries', JSON.stringify(appState.logEntries));
-            localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
-
-            showToast('Sync complete!', 'success');
-
-        } else {
-            // --- SCENARIO B/C: NEW USER ---
-            // No document found, this is a new account
-            console.log('New user, checking for guest data...');
-            const localLogs = JSON.parse(localStorage.getItem('fodmapLogEntries')) || [];
-            let localProfile = JSON.parse(localStorage.getItem('fodmapUserProfile')) || defaultProfile;
-
-            // Ensure profile has user's name from auth
-            // We use "|| null" to ensure we never try to save "undefined"
-            localProfile.displayName = user.displayName || null;
-            localProfile.email = user.email || null;
-
-            // Upload local data (or defaults) to the cloud
-            try {
-                await userDocRef.set({
+                // Upload local data to the cloud
+                userDocRef.set({
                     logEntries: localLogs,
                     userProfile: localProfile
+                }).then(() => {
+                    console.log('Guest data uploaded to new cloud account.');
+                    showToast('Account created & data backed up!', 'success');
+                    // Now attach the listener to continue
+                    attachListener(userDocRef);
+                }).catch(error => {
+                    console.error("Error creating new user document:", error);
+                    showToast('Error saving data to cloud.', 'error');
                 });
-                console.log('Guest data uploaded to new cloud account.');
-                showToast('Account created & data backed up!', 'success');
-
-                // Load this merged data into the current app state
-                appState.logEntries = localLogs;
-                appState.userProfile = localProfile;
-
-            } catch (error)
-            {
-                console.error("Error creating new user document:", error);
-                showToast('Error saving data to cloud.', 'error');
+            } else {
+                // --- SCENARIO A: EXISTING USER ---
+                // The document already exists, so just attach the listener.
+                // It will fire immediately with the current cloud data.
+                console.log('Existing user found, attaching real-time listener...');
+                attachListener(userDocRef);
             }
-        }
-
-        // --- FINAL STEP: Re-render the entire app ---
-        // This ensures the UI reflects the newly synced data
-        updateUiForPhase(appState.userProfile.currentPhase); 
-        setupProfilePage(); 
-
-        appState.isSyncing = false; // Clear the flag
+        }).catch(error => {
+            console.error("Error checking user document:", error);
+            showToast('Could not connect to cloud.', 'error');
+        });
     }
 
     /**
-     * Main entry point for user data synchronization.
-     * Called by onAuthStateChanged.
-     * @param {firebase.User} user - The authenticated user.
+     * Helper function that attaches the onSnapshot listener.
+     * This is the core of the real-time sync.
+     * @param {firebase.firestore.DocumentReference} userDocRef
      */
-    function syncUserData(user) {
-        if (!user) return; // Safety check
-        appState.isSyncing = true; // Set the flag
+    function attachListener(userDocRef) {
+        // Detach any old listener before attaching a new one
+        if (unsubscribeFromFirestore) {
+            unsubscribeFromFirestore();
+        }
 
-        const userDocRef = db.collection('users').doc(user.uid);
+        unsubscribeFromFirestore = userDocRef.onSnapshot((doc) => {
+            console.log("Firestore data updated!");
 
-        // Get the user's document
-        userDocRef.get().then((doc) => {
-            handleDataSync(user, doc);
-        }).catch((error) => {
-            console.error("Error getting user document:", error);
-            showToast('Could not connect to cloud.', 'error');
+            if (doc.exists) {
+                // --- DATA RECEIVED ---
+                const cloudData = doc.data();
+
+                // Load cloud data into appState
+                appState.logEntries = cloudData.logEntries || [];
+                appState.userProfile = { ...defaultProfile, ...(cloudData.userProfile || {}) };
+
+                // Save cloud data to localStorage (this is our offline cache)
+                localStorage.setItem('fodmapLogEntries', JSON.stringify(appState.logEntries));
+                localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+
+                // --- Re-render the entire app ---
+                // This ensures the UI reflects the newly synced data
+                updateUiForPhase(appState.userProfile.currentPhase);
+                setupProfilePage();
+                // We MUST also render log entries, as this updates the "By Date" view
+                renderLogEntries(); 
+            } else {
+                // This can happen if the user deletes their account
+                console.warn("User document does not exist.");
+            }
+        }, (error) => {
+            console.error("Firestore listener error:", error);
+            showToast('Sync connection lost. Check internet.', 'error');
         });
     }
 
     // --- CENTRAL AUTH LISTENER ---
     // This function runs on page load and whenever the auth state changes
     auth.onAuthStateChanged((user) => {
-        // If we are already handling a sync (from a modal click), don't do anything.
-        // This prevents a double-sync.
-        if (appState.isSyncing) {
-            console.log('Auth state changed, but sync is already in progress. Skipping.');
-            return;
-        }
-
         if (user) {
-            // --- USER IS LOGGED IN (on page load) ---
-            console.log('User is logged in on page load:', user.uid);
+            // --- USER IS LOGGED IN ---
+            console.log('User is logged in:', user.uid);
 
             // Update UI
             menuLoginLi.classList.add('hidden');
             menuLogoutLi.classList.remove('hidden');
+            // We show/hide premium based on the userProfile data,
+            // which will be loaded by the listener.
 
-            // Trigger the data sync
-            syncUserData(user); 
+            // Set up the real-time sync
+            setupRealtimeListener(user); 
 
         } else {
             // --- USER IS LOGGED OUT ---
             console.log('User is logged out.');
 
-            // Update UI
+            // --- CRITICAL: Detach the real-time listener ---
+            if (unsubscribeFromFirestore) {
+                unsubscribeFromFirestore();
+                unsubscribeFromFirestore = null;
+                console.log('Detached Firestore listener.');
+            }
+
+            // Update UI for "Guest"
             menuLoginLi.classList.remove('hidden');
             menuPremiumLi.classList.remove('hidden'); 
             menuLogoutLi.classList.add('hidden');
 
-            // User is a guest, so just render whatever is in localStorage
+            // User is a guest.
+            // We need to re-load from localStorage in case they just logged out
+            // and we wiped it. (This also handles a fresh guest load)
+            appState.logEntries = JSON.parse(localStorage.getItem('fodmapLogEntries')) || [];
+            appState.userProfile = { ...defaultProfile, ...(JSON.parse(localStorage.getItem('fodmapUserProfile')) || {}) };
+
+            // Render the guest UI
             updateUiForPhase(appState.userProfile.currentPhase);
             setupProfilePage();
         }
