@@ -1768,7 +1768,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Reusable Log Click Handler for Edit/Delete/Expand ---
-    const handleLogClick = async (e) => {
+    const handleLogClick = (e) => {
         const header = e.target.closest('.accordion-header');
         const deleteBtn = e.target.closest('.delete-entry-btn');
         const editBtn = e.target.closest('.edit-entry-btn');
@@ -1781,7 +1781,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- HANDLE DELETE ---
             const entryId = parseInt(deleteBtn.dataset.id);
             appState.logEntries = appState.logEntries.filter(entry => entry.id !== entryId);
-            await saveLogEntries(); // Re-render and save
+            saveLogEntries(); // Re-render and save
             showToast("Entry deleted.", "success");
         } else if (header) {
             // --- HANDLE EXPAND ---
@@ -1836,17 +1836,17 @@ document.addEventListener('DOMContentLoaded', () => {
         renderLogByDate();
     });
 
-    const saveLogEntries = async () => { 
+    const saveLogEntries = () => { 
         localStorage.setItem('fodmapLogEntries', JSON.stringify(appState.logEntries)); 
 
         // --- NEW: Wait for the cloud save to complete ---
-        await saveToCloud('logEntries', appState.logEntries); 
+        saveToCloud('logEntries', appState.logEntries);
 
         renderLogEntries(); 
         renderHomePage(); 
     };
 
-    logForm.addEventListener('submit', async (e) => {
+    logForm.addEventListener('submit', (e) => {
         e.preventDefault(); 
 
         // --- NEW: Consistent Validation Block (Request 1 & 2) ---
@@ -1925,7 +1925,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast("Added!", "success");
         }
 
-        await saveLogEntries(); 
+        saveLogEntries(); 
         checkAndShowRatePopup();
         
         // --- NEW: Close the modal (which also resets the form) ---
