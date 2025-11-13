@@ -1,10 +1,13 @@
-const CACHE_NAME = 'fodmap-logmap-v3';
+const CACHE_NAME = 'fodmap-logmap-v4';
 const FILES_TO_CACHE = [
+  '/',
   'index.html',
   'manifest.json',
+  'app.js',
+  'style.css',
+  'images/fmlm_logo_h.png',
   'images/icon-192.png',
-  'images/icon-512.png',
-  '/' // Caches the root URL
+  'images/icon-512.png'
 ];
 
 // Install event: Caches the app shell and takes control immediately
