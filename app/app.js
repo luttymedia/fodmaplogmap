@@ -915,7 +915,12 @@ document.addEventListener('DOMContentLoaded', () => {
             summaryContainer.innerHTML = `<p class="text-center text-subtle italic text-sm p-4">Your progress will show here once you add your first log entry!</p>`;
         }
 
-        renderSymptomChart();
+        try {
+            renderSymptomChart();
+        } catch (e) {
+            console.error("Failed to render symptom chart (this is expected if offline and not cached):", e);
+            // Don't let a chart error stop the app
+        }
     };
     summaryContainer.addEventListener('click', (e) => {
             const header = e.target.closest('.progress-item-header'); if (header) { const item = header.parentElement; const expanded = item.classList.contains('expanded'); summaryContainer.querySelectorAll('.progress-item').forEach(i => i.classList.remove('expanded')); if (!expanded) item.classList.add('expanded'); }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fodmap-logmap-v5';
+const CACHE_NAME = 'fodmap-logmap-v6';
 const FONT_CACHE = 'font-icon-cache-v1';
 const CACHE_WHITELIST = [CACHE_NAME, FONT_CACHE];
 
@@ -48,7 +48,8 @@ self.addEventListener('fetch', (event) => {
   } else if (
     event.request.url.startsWith('https://fonts.googleapis.com') ||
     event.request.url.startsWith('https://fonts.gstatic.com') || // Google's font files
-    event.request.url.startsWith('https://cdnjs.cloudflare.com') // Font Awesome
+    event.request.url.startsWith('https://cdnjs.cloudflare.com') || // Font Awesome
+    event.request.url.startsWith('https://cdn.jsdelivr.net/npm/chart.js') // Chart.js CDN
   ) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
