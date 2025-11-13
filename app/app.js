@@ -744,6 +744,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // --- NEW: Increment AI Count and check for rating ---
                 appState.userProfile.aiUsageCount = (appState.userProfile.aiUsageCount || 0) + 1;
                 localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+                saveToCloud('userProfile', appState.userProfile);
                 checkAndShowRatePopup();
                 // --- END NEW ---
                 }                    
@@ -931,6 +932,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (group.id === 'home-progress-card') {
                     appState.userProfile.uiSettings.isProgressExpanded = isNowExpanded;
                     localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+                    saveToCloud('userProfile', appState.userProfile);
                 }
                 // --- END ---
             }
@@ -1171,6 +1173,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 4. Save & Re-render (Same as before)
         localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+        saveToCloud('userProfile', appState.userProfile);
         renderPersonalizationSummary(); 
     }
 
@@ -1765,7 +1768,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Reusable Log Click Handler for Edit/Delete/Expand ---
-    const handleLogClick = (e) => {
+    const handleLogClick = async (e) => {
         const header = e.target.closest('.accordion-header');
         const deleteBtn = e.target.closest('.delete-entry-btn');
         const editBtn = e.target.closest('.edit-entry-btn');
@@ -1778,7 +1781,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- HANDLE DELETE ---
             const entryId = parseInt(deleteBtn.dataset.id);
             appState.logEntries = appState.logEntries.filter(entry => entry.id !== entryId);
-            saveLogEntries(); // Re-render and save
+            await saveLogEntries(); // Re-render and save
             showToast("Entry deleted.", "success");
         } else if (header) {
             // --- HANDLE EXPAND ---
@@ -1833,9 +1836,17 @@ document.addEventListener('DOMContentLoaded', () => {
         renderLogByDate();
     });
 
-    const saveLogEntries = () => { localStorage.setItem('fodmapLogEntries', JSON.stringify(appState.logEntries)); renderLogEntries(); renderHomePage(); };
+    const saveLogEntries = async () => { 
+        localStorage.setItem('fodmapLogEntries', JSON.stringify(appState.logEntries)); 
 
-    logForm.addEventListener('submit', (e) => {
+        // --- NEW: Wait for the cloud save to complete ---
+        await saveToCloud('logEntries', appState.logEntries); 
+
+        renderLogEntries(); 
+        renderHomePage(); 
+    };
+
+    logForm.addEventListener('submit', async (e) => {
         e.preventDefault(); 
 
         // --- NEW: Consistent Validation Block (Request 1 & 2) ---
@@ -1914,7 +1925,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast("Added!", "success");
         }
 
-        saveLogEntries(); 
+        await saveLogEntries(); 
         checkAndShowRatePopup();
         
         // --- NEW: Close the modal (which also resets the form) ---
@@ -1973,9 +1984,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // 1. Update state
             appState.userProfile.currentPhase = newPhase;
             
-            // 2. Save to localStorage
+            // 2. Save to localStorage + cloud
             localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
-            
+            saveToCloud('userProfile', appState.userProfile);
+
             // 3. Update button UI
             sideMdl.querySelectorAll('#side-menu-phases .log-view-toggle-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -2021,8 +2033,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- 3. Personalization Map logic REMOVED ---
         // (This will be handled by the new modal's save button later)
 
-        // --- 4. Final Save to localStorage & Toast ---
+        // --- 4. Final Save to localStorage + cloud & Toast ---
         localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+        saveToCloud('userProfile', appState.userProfile);
         showToast("Profile Saved!", "success");
     });
 
@@ -2320,6 +2333,29 @@ authForm.addEventListener('submit', (e) => {
     });
 
     /**
+     * Saves a specific piece of the app state to Firestore if the user is logged in.
+     * @param {string} key - 'logEntries' or 'userProfile'
+     * @param {any} data - The data to save (e.g., appState.logEntries)
+     */
+    async function saveToCloud(key, data) {
+        const user = auth.currentUser;
+        if (!user) return; // Not logged in, do nothing
+
+        try {
+            const userDocRef = db.collection('users').doc(user.uid);
+            // Use .set with merge:true. This is safer.
+            // It will create or update the document without failing.
+            await userDocRef.set({
+                [key]: data
+            }, { merge: true });
+            console.log(`Saved "${key}" to cloud.`);
+        } catch (e) {
+            console.error(`Error saving "${key}" to cloud:`, e);
+            showToast('Error syncing changes to cloud.', 'error');
+        }
+    }
+
+    /**
      * Handles the core logic of merging local and cloud data.
      * @param {firebase.User} user - The authenticated user.
      * @param {firebase.firestore.DocumentSnapshot} doc - The user's document snapshot.
@@ -2471,17 +2507,20 @@ authForm.addEventListener('submit', (e) => {
                     // Later, this will open the Play Store link
                     appState.userProfile.ratePopupStatus = 'rated';
                     localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+                    saveToCloud('userProfile', appState.userProfile);
                     // window.open('YOUR_PLAY_STORE_LINK_HERE', '_blank');
                 },
                 altText: 'No, Thanks',
                 onAltConfirm: () => {
                     appState.userProfile.ratePopupStatus = 'declined';
                     localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+                    saveToCloud('userProfile', appState.userProfile);
                 },
                 cancelText: 'Remind Me Later',
                 onCancel: () => {
                     appState.userProfile.ratePopupStatus = 'remind_later';
                     localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+                    saveToCloud('userProfile', appState.userProfile);
                 }
             });
         }
@@ -2691,8 +2730,9 @@ authForm.addEventListener('submit', (e) => {
         settings.durationUnit = ptModalDurationUnit.value;
         settings.rules = ptModalRules.value;
 
-        // Save to localStorage
+        // Save to localStorage + cloud 
         localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+        saveToCloud('userProfile', appState.userProfile);
 
         // Re-render home page components
         renderCountdown('pre-treatment');
@@ -2744,8 +2784,9 @@ authForm.addEventListener('submit', (e) => {
         settings.durationNum = parseInt(rsModalDurationNum.value, 10) || 4;
         settings.durationUnit = rsModalDurationUnit.value;
 
-        // Save to localStorage
+        // Save to localStorage + cloud 
         localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+        saveToCloud('userProfile', appState.userProfile);
 
         // Re-render home page components
         renderCountdown('restriction');
@@ -2857,8 +2898,9 @@ authForm.addEventListener('submit', (e) => {
             log: appState.userProfile.medicationTracker.log || {} // Preserve the log
         };
 
-        // Save to localStorage
+        // Save to localStorage + cloud 
         localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+        saveToCloud('userProfile', appState.userProfile);
 
         // Re-render the home page card
         renderMedicationTracker();
@@ -3089,8 +3131,9 @@ authForm.addEventListener('submit', (e) => {
         // 4. Mark onboarding as complete
         appState.userProfile.hasCompletedOnboarding = true;
         
-        // 5. Save everything to localStorage
+        // 5. Save everything to localStorage + cloud 
         localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+        saveToCloud('userProfile', appState.userProfile);
 
         // 6. Refresh the app UI
         updateUiForPhase(appState.userProfile.currentPhase);
@@ -3240,8 +3283,9 @@ authForm.addEventListener('submit', (e) => {
                     e.target.nextElementSibling.classList.remove('strikethrough');
                 }
 
-                // Save changes
+                // Save changes to localStorage + cloud
                 localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+                saveToCloud('userProfile', appState.userProfile);
 
                 // Re-render the log history (but not the whole card)
                 const logKeys = Object.keys(appState.userProfile.medicationTracker.log).sort().reverse();
@@ -3638,6 +3682,7 @@ authForm.addEventListener('submit', (e) => {
                 if (indexToDelete > -1) {
                     appState.userProfile.personalizationFoods.splice(indexToDelete, 1); // Remove from array
                     localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile)); // Save
+                    saveToCloud('userProfile', appState.userProfile);
                     renderPersonalizationSummary(); // Re-render the Home page
                     closeFoodModal();
                     showToast("Food deleted.", "success");
@@ -3682,8 +3727,9 @@ authForm.addEventListener('submit', (e) => {
             appState.userProfile.personalizationFoods.push(newFoodData);
         }
 
-        // 3. Save to localStorage
+        // 3. Save to localStorage + cloud
         localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+        saveToCloud('userProfile', appState.userProfile);
         
         // 4. Close modal, re-render Home, and show toast
         closeFoodModal();
@@ -4230,6 +4276,14 @@ authForm.addEventListener('submit', (e) => {
                     // Save to localStorage
                     localStorage.setItem('fodmapLogEntries', JSON.stringify(importedData.logEntries));
                     localStorage.setItem('fodmapUserProfile', JSON.stringify(importedData.userProfile));
+
+                    // --- NEW: Update appState AND save to cloud ---
+                    // This makes the imported data the new "source of truth"
+                    appState.logEntries = importedData.logEntries;
+                    appState.userProfile = importedData.userProfile;
+                    saveToCloud('logEntries', appState.logEntries);
+                    saveToCloud('userProfile', appState.userProfile);
+                    // --- END NEW ---
 
                     // Show confirmation and reload
                     showToast("Import successful! Restarting app...", "success");
