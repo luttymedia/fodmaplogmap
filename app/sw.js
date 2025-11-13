@@ -1,4 +1,7 @@
-const CACHE_NAME = 'fodmap-logmap-v4';
+const CACHE_NAME = 'fodmap-logmap-v5';
+const FONT_CACHE = 'font-icon-cache-v1';
+const CACHE_WHITELIST = [CACHE_NAME, FONT_CACHE];
+
 const FILES_TO_CACHE = [
   '/',
   'index.html',
@@ -21,27 +24,52 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Fetch event: "Network First" strategy
+// Fetch event: "Network First" for pages, "Cache-First" for assets
 self.addEventListener('fetch', (event) => {
-  // Check if the request is for navigation (e.g., loading the page)
+
+  // 1. Navigation requests (loading the page)
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request) // 1. Try to get the file from the network first
+      fetch(event.request) // 1. Try network
         .then((response) => {
-          // 2. If successful, cache the new version and return it
+          // 2. If success, cache and return
           return caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, response.clone());
             return response;
           });
         })
         .catch(() => {
-          // 3. If the network fails (offline), get the file from the cache
+          // 3. If network fails, get from cache
           return caches.match(event.request);
         })
     );
+
+  // 2. NEW: Fonts and Icons (Stale-While-Revalidate, simple)
+  } else if (
+    event.request.url.startsWith('https://fonts.googleapis.com') ||
+    event.request.url.startsWith('https://fonts.gstatic.com') || // Google's font files
+    event.request.url.startsWith('https://cdnjs.cloudflare.com') // Font Awesome
+  ) {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        // 1. Return from cache if we have it
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        // 2. If not, fetch from network
+        return fetch(event.request).then((networkResponse) => {
+          // 3. ...and cache it for next time
+          return caches.open(FONT_CACHE).then((cache) => {
+            cache.put(event.request, networkResponse.clone());
+            return networkResponse;
+          });
+        });
+      })
+    );
+
+  // 3. Other requests (app shell, images, etc.)
   } else {
-    // For non-navigation requests (images, etc.), use a "cache-first" or "stale-while-revalidate"
-    // For simplicity, we will keep your original cache-first for other assets
+    // Use your original cache-first strategy
     event.respondWith(
       caches.match(event.request)
         .then((response) => {
@@ -57,7 +85,8 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keyList) => {
       return Promise.all(keyList.map((key) => {
-        if (key !== CACHE_NAME) {
+        // Check against the whitelist instead of just one cache
+        if (CACHE_WHITELIST.indexOf(key) === -1) {
           return caches.delete(key);
         }
       }));
