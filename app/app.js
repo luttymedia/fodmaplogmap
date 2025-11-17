@@ -2733,6 +2733,10 @@ authForm.addEventListener('submit', (e) => {
         const hasLocalLogs = localLogs.length > 0;
         const hasLocalDiet = localDietFoods.length > 0;
 
+        // --- NEW: Check if this local data is just a cache for the current user ---
+        const isUserDataCache = (localProfile.loggedInUid === user.uid);
+        // --- END NEW ---
+
         // 2. Check if this is a brand new user (doc doesn't exist)
         userDocRef.get().then(doc => {
             const isNewUser = !doc.exists;
@@ -2786,7 +2790,8 @@ authForm.addEventListener('submit', (e) => {
             // --- SCENARIO 2: EXISTING USER with GUEST DATA ---
             // The user is logging into a device that has local guest data.
             // We must ask them what to do.
-            if (hasLocalLogs || hasLocalDiet) {
+            // --- MODIFIED: Only show if it's NOT their own cache ---
+            if ((hasLocalLogs || hasLocalDiet) && !isUserDataCache) {
                 let logText = hasLocalLogs ? `${localLogs.length} log entries` : '';
                 let dietText = hasLocalDiet ? `${localDietFoods.length} diet foods` : '';
                 let message = `You have ${logText}${hasLocalLogs && hasLocalDiet ? ' and ' : ''}${dietText} saved on this device. Would you like to merge them with your cloud account?`;
@@ -2884,6 +2889,9 @@ authForm.addEventListener('submit', (e) => {
                     ...(cloudProfile || {}),
                     personalizationFoods: appState.userProfile.personalizationFoods // Keep local diet list
                 };
+                
+                // --- NEW: Tag the cache with the logged-in User ID ---
+                appState.userProfile.loggedInUid = userDocRef.id;
                 
                 // Save to localStorage
                 localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
@@ -3128,6 +3136,12 @@ authForm.addEventListener('submit', (e) => {
             // --- USER IS LOGGED IN ---
             console.log('User is logged in:', user.uid);
 
+            // --- NEW FIX: Hide the onboarding modal if it's open ---
+            if (onboardingModal) {
+                onboardingModal.classList.add('hidden');
+            }
+            // --- END FIX ---
+
             // --- 1. RENDER AUTH-DEPENDENT UI IMMEDIATELY ---
             // This fixes the soft refresh race condition for the side menu.
             menuLoginLi.classList.add('hidden');
@@ -3179,6 +3193,16 @@ authForm.addEventListener('submit', (e) => {
             if (!document.querySelector('.page:not(.hidden)')) {
                 navigateTo('home');
             }
+
+            // --- NEW LOCATION FOR ONBOARDING CHECK ---
+            // Only show for guests who have not completed it
+            if (!appState.userProfile.hasCompletedOnboarding) {
+                // Use a short timeout to let the app finish painting
+                setTimeout(() => {
+                    showOnboardingModal();
+                }, 100);
+            }
+            // --- END NEW LOCATION ---
 
             // --- NEW: Show login modal for all guest users on load ---
             openAuthModal('login');
@@ -4941,14 +4965,6 @@ authForm.addEventListener('submit', (e) => {
                 }
             }
         });
-    }
-
-    // --- FINAL: Check for onboarding ---
-    if (!appState.userProfile.hasCompletedOnboarding) {
-        // Use a short timeout to let the app finish painting
-        setTimeout(() => {
-            showOnboardingModal();
-        }, 100);
     }
 
     // --- Global click listener to close popups ---
