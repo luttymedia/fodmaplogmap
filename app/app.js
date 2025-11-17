@@ -92,6 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const authSwitchLink = document.getElementById('auth-switch-link');
     const authPasswordToggle = document.getElementById('auth-password-toggle');
     const authForgotPasswordLink = document.getElementById('auth-forgot-password-link');
+    const authContinueGuestBtn = document.getElementById('auth-continue-guest-btn');
+    const authGuestHelpBtn = document.getElementById('auth-guest-help-btn');
     const menuLoginBtn = document.getElementById('menu-login-btn');
     const menuLoginLi = document.getElementById('menu-login-li');
     const menuPremiumLi = document.getElementById('menu-premium-li');
@@ -2484,6 +2486,26 @@ authForm.addEventListener('submit', (e) => {
             });
         });
     }
+
+    // --- NEW: Continue as Guest Listener ---
+    if (authContinueGuestBtn) {
+        authContinueGuestBtn.addEventListener('click', () => {
+            closeAuthModal();
+        });
+    }
+
+    // --- NEW: Guest Help Button Listener ---
+    if (authGuestHelpBtn) {
+        authGuestHelpBtn.addEventListener('click', () => {
+            showActionModal({
+                title: 'Guest vs. Account',
+                message: "Guest data is stored locally on your device's browser. If you clear your browser cache or switch devices, your data will be lost.\n\nCreating a free account saves your data to the cloud, allowing you to sync between devices and keep a secure backup.",
+                confirmText: 'Got it!',
+                onConfirm: () => {}, // Just closes the modal
+                cancelText: null // Hides the cancel button
+            });
+        });
+    }
     // --- END: Auth Modal Listeners ---
 
     // --- Handle Logout Button ---
@@ -3157,6 +3179,9 @@ authForm.addEventListener('submit', (e) => {
             if (!document.querySelector('.page:not(.hidden)')) {
                 navigateTo('home');
             }
+
+            // --- NEW: Show login modal for all guest users on load ---
+            openAuthModal('login');
         }
     });
 
@@ -3308,9 +3333,23 @@ authForm.addEventListener('submit', (e) => {
     function showActionModal({ title, message, type = 'confirm', confirmText = 'OK', onConfirm, cancelText = 'Cancel', onCancel, altText, onAltConfirm }) {
         actionModalTitle.textContent = title;
         actionModalMessage.textContent = message;
-        actionModalBtnConfirm.textContent = confirmText;
-        actionModalBtnCancel.textContent = cancelText;
 
+        // Configure Confirm Button
+        if (confirmText && onConfirm) {
+            actionModalBtnConfirm.textContent = confirmText;
+            actionModalBtnConfirm.classList.remove('hidden');
+        } else {
+            actionModalBtnConfirm.classList.add('hidden');
+        }
+
+        // Configure Cancel Button
+        if (cancelText) {
+            actionModalBtnCancel.textContent = cancelText;
+            actionModalBtnCancel.classList.remove('hidden');
+        } else {
+            actionModalBtnCancel.classList.add('hidden');
+        }
+        
         const actionModalBtnAlt = document.getElementById('action-modal-btn-alt');
 
         // Configure for prompt

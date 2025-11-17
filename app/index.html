@@ -470,7 +470,7 @@
             </div>
         </div>
 
-        <div id="auth-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[90] hidden">
+        <div id="auth-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[98] hidden">
             <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
                 <div class="p-4 border-b border-slate-200 flex justify-between items-center">
                     <h3 id="auth-modal-title" class="text-lg font-semibold text-secondary">Log In</h3>
@@ -524,6 +524,13 @@
 
                     <p id="auth-switch-link" class="text-sm text-center text-secondary mt-4">
                         Don't have an account? <button id="auth-switch-btn" class->Sign Up</button>
+                    </p>
+
+                    <p class="text-sm text-center text-secondary mt-4">
+                        <button id="auth-continue-guest-btn" class="font-bold text-primary underline">Continue as a guest</button>
+                        <button id="auth-guest-help-btn" class="ml-1 w-5 h-5 inline-flex items-center justify-center text-xs bg-slate-200 text-slate-600 rounded-full hover:bg-slate-300" title="Why create an account?">
+                            ?
+                        </button>
                     </p>
                 </div>
             </div>
