@@ -1104,12 +1104,12 @@ document.addEventListener('DOMContentLoaded', () => {
      * Performs the scan logic, either merging or erasing.
      * @param {boolean} isMerging - If true, merges with existing list. If false, erases.
      */
-    function performScan(isMerging) {
+    async function performScan(isMerging) {
         const newFoodsArray = [];
         const allFoodsByName = {}; // { milk: [...], apple: [...] }
-        let foodIdCounter = Date.now();
+        let foodIdCounter = Date.now(); // Used for *new* foods
 
-        // 1. Group all log entries by food name (Same as before)
+        // 1. Group all log entries by food name
         appState.logEntries.forEach(entry => {
             if (!entry.group) return; // Only skip entries with no group
 
@@ -1120,7 +1120,7 @@ document.addEventListener('DOMContentLoaded', () => {
             allFoodsByName[foodName].push(entry);
         });
 
-        // 2. Process each unique food (Same as before)
+        // 2. Process each unique food
         for (const foodName in allFoodsByName) {
             const entries = allFoodsByName[foodName];
             const mostRecentEntry = entries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
@@ -1131,7 +1131,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const severeTriggerEntries = triggerEntries.filter(e => parseInt(e.severity, 10) >= 4);
 
             let newFoodObject = {
-                id: foodIdCounter++, // This ID is temporary if merging
+                // id: foodIdCounter++, // ID will be assigned later
                 name: foodName.charAt(0).toUpperCase() + foodName.slice(1), 
                 group: group,
                 status: 'tolerated', 
@@ -1159,11 +1159,10 @@ document.addEventListener('DOMContentLoaded', () => {
             newFoodsArray.push(newFoodObject);
         }
 
-        // --- 3. NEW: Handle Merging vs. Erasing ---
-        let finalFoodCount = 0;
-
-        if (isMerging) {
-            // --- MERGE LOGIC ---
+        // --- 3. Handle Merging vs. Erasing (Cloud Batch Write) ---
+        const user = auth.currentUser;
+        if (!user) {
+            // User is a guest. Perform the logic on the *local* appState array.
             let existingFoods = [...appState.userProfile.personalizationFoods];
             let newFoodsAdded = 0;
             let foodsUpdated = 0;
@@ -1172,33 +1171,107 @@ document.addEventListener('DOMContentLoaded', () => {
                 const existingIndex = existingFoods.findIndex(f => f.name.toLowerCase() === scannedFood.name.toLowerCase());
 
                 if (existingIndex > -1) {
-                    // Food exists: Update it
-                    // Preserve the original ID
+                    // Food exists: Update it, preserve original ID
                     const originalId = existingFoods[existingIndex].id;
-                    existingFoods[existingIndex] = { ...scannedFood, id: originalId }; // Overwrite with new data, keep ID
+                    existingFoods[existingIndex] = { ...scannedFood, id: originalId };
                     foodsUpdated++;
                 } else {
-                    // Food is new: Add it
-                    existingFoods.push(scannedFood); // Will have its new temporary ID
+                    // Food is new: Add it with a new ID
+                    existingFoods.push({ ...scannedFood, id: foodIdCounter++ });
                     newFoodsAdded++;
                 }
             });
-
+            
             appState.userProfile.personalizationFoods = existingFoods;
-            finalFoodCount = existingFoods.length;
+            localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+            renderPersonalizationSummary(); 
             showToast(`Scan complete! ${newFoodsAdded} foods added, ${foodsUpdated} updated.`, "success");
-
-        } else {
-            // --- ERASE LOGIC (Old behavior) ---
-            appState.userProfile.personalizationFoods = newFoodsArray;
-            finalFoodCount = newFoodsArray.length;
-            showToast(`Scan complete! Found ${finalFoodCount} unique foods.`, "success");
+            return; // Exit, no cloud operations
         }
 
-        // 4. Save & Re-render (Same as before)
-        localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
-        saveToCloud('userProfile', appState.userProfile);
-        renderPersonalizationSummary(); 
+        // --- User is LOGGED IN: Perform cloud operations ---
+        const batch = db.batch();
+        const dietColRef = db.collection('users').doc(user.uid).collection('diet');
+        let newFoodsAdded = 0;
+        let foodsUpdated = 0;
+        let finalFoodCount = 0;
+        
+        // We still use the local array as the "source of truth" to compare against
+        let existingFoods = [...appState.userProfile.personalizationFoods];
+        let finalLocalFoods = []; // This will become the new local state
+
+        try {
+            if (isMerging) {
+                // --- MERGE LOGIC (Cloud) ---
+                newFoodsArray.forEach(scannedFood => {
+                    const existingFood = existingFoods.find(f => f.name.toLowerCase() === scannedFood.name.toLowerCase());
+                    
+                    if (existingFood) {
+                        // Food exists: Update it in the batch, preserve ID
+                        const docRef = dietColRef.doc(String(existingFood.id));
+                        batch.set(docRef, { ...scannedFood, id: existingFood.id }); // Use .set to overwrite
+                        finalLocalFoods.push({ ...scannedFood, id: existingFood.id });
+                        foodsUpdated++;
+                    } else {
+                        // Food is new: Add it with a new ID
+                        const newId = foodIdCounter++;
+                        const docRef = dietColRef.doc(String(newId));
+                        batch.set(docRef, { ...scannedFood, id: newId });
+                        finalLocalFoods.push({ ...scannedFood, id: newId });
+                        newFoodsAdded++;
+                    }
+                });
+                
+                // Add back any existing foods that *weren't* part of the scan
+                existingFoods.forEach(ef => {
+                    if (!finalLocalFoods.some(f => f.id === ef.id)) {
+                        finalLocalFoods.push(ef);
+                    }
+                });
+
+                finalFoodCount = finalLocalFoods.length;
+                
+            } else {
+                // --- ERASE LOGIC (Cloud) ---
+                // 1. Delete all existing documents
+                // We must do this *before* committing the batch
+                // This is safer to do as a separate operation first
+                const existingDocs = await dietColRef.get();
+                if (!existingDocs.empty) {
+                    const deleteBatch = db.batch();
+                    existingDocs.forEach(doc => deleteBatch.delete(doc.ref));
+                    await deleteBatch.commit();
+                }
+
+                // 2. Add new documents
+                newFoodsArray.forEach(scannedFood => {
+                    const newId = foodIdCounter++;
+                    const docRef = dietColRef.doc(String(newId));
+                    batch.set(docRef, { ...scannedFood, id: newId });
+                    finalLocalFoods.push({ ...scannedFood, id: newId });
+                });
+                finalFoodCount = finalLocalFoods.length;
+            }
+
+            // Commit the batch of adds/updates
+            await batch.commit();
+            
+            // 4. Update local state & re-render
+            appState.userProfile.personalizationFoods = finalLocalFoods;
+            localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+            saveToCloud('userProfile', appState.userProfile); // Save other profile settings
+            renderPersonalizationSummary(); 
+            
+            if (isMerging) {
+                showToast(`Scan complete! ${newFoodsAdded} foods added, ${foodsUpdated} updated.`, "success");
+            } else {
+                showToast(`Scan complete! Found ${finalFoodCount} unique foods.`, "success");
+            }
+
+        } catch (e) {
+            console.error("AutoScan batch write failed:", e);
+            showToast("AutoScan failed to sync with cloud.", "error");
+        }
     }
 
     // --- NEW: Main Controller for Personalization Home Tab ---
@@ -1804,9 +1877,17 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (deleteBtn) {
             // --- HANDLE DELETE ---
             const entryId = parseInt(deleteBtn.dataset.id);
+            
+            // 1. Delete from local state
             appState.logEntries = appState.logEntries.filter(entry => entry.id !== entryId);
-            saveLogEntries(); // Re-render and save
+            
+            // 2. Delete from cloud
+            deleteLogFromCloud(entryId); // Async
+
+            // 3. Save local state & re-render
+            saveLogEntries();
             showToast("Entry deleted.", "success");
+
         } else if (header) {
             // --- HANDLE EXPAND ---
             header.parentElement.classList.toggle('expanded');
@@ -1861,13 +1942,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const saveLogEntries = () => { 
+        // 1. Save local copy for offline use
         localStorage.setItem('fodmapLogEntries', JSON.stringify(appState.logEntries)); 
-
-        // --- NEW: Wait for the cloud save to complete ---
-        saveToCloud('logEntries', appState.logEntries);
-
+        
+        // 2. Re-render UI
         renderLogEntries(); 
         renderHomePage(); 
+        
+        // 3. Save USER PROFILE (in case AI count changed)
+        // Note: The cloud save for the log entry itself
+        // is now handled by the logForm submit listener.
+        localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+        saveToCloud('userProfile', appState.userProfile);
     };
 
     logForm.addEventListener('submit', (e) => {
@@ -1936,19 +2022,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (appState.currentlyEditingId) {
             // --- UPDATE EXISTING ENTRY ---
-            const index = appState.logEntries.findIndex(entry => entry.id === appState.currentlyEditingId);
+            const logIdToUpdate = appState.currentlyEditingId;
+            const updatedLog = { ...entryData, id: logIdToUpdate }; // Keep original ID
+
+            // 1. Update in local state
+            const index = appState.logEntries.findIndex(entry => entry.id === logIdToUpdate);
             if (index !== -1) {
-                appState.logEntries[index] = { ...entryData, id: appState.currentlyEditingId }; // Keep original ID
+                appState.logEntries[index] = updatedLog;
             }
+            
+            // 2. Update in cloud
+            updateLogInCloud(logIdToUpdate, updatedLog); // Async
+
             appState.currentlyEditingId = null; // Reset edit state
             showToast("Entry updated!", "success");
+
         } else {
             // --- ADD NEW ENTRY ---
             const newEntry = { ...entryData, id: Date.now() };
+
+            // 1. Add to local state
             appState.logEntries.push(newEntry); 
+            
+            // 2. Add to cloud
+            addLogToCloud(newEntry); // Async
+
             showToast("Added!", "success");
         }
 
+        // 3. Save local state, re-render, and check for rating
         saveLogEntries(); 
         checkAndShowRatePopup();
         
@@ -2397,6 +2499,39 @@ authForm.addEventListener('submit', (e) => {
         });
     });
 
+    // --- Handle Logout Button ---
+    menuLogoutBtn.addEventListener('click', () => {
+        auth.signOut().then(() => {
+            // Wipe local data for privacy (as we decided)
+            localStorage.removeItem('fodmapLogEntries');
+            localStorage.removeItem('fodmapUserProfile');
+            // Reload the page
+            location.reload();
+        }).catch((error) => {
+            console.error('Logout Error:', error);
+        });
+    });
+
+    /**
+     * Forces a user logout, clears all local data, and reloads the app.
+     * This is the definitive logout action.
+     */
+    function forceLogoutAndReload() {
+        // We must clear local data *before* reloading
+        localStorage.removeItem('fodmapLogEntries');
+        localStorage.removeItem('fodmapUserProfile');
+        
+        // We tell auth to sign out, but we don't wait for it.
+        // The reload will handle the UI reset.
+        auth.signOut().catch(err => console.error("Sign out error on forced reload:", err));
+        
+        // Use a tiny delay to ensure the signOut message is sent
+        // before the page is torn down.
+        setTimeout(() => {
+            location.reload();
+        }, 100);
+    }
+
     /**
      * Saves a specific piece of the app state to Firestore if the user is logged in.
      * @param {string} key - 'logEntries' or 'userProfile'
@@ -2420,6 +2555,143 @@ authForm.addEventListener('submit', (e) => {
         }
     }
 
+    // --- START: NEW CLOUD FUNCTIONS (SUB-COLLECTIONS) ---
+
+    /**
+     * Adds a new log document to the user's /logs sub-collection.
+     * @param {object} logData - The log entry object.
+     */
+    async function addLogToCloud(logData) {
+        const user = auth.currentUser;
+        if (!user) return;
+        try {
+            // Use the log's 'id' (which is Date.now()) as the document ID
+            const docId = String(logData.id);
+            await db.collection('users').doc(user.uid).collection('logs').doc(docId).set(logData);
+            console.log('Log added to cloud:', docId);
+        } catch (e) {
+            console.error('Error adding log to cloud:', e);
+            showToast('Error saving new log to cloud.', 'error');
+        }
+    }
+
+    /**
+     * Updates an existing log document in the user's /logs sub-collection.
+     * @param {string|number} logId - The ID of the log document.
+     * @param {object} logData - The complete log entry object to update.
+     */
+    async function updateLogInCloud(logId, logData) {
+        const user = auth.currentUser;
+        if (!user) return;
+        try {
+            const docId = String(logId);
+            // Use .set() to overwrite the document with the new data
+            await db.collection('users').doc(user.uid).collection('logs').doc(docId).set(logData, { merge: true });
+            console.log('Log updated in cloud:', docId);
+        } catch (e) {
+            console.error('Error updating log in cloud:', e);
+            showToast('Error updating log in cloud.', 'error');
+        }
+    }
+
+    /**
+     * Deletes a log document from the user's /logs sub-collection.
+     * @param {string|number} logId - The ID of the log document to delete.
+     */
+    async function deleteLogFromCloud(logId) {
+        const user = auth.currentUser;
+        if (!user) return;
+        try {
+            const docId = String(logId);
+            await db.collection('users').doc(user.uid).collection('logs').doc(docId).delete();
+            console.log('Log deleted from cloud:', docId);
+        } catch (e) {
+            console.error('Error deleting log from cloud:', e);
+            showToast('Error deleting log from cloud.', 'error');
+        }
+    }
+
+    /**
+     * Adds a new diet food document to the user's /diet sub-collection.
+     * @param {object} foodData - The food object.
+     */
+    async function addFoodToCloud(foodData) {
+        const user = auth.currentUser;
+        if (!user) return;
+        try {
+            // Use the food's 'id' as the document ID
+            const docId = String(foodData.id);
+            await db.collection('users').doc(user.uid).collection('diet').doc(docId).set(foodData);
+            console.log('Diet food added to cloud:', docId);
+        } catch (e) {
+            console.error('Error adding diet food to cloud:', e);
+            showToast('Error saving new food to cloud.', 'error');
+        }
+    }
+
+    /**
+     * Updates an existing diet food document in the user's /diet sub-collection.
+     * @param {string|number} foodId - The ID of the food document.
+     * @param {object} foodData - The complete food object to update.
+     */
+    async function updateFoodInCloud(foodId, foodData) {
+        const user = auth.currentUser;
+        if (!user) return;
+        try {
+            const docId = String(foodId);
+            // Use .set() to overwrite
+            await db.collection('users').doc(user.uid).collection('diet').doc(docId).set(foodData, { merge: true });
+            console.log('Diet food updated in cloud:', docId);
+        } catch (e) {
+            console.error('Error updating diet food in cloud:', e);
+            showToast('Error updating food in cloud.', 'error');
+        }
+    }
+
+    /**
+     * Deletes a diet food document from the user's /diet sub-collection.
+     * @param {string|number} foodId - The ID of the food document to delete.
+     */
+    async function deleteFoodFromCloud(foodId) {
+        const user = auth.currentUser;
+        if (!user) return;
+        try {
+            const docId = String(foodId);
+            await db.collection('users').doc(user.uid).collection('diet').doc(docId).delete();
+            console.log('Diet food deleted from cloud:', docId);
+        } catch (e) {
+            console.error('Error deleting diet food from cloud:', e);
+            showToast('Error deleting food from cloud.', 'error');
+        }
+    }
+
+    /**
+     * Deletes all documents in a Firestore collection in batches.
+     * @param {firebase.firestore.CollectionReference} collectionRef - The reference to the collection to delete.
+     * @param {number} batchSize - The number of documents to delete in each batch.
+     */
+    async function deleteCollection(collectionRef, batchSize = 50) {
+        const query = collectionRef.limit(batchSize);
+
+        while (true) {
+            const snapshot = await query.get();
+            if (snapshot.size === 0) {
+                break; // Collection is empty
+            }
+
+            // Create a new batch
+            const batch = db.batch();
+            snapshot.docs.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+
+            // Commit the batch
+            await batch.commit();
+        }
+    }
+
+    // --- END: NEW CLOUD FUNCTIONS (SUB-COLLECTIONS) ---
+
     /**
      * Sets up a real-time listener for the user's data.
      * This handles all data syncing (initial load, guest-merge, and live updates).
@@ -2430,93 +2702,134 @@ authForm.addEventListener('submit', (e) => {
 
         const userDocRef = db.collection('users').doc(user.uid);
 
-        // First, check if this is a new user needing to upload guest data.
-        // We do this *before* attaching the listener to avoid a race condition.
-        userDocRef.get().then(doc => {
-            if (!doc.exists) {
-                // --- SCENARIO B: NEW USER ---
-                // No document found, this is a new account.
-                // We upload local guest data *once*.
-                console.log('New user, checking for guest data...');
-                const localLogs = JSON.parse(localStorage.getItem('fodmapLogEntries')) || [];
-                let localProfile = JSON.parse(localStorage.getItem('fodmapUserProfile')) || defaultProfile;
+        // --- NEW GUEST MERGE LOGIC ---
+        // 1. Check for local "guest" data
+        const localLogs = JSON.parse(localStorage.getItem('fodmapLogEntries')) || [];
+        const localProfile = JSON.parse(localStorage.getItem('fodmapUserProfile')) || defaultProfile;
+        const localDietFoods = localProfile.personalizationFoods || [];
 
+        const hasLocalLogs = localLogs.length > 0;
+        const hasLocalDiet = localDietFoods.length > 0;
+
+        // 2. Check if this is a brand new user (doc doesn't exist)
+        userDocRef.get().then(doc => {
+            const isNewUser = !doc.exists;
+
+            // --- SCENARIO 1: NEW USER ---
+            // If the user is new, we *always* upload their guest data.
+            // No need to ask permission.
+            if (isNewUser) {
+                console.log('New user, uploading guest data...');
                 // Ensure profile has user's name/email from auth
                 localProfile.displayName = user.displayName || null;
                 localProfile.email = user.email || null;
                 localProfile.isPremium = false; // Default
+                
+                // We use a batch to do this all at once
+                const batch = db.batch();
+                
+                // 1. Set the main userProfile document
+                batch.set(userDocRef, { userProfile: localProfile });
+                
+                // 2. Add all local logs
+                const logsColRef = userDocRef.collection('logs');
+                localLogs.forEach(log => {
+                    batch.set(logsColRef.doc(String(log.id)), log);
+                });
+                
+                // 3. Add all local diet foods
+                const dietColRef = userDocRef.collection('diet');
+                localDietFoods.forEach(food => {
+                    batch.set(dietColRef.doc(String(food.id)), food);
+                });
 
-                // Upload local data to the cloud
-                userDocRef.set({
-                    logEntries: localLogs,
-                    userProfile: localProfile
-                }).then(() => {
+                // Commit the batch and then attach listeners
+                batch.commit().then(() => {
                     console.log('Guest data uploaded to new cloud account.');
                     showToast('Account created & data backed up!', 'success');
-                    // Now attach the listener to continue
-                    attachListener(userDocRef);
+                    
+                    // --- NEW FIX: Clear local data after successful upload ---
+                    localStorage.removeItem('fodmapLogEntries');
+                    localStorage.removeItem('fodmapUserProfile');
+                    
+                    attachListener(userDocRef); // Now attach
                 }).catch(error => {
                     console.error("Error creating new user document:", error);
                     showToast('Error saving data to cloud.', 'error');
+                    attachListener(userDocRef); // Attach anyway as a fallback
+                });
+                return; // Stop execution here
+            }
+
+            // --- SCENARIO 2: EXISTING USER with GUEST DATA ---
+            // The user is logging into a device that has local guest data.
+            // We must ask them what to do.
+            if (hasLocalLogs || hasLocalDiet) {
+                let logText = hasLocalLogs ? `${localLogs.length} log entries` : '';
+                let dietText = hasLocalDiet ? `${localDietFoods.length} diet foods` : '';
+                let message = `You have ${logText}${hasLocalLogs && hasLocalDiet ? ' and ' : ''}${dietText} saved on this device. Would you like to merge them with your cloud account?`;
+
+                showActionModal({
+                    title: 'Local Data Found',
+                    message: message,
+                    confirmText: 'Merge',
+                    onConfirm: async () => {
+                        try {
+                            const batch = db.batch();
+                            
+                            // 1. Add all local logs
+                            const logsColRef = userDocRef.collection('logs');
+                            localLogs.forEach(log => {
+                                batch.set(logsColRef.doc(String(log.id)), log, { merge: true });
+                            });
+                            
+                            // 2. Add all local diet foods
+                            const dietColRef = userDocRef.collection('diet');
+                            localDietFoods.forEach(food => {
+                                batch.set(dietColRef.doc(String(food.id)), food, { merge: true });
+                            });
+                            
+                            await batch.commit();
+                            showToast('Local data merged!', 'success');
+                            
+                            // Clear local data *after* successful merge
+                            localStorage.removeItem('fodmapLogEntries');
+                            localStorage.removeItem('fodmapUserProfile'); // Clear the whole profile
+                            
+                            attachListener(userDocRef);
+                            
+                        } catch (e) {
+                            console.error("Merge failed:", e);
+                            showToast("Merge failed. Discarding local data.", "error");
+                            attachListener(userDocRef);
+                        }
+                    },
+                    altText: 'Discard',
+                    onAltConfirm: () => {
+                        showToast('Discarding local data...', 'warning');
+                        
+                        // Clear local storage
+                        localStorage.removeItem('fodmapLogEntries');
+                        localStorage.removeItem('fodmapUserProfile');
+
+                        // --- NEW FIX: Clear in-memory state ---
+                        // This forces the app to *only* show what the cloud listeners provide.
+                        appState.logEntries = [];
+                        appState.userProfile = { ...defaultProfile, personalizationFoods: [] };
+                        
+                        // Attach listener, which will load cloud data
+                        attachListener(userDocRef);
+                    },
+                    cancelText: 'Log Out',
+                    onCancel: () => {
+                        auth.signOut(); // Safest option is to log out
+                    }
                 });
             } else {
-                // --- SCENARIO A: EXISTING USER ---
-                console.log('Existing user found, checking for local data...');
-                const localLogs = JSON.parse(localStorage.getItem('fodmapLogEntries')) || [];
-                const cloudLogData = doc.data().logEntries;
-
-                // Check if user has local logs AND cloud logs.
-                // If cloudLogData is empty, the guest-merge logic handles it.
-                // This is specifically for a logged-out user adding to "guest" data.
-                if (localLogs.length > 0 && cloudLogData && cloudLogData.length > 0) {
-                    
-                    // User is logged in, has cloud data, AND has local data.
-                    // This is the merge scenario.
-                    const entryText = localLogs.length === 1 ? '1 log entry' : `${localLogs.length} log entries`;
-                    showActionModal({
-                        title: 'Local Data Found',
-                        message: `You have ${entryText} saved on this device. Would you like to merge them with your cloud account?`,
-                        confirmText: 'Merge',
-                        onConfirm: async () => {
-                            try {
-                                const cloudLogs = doc.data().logEntries || [];
-                                
-                                // Merge logic: Use a Map to de-duplicate based on log ID
-                                const cloudLogMap = new Map(cloudLogs.map(log => [log.id, log]));
-                                localLogs.forEach(log => { cloudLogMap.set(log.id, log); });
-                                const mergedLogs = Array.from(cloudLogMap.values());
-
-                                // Save the merged list back to the cloud
-                                await userDocRef.set({ logEntries: mergedLogs }, { merge: true });
-                                showToast('Local logs merged!', 'success');
-                                
-                                // Now, attach the listener
-                                attachListener(userDocRef);
-                            } catch (e) {
-                                console.error("Merge failed:", e);
-                                showToast("Merge failed. Discarding local data.", "error");
-                                // Fallback: just attach the listener
-                                attachListener(userDocRef);
-                            }
-                        },
-                        altText: 'Discard',
-                        onAltConfirm: () => {
-                            showToast('Discarding local entries...', 'warning');
-                            // Attach listener, which will overwrite local data with cloud data
-                            attachListener(userDocRef);
-                        },
-                        cancelText: 'Log Out',
-                        onCancel: () => {
-                            auth.signOut(); // Safest option is to log out
-                        }
-                    });
-
-                } else {
-                    // No local logs to merge, or no cloud logs (fresh account)
-                    // Just attach the listener.
-                    console.log('No local data to merge, attaching listener...');
-                    attachListener(userDocRef);
-                }
+                // --- SCENARIO 3: EXISTING USER, NO GUEST DATA ---
+                // This is the normal login scenario.
+                console.log('Existing user, no local data. Attaching listener...');
+                attachListener(userDocRef);
             }
         }).catch(error => {
             console.error("Error checking user document:", error);
@@ -2532,55 +2845,138 @@ authForm.addEventListener('submit', (e) => {
     function attachListener(userDocRef) {
         // Detach any old listener before attaching a new one
         if (unsubscribeFromFirestore) {
-            unsubscribeFromFirestore();
+            unsubscribeFromFirestore(); // This will be an array of functions
         }
+        
+        let initialLoad = true;
+        const listeners = [];
 
-        unsubscribeFromFirestore = userDocRef.onSnapshot((doc) => {
-            console.log("Firestore data updated!");
-
+        // --- 1. LISTENER FOR USER PROFILE (SETTINGS) ---
+        const profileUnsub = userDocRef.onSnapshot((doc) => {
+            console.log("Firestore User Profile updated!");
             if (doc.exists) {
-                // --- DATA RECEIVED ---
-                const cloudData = doc.data();
-
-                // Load cloud data into appState
-                appState.logEntries = cloudData.logEntries || [];
-                appState.userProfile = { ...defaultProfile, ...(cloudData.userProfile || {}) };
-
-                // Save cloud data to localStorage (this is our offline cache)
-                localStorage.setItem('fodmapLogEntries', JSON.stringify(appState.logEntries));
+                const cloudProfile = doc.data().userProfile;
+                // Merge with default, but keep existing diet list
+                appState.userProfile = { 
+                    ...defaultProfile, 
+                    ...(cloudProfile || {}),
+                    personalizationFoods: appState.userProfile.personalizationFoods // Keep local diet list
+                };
+                
+                // Save to localStorage
                 localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
-
-                // --- Populate Account UI (FIX for stale UI) ---
-                // We show/hide premium based on the userProfile data
-                // (Future logic would go here)
-
-                // Note: The main side menu links are now handled
-                // by onAuthStateChanged to prevent race conditions.
-                // This listener *only* populates DB-driven content.
-
-                // --- Re-render the entire app ---
-                // This ensures the UI reflects the newly synced data
+                
+                // Re-render UI
                 updateUiForPhase(appState.userProfile.currentPhase);
                 setupProfilePage();
-                // We MUST also render log entries, as this updates the "By Date" view
-                renderLogEntries();
 
-                // This ensures we land on the home page after a successful
-                // login or refresh, preventing the "stuck page" issue.
-                
-                // Only navigate if no other page is visible (i.e., on first load/login)
-                if (!document.querySelector('.page:not(.hidden)')) {
-                    navigateTo('home');
+            } else {
+                    // The user document was deleted. This is triggered on other
+                    // clients (like Browser B) after an account deletion.
+                    // We must force a full reload.
+                    console.warn("User document does not exist. Forcing logout and reload.");
+                    showToast("Account deleted. Logging out...", "warning");
+                    forceLogoutAndReload(); // <-- This is the fix
                 }
+            }, (error) => {
+            // --- THIS IS THE REAL FIX ---
+            // This handles the case where the user is deleted, and our
+            // permission to *read* the document is revoked.
+            console.error("Firestore profile listener error:", error);
+            
+            if (error.code === 'permission-denied' || error.code === 'unauthenticated') {
+                console.warn("Permission denied listening to profile. Forcing logout.");
+                showToast("Account logged out. Logging out...", "warning");
+                
+                // Call the new, reliable helper function
+                forceLogoutAndReload();
                 
             } else {
-                // This can happen if the user deletes their account
-                console.warn("User document does not exist.");
+                // A different error, like network loss
+                showToast('Sync connection lost.', 'error');
             }
-        }, (error) => {
-            console.error("Firestore listener error:", error);
-            showToast('Sync connection lost. Check internet.', 'error');
         });
+        listeners.push(profileUnsub);
+
+        // --- 2. LISTENER FOR /logs SUB-COLLECTION ---
+        const logsUnsub = userDocRef.collection('logs').onSnapshot((snapshot) => {
+            console.log("Firestore Logs updated!");
+            snapshot.docChanges().forEach((change) => {
+                const logData = change.doc.data();
+                const logId = logData.id;
+                
+                if (change.type === "added") {
+                    // Add if it's not already in the local state
+                    if (!appState.logEntries.some(log => log.id === logId)) {
+                        appState.logEntries.push(logData);
+                    }
+                }
+                if (change.type === "modified") {
+                    const index = appState.logEntries.findIndex(log => log.id === logId);
+                    if (index > -1) {
+                        appState.logEntries[index] = logData; // Overwrite
+                    }
+                }
+                if (change.type === "removed") {
+                    appState.logEntries = appState.logEntries.filter(log => log.id !== logId);
+                }
+            });
+            
+            // Save local cache and re-render
+            localStorage.setItem('fodmapLogEntries', JSON.stringify(appState.logEntries));
+            renderLogEntries();
+            renderHomePage(); // This updates charts and progress
+
+        }, (error) => {
+            console.error("Firestore logs listener error:", error);
+        });
+        listeners.push(logsUnsub);
+
+        // --- 3. LISTENER FOR /diet SUB-COLLECTION ---
+        const dietUnsub = userDocRef.collection('diet').onSnapshot((snapshot) => {
+            console.log("Firestore Diet updated!");
+            snapshot.docChanges().forEach((change) => {
+                const foodData = change.doc.data();
+                const foodId = foodData.id;
+                
+                if (change.type === "added") {
+                    if (!appState.userProfile.personalizationFoods.some(food => food.id === foodId)) {
+                        appState.userProfile.personalizationFoods.push(foodData);
+                    }
+                }
+                if (change.type === "modified") {
+                    const index = appState.userProfile.personalizationFoods.findIndex(food => food.id === foodId);
+                    if (index > -1) {
+                        appState.userProfile.personalizationFoods[index] = foodData;
+                    }
+                }
+                if (change.type === "removed") {
+                    appState.userProfile.personalizationFoods = appState.userProfile.personalizationFoods.filter(food => food.id !== foodId);
+                }
+            });
+            
+            // Save local cache and re-render
+            localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+            renderPersonalizationSummary();
+            
+        }, (error) => {
+            console.error("Firestore diet listener error:", error);
+        });
+        listeners.push(dietUnsub);
+
+        // --- 4. MANAGE LISTENERS ---
+        // Store all unsubscribe functions
+        unsubscribeFromFirestore = () => {
+            listeners.forEach(unsub => unsub());
+        };
+        
+        // On initial load, navigate to home page
+        if (initialLoad) {
+            if (!document.querySelector('.page:not(.hidden)')) {
+                navigateTo('home');
+            }
+            initialLoad = false;
+        }
     }
 
     // --- NEW: Account Settings Page Listeners ---
@@ -2664,31 +3060,40 @@ authForm.addEventListener('submit', (e) => {
 
             showActionModal({
                 title: 'Delete Account',
-                message: `This is permanent and cannot be undone. All your cloud data will be deleted. Are you sure you want to delete your account?`,
+                message: `This is permanent and cannot be undone. All your cloud data (logs, diet list, and settings) will be deleted. Are you sure?`,
                 altText: 'Delete Forever', // Red button
-                onAltConfirm: () => {
-                    // Step 1: Delete the user's Firestore document
-                    db.collection('users').doc(user.uid).delete()
-                        .then(() => {
-                            // Step 2: Delete the user's auth account
-                            return user.delete();
-                        })
-                        .then(() => {
-                            // This block now runs AFTER user.delete() is successful
-                            showToast("Account deleted. Logging you out.", "success");
-                            // Manually clear local data and reload, just like the logout button
-                            localStorage.removeItem('fodmapLogEntries');
-                            localStorage.removeItem('fodmapUserProfile');
-                            location.reload(); // Force a full page reload
-                        })
-                        .catch((error) => {
-                            console.error("Error deleting account:", error);
-                            // This can fail if the user needs to re-authenticate
+                onAltConfirm: async () => {
+                    const userDocRef = db.collection('users').doc(user.uid);
+                    const logsColRef = userDocRef.collection('logs');
+                    const dietColRef = userDocRef.collection('diet');
+
+                    try {
+                        // Step 1: Delete auth user FIRST
+                        // This invalidates the session and triggers listeners on all clients
+                        await user.delete();
+                        console.log('Auth user deleted.');
+
+                        // Step 2: Delete all data
+                        await deleteCollection(logsColRef);
+                        await deleteCollection(dietColRef);
+                        await userDocRef.delete();
+                        console.log('Firestore data deleted.');
+                        
+                        // Step 3: Success! Show toast and force reload.
+                        showToast("Account deleted. Logging you out.", "success");
+                        forceLogoutAndReload(); // <--- SUCCESS PATH (for Browser A)
+
+                    } catch (error) {
+                        console.error("Error deleting account:", error);
+                        
+                        // Step 4: Failure. Show correct toast and force reload.
+                        if (error.code === 'auth/requires-recent-login') {
+                            showToast("Please log in again to confirm deletion.", "warning");
+                        } else {
                             showToast("Error: " + error.message, "error");
-                            if (error.code === 'auth/requires-recent-login') {
-                                showToast("Please log out and log back in to delete your account.", "warning");
-                            }
-                        });
+                        }
+                        forceLogoutAndReload(); // <--- FAILURE PATH
+                    }
                 }
             });
         });
@@ -2720,11 +3125,11 @@ authForm.addEventListener('submit', (e) => {
             // --- USER IS LOGGED OUT ---
             console.log('User is logged out.');
 
-            // --- CRITICAL: Detach the real-time listener ---
+            // --- CRITICAL: Detach the real-time listeners ---
             if (unsubscribeFromFirestore) {
-                unsubscribeFromFirestore();
+                unsubscribeFromFirestore(); // This now calls all unsub functions
                 unsubscribeFromFirestore = null;
-                console.log('Detached Firestore listener.');
+                console.log('Detached Firestore listeners.');
             }
 
             // Update UI for "Guest"
@@ -2734,10 +3139,15 @@ authForm.addEventListener('submit', (e) => {
             menuAccountLi.classList.add('hidden');
 
             // User is a guest.
-            // We need to re-load from localStorage in case they just logged out
-            // and we wiped it. (This also handles a fresh guest load)
+            // Load from localStorage. This also handles a fresh guest load.
             appState.logEntries = JSON.parse(localStorage.getItem('fodmapLogEntries')) || [];
-            appState.userProfile = { ...defaultProfile, ...(JSON.parse(localStorage.getItem('fodmapUserProfile')) || {}) };
+            const savedProfile = JSON.parse(localStorage.getItem('fodmapUserProfile')) || {};
+            appState.userProfile = { 
+                ...defaultProfile, 
+                ...savedProfile,
+                // Ensure the diet list is also loaded from the saved profile
+                personalizationFoods: (savedProfile.personalizationFoods || []) 
+            };
 
             // Render the guest UI
             updateUiForPhase(appState.userProfile.currentPhase);
@@ -3955,19 +4365,25 @@ authForm.addEventListener('submit', (e) => {
             message: `Are you sure you want to delete "${foodData.name}"? This cannot be undone.`,
             confirmText: 'Delete',
             onConfirm: () => {
-                // Find the index of the food to delete
-                const indexToDelete = appState.userProfile.personalizationFoods.findIndex(
-                    food => food.id === currentEditingFoodId
-                );
+                const foodIdToDelete = currentEditingFoodId;
                 
+                // 1. Delete from local state
+                const indexToDelete = appState.userProfile.personalizationFoods.findIndex(
+                    food => food.id === foodIdToDelete
+                );
                 if (indexToDelete > -1) {
-                    appState.userProfile.personalizationFoods.splice(indexToDelete, 1); // Remove from array
-                    localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile)); // Save
-                    saveToCloud('userProfile', appState.userProfile);
-                    renderPersonalizationSummary(); // Re-render the Home page
-                    closeFoodModal();
-                    showToast("Food deleted.", "success");
+                    appState.userProfile.personalizationFoods.splice(indexToDelete, 1);
                 }
+                
+                // 2. Delete from cloud
+                deleteFoodFromCloud(foodIdToDelete); // Async
+
+                // 3. Save local user profile & re-render
+                localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+                saveToCloud('userProfile', appState.userProfile); // Save main settings
+                renderPersonalizationSummary();
+                closeFoodModal();
+                showToast("Food deleted.", "success");
             }
         });
     });
@@ -3997,19 +4413,31 @@ authForm.addEventListener('submit', (e) => {
 
         if (currentEditingFoodId) {
             // --- UPDATE EXISTING FOOD ---
+            
+            // 1. Update in local state
             const indexToUpdate = appState.userProfile.personalizationFoods.findIndex(
                 food => food.id === currentEditingFoodId
             );
             if (indexToUpdate > -1) {
                 appState.userProfile.personalizationFoods[indexToUpdate] = newFoodData;
             }
+            
+            // 2. Update in cloud
+            updateFoodInCloud(currentEditingFoodId, newFoodData); // Async
+            
         } else {
             // --- ADD NEW FOOD ---
+            
+            // 1. Add to local state
             appState.userProfile.personalizationFoods.push(newFoodData);
+            
+            // 2. Add to cloud
+            addFoodToCloud(newFoodData); // Async
         }
 
-        // 3. Save to localStorage + cloud
+        // 3. Save user profile (local) and re-render
         localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+        // We only save the userProfile (settings) to the *main* doc
         saveToCloud('userProfile', appState.userProfile);
         
         // 4. Close modal, re-render Home, and show toast
@@ -4017,6 +4445,7 @@ authForm.addEventListener('submit', (e) => {
         renderPersonalizationSummary();
         showToast("Food saved!", "success");
     }
+
     // --- NEW: Modal Main Action - SAVE (with Validation) ---
     foodModalEdit.addEventListener('submit', (e) => {
         e.preventDefault(); // Stop the form from reloading the page
@@ -4495,41 +4924,67 @@ authForm.addEventListener('submit', (e) => {
      * Packages and downloads the user's data as a JSON file.
      */
     function handleExportData() {
-        // --- NEW: Show confirmation modal FIRST ---
         showActionModal({
             title: 'Export Data Backup',
             message: "This will create a backup file containing all your logs and profile settings.\n\nThis file can be used with the 'Import' button to restore your data or move it to a new device. It will be saved to your device's default 'Downloads' folder.",
             confirmText: 'Export Now',
-            onConfirm: () => {
-                // --- Logic moved inside onConfirm ---
+            onConfirm: async () => {
                 try {
-                    const backupData = {
-                logEntries: appState.logEntries,
-                userProfile: appState.userProfile
-            };
+                    let backupData = {
+                        logEntries: [],
+                        userProfile: {}
+                    };
+                    
+                    const user = auth.currentUser;
+                    
+                    if (user) {
+                        // --- LOGGED IN: Fetch fresh data from cloud ---
+                        const userDocRef = db.collection('users').doc(user.uid);
+                        
+                        // 1. Get logs
+                        const logsSnapshot = await userDocRef.collection('logs').get();
+                        const cloudLogs = logsSnapshot.docs.map(doc => doc.data());
+                        
+                        // 2. Get diet
+                        const dietSnapshot = await userDocRef.collection('diet').get();
+                        const cloudDiet = dietSnapshot.docs.map(doc => doc.data());
+                        
+                        // 3. Get profile (settings)
+                        const profileDoc = await userDocRef.get();
+                        const cloudProfile = profileDoc.data().userProfile || defaultProfile;
 
-            const dataStr = JSON.stringify(backupData, null, 2);
-            const blob = new Blob([dataStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
+                        // 4. Assemble the backup object
+                        backupData.logEntries = cloudLogs;
+                        backupData.userProfile = { ...cloudProfile, personalizationFoods: cloudDiet };
+                        
+                    } else {
+                        // --- GUEST: Use local state ---
+                        backupData.logEntries = appState.logEntries;
+                        backupData.userProfile = appState.userProfile;
+                    }
 
-            const a = document.createElement('a');
-            a.href = url;
+                    // 5. Create and download the file
+                    const dataStr = JSON.stringify(backupData, null, 2);
+                    const blob = new Blob([dataStr], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
 
-            const date = new Date().toISOString().split('T')[0];
-            a.download = `fodmap-logmap-backup-${date}.json`;
+                    const a = document.createElement('a');
+                    a.href = url;
 
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+                    const date = new Date().toISOString().split('T')[0];
+                    a.download = `fodmap-logmap-backup-${date}.json`;
 
-            URL.revokeObjectURL(url);
-            showToast("Data exported!", "success");
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
 
-        } catch (err) {
-            console.error("Export failed:", err);
-            showToast("Data export failed.", "error");
-        }
-                // --- END: Logic moved inside onConfirm ---
+                    URL.revokeObjectURL(url);
+                    showToast("Data exported!", "success");
+
+                } catch (err) {
+                    console.error("Export failed:", err);
+                    showToast("Data export failed.", "error");
+                }
             }
         });
     }
@@ -4546,44 +5001,66 @@ authForm.addEventListener('submit', (e) => {
 
         const reader = new FileReader();
 
-        reader.onload = (e) => {
-            const fileContent = e.target.result; // Store file content
-
-            // --- Logic is now the main body of onload ---
+        reader.onload = async (e) => {
             try {
-                const importedData = JSON.parse(fileContent); // Parse stored content
-                        
-                        // Basic validation
-                        if (importedData.logEntries && importedData.userProfile) {
-                    // Save to localStorage
-                    localStorage.setItem('fodmapLogEntries', JSON.stringify(importedData.logEntries));
-                    localStorage.setItem('fodmapUserProfile', JSON.stringify(importedData.userProfile));
+                const importedData = JSON.parse(e.target.result);
+                
+                // Basic validation
+                if (!importedData.logEntries || !importedData.userProfile) {
+                    throw new Error("Invalid file format.");
+                }
 
-                    // --- NEW: Update appState AND save to cloud ---
-                    // This makes the imported data the new "source of truth"
-                    appState.logEntries = importedData.logEntries;
-                    appState.userProfile = importedData.userProfile;
-                    saveToCloud('logEntries', appState.logEntries);
-                    saveToCloud('userProfile', appState.userProfile);
-                    // --- END NEW ---
+                // --- NEW IMPORT LOGIC ---
+                // 1. Set local storage and app state
+                const logs = importedData.logEntries || [];
+                // The 'diet' list is now in userProfile.personalizationFoods
+                const profile = importedData.userProfile || defaultProfile;
+                const dietFoods = profile.personalizationFoods || [];
 
-                    // Show confirmation and reload
-                    showToast("Import successful! Restarting app...", "success");
+                localStorage.setItem('fodmapLogEntries', JSON.stringify(logs));
+                localStorage.setItem('fodmapUserProfile', JSON.stringify(profile));
+                
+                appState.logEntries = logs;
+                appState.userProfile = profile;
+                
+                // 2. If user is logged in, batch-write to cloud
+                const user = auth.currentUser;
+                if (user) {
+                    const batch = db.batch();
+                    const userDocRef = db.collection('users').doc(user.uid);
+                    
+                    // 2a. Save the main userProfile (settings)
+                    batch.set(userDocRef, { userProfile: profile });
 
-                    // Reload the app to apply the new state
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
+                    // 2b. Add all logs to the /logs sub-collection
+                    const logsColRef = userDocRef.collection('logs');
+                    logs.forEach(log => {
+                        const docRef = logsColRef.doc(String(log.id));
+                        batch.set(docRef, log);
+                    });
+                    
+                    // 2c. Add all diet foods to the /diet sub-collection
+                    const dietColRef = userDocRef.collection('diet');
+                    dietFoods.forEach(food => {
+                        const docRef = dietColRef.doc(String(food.id));
+                        batch.set(docRef, food);
+                    });
 
-                } else {
-                throw new Error("Invalid file format.");
+                    // 2d. Commit the batch
+                    await batch.commit();
+                }
+                
+                // 3. Show confirmation and reload
+                showToast("Import successful! Restarting app...", "success");
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+
+            } catch (err) {
+                console.error("Import failed:", err);
+                showToast("Import failed. File may be invalid.", "error");
             }
-        } catch (err) {
-            console.error("Import failed:", err);
-            showToast("Import failed. File may be invalid.", "error");
-        }
-        // --- END: Simplified logic ---
-    };
+        };
         
         reader.onerror = () => {
             console.error("File reading failed:", reader.error);
