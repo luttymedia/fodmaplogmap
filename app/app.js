@@ -3680,10 +3680,18 @@ authForm.addEventListener('submit', (e) => {
     }
     
     /**
-     * Closes the onboarding modal.
+     * Closes the onboarding modal and marks it as "seen".
      */
     function closeOnboardingModal() {
         if (onboardingModal) onboardingModal.classList.add('hidden');
+
+        // --- NEW: Mark onboarding as "seen" ---
+        // This prevents the modal from showing again, even if skipped.
+        if (appState.userProfile.hasCompletedOnboarding === false) {
+            appState.userProfile.hasCompletedOnboarding = true;
+            localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+            saveToCloud('userProfile', appState.userProfile);
+        }
     }
 
     /**
