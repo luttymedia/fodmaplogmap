@@ -58,6 +58,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const authCheckTerms = document.getElementById('auth-check-terms');
     const authCheckHealth = document.getElementById('auth-check-health');
 
+    // --- NEW: Google Consent Elements ---
+    const authViewGoogleConsent = document.getElementById('auth-view-google-consent');
+    const googleCheckTerms = document.getElementById('google-check-terms');
+    const googleCheckHealth = document.getElementById('google-check-health');
+    const googleConsentConfirmBtn = document.getElementById('google-consent-confirm-btn');
+    const googleConsentCancelBtn = document.getElementById('google-consent-cancel-btn');
+
     // --- Phase-Controlled Elements ---
     const progressCard = document.getElementById('home-progress-card');
     const insightsCard = document.getElementById('home-insights-card');
@@ -201,6 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Define the default profile structure
     const defaultProfile = { 
+        hasConsentedToGDPR: false, // NEW: Default to false for guests
         diagnoses: [], 
         intolerances: [], 
         allergiesOther: '', 
@@ -247,6 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const appState = {
         logEntries: JSON.parse(localStorage.getItem('fodmapLogEntries')) || [],
         isSyncing: false,
+        pendingGoogleUser: null, // Tracks a Google user awaiting GDPR consent
         logEntries: JSON.parse(localStorage.getItem('fodmapLogEntries')) || [],
         // Merge saved profile over defaults
         userProfile: { 
@@ -2313,6 +2322,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset views
         if (authViewForm) authViewForm.classList.remove('hidden');
         if (authViewVerify) authViewVerify.classList.add('hidden');
+        if (authViewGoogleConsent) authViewGoogleConsent.classList.add('hidden');
 
         // Reset password visibility on modal open
         if (authPasswordInput) authPasswordInput.type = 'password';
@@ -2353,13 +2363,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function closeAuthModal() {
+        // --- NEW: Cleanup Pending Google User AND Firestore Data ---
+        if (appState.pendingGoogleUser) {
+            const userToDelete = appState.pendingGoogleUser;
+            const uid = userToDelete.uid;
+            appState.pendingGoogleUser = null;
+
+            // 1. CRITICAL FIX: Detach listeners FIRST
+            // This prevents the app from detecting the deletion and auto-reloading
+            // before we have a chance to delete the auth account.
+            if (unsubscribeFromFirestore) {
+                unsubscribeFromFirestore();
+                unsubscribeFromFirestore = null;
+            }
+
+            const userDocRef = db.collection('users').doc(uid);
+            const logsColRef = userDocRef.collection('logs');
+            const dietColRef = userDocRef.collection('diet');
+
+            // 2. Clean up Firestore
+            Promise.all([
+                deleteCollection(logsColRef),
+                deleteCollection(dietColRef),
+                userDocRef.delete()
+            ])
+            .then(() => {
+                console.log('Orphaned Firestore data cleaned up.');
+                // 3. Delete Auth User
+                return userToDelete.delete();
+            })
+            .then(() => {
+                console.log('Pending user deleted on modal close.');
+                showToast("Account creation cancelled.", "warning");
+                // 4. Reload to ensure a clean Guest state
+                window.location.reload();
+            })
+            .catch((error) => {
+                console.error("Error cleaning up pending user:", error);
+                // Fallback: Force sign out and reload
+                auth.signOut().then(() => window.location.reload());
+            });
+            
+            // Return early to prevent the rest of the modal close logic 
+            // from interfering before the reload happens.
+            return; 
+        }
+        // --- END NEW ---
+
         authModal.classList.add('hidden');
         authForm.reset();
-        // --- NEW: Reset UI state ---
+        
+        // Reset UI state
         if (authCheckTerms) authCheckTerms.checked = false;
         if (authCheckHealth) authCheckHealth.checked = false;
-        authSubmitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        authSubmitBtn.disabled = false;
+        if (authSubmitBtn) {
+            authSubmitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            authSubmitBtn.disabled = false;
+        }
     }
 
     /**
@@ -2421,6 +2481,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (appState.currentAuthMode === 'signup') {
         // --- SIGN UP ---
         const name = authNameInput.value;
+        
+        // --- NEW: Mark consent as true before creation ---
+        // This ensures the data uploaded by the listener is correct
+        appState.userProfile.hasConsentedToGDPR = true;
+        localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
+
         if (!name) {
             showAuthError('Please enter your name.');
             return;
@@ -2572,16 +2638,107 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Handle Google Sign-In Button ---
     authGoogleBtn.addEventListener('click', () => {
         auth.signInWithPopup(googleProvider)
-            .then((result) => {
-                // User is logged in
-                console.log('User logged in with Google:', result.user);
-                closeAuthModal();
+            .then(async (result) => { // Note: Added async here
+                const user = result.user;
+                let isNewUser = result.additionalUserInfo?.isNewUser;
+
+                // --- NEW: ROBUSTNESS CHECK ---
+                // If Firebase says "Existing User", we must double-check Firestore
+                if (!isNewUser) {
+                    try {
+                        // Force server fetch to bypass local cache
+                        const userDoc = await db.collection('users').doc(user.uid).get({ source: 'server' });
+                        
+                        if (!userDoc.exists) {
+                            console.log("User exists in Auth but has no Firestore data. Treating as new.");
+                            isNewUser = true;
+                        } else {
+                            // RACE CONDITION FIX:
+                            // If the doc exists, check if it has explicitly consented.
+                            // Guest data uploaded by the background listener will have this as false.
+                            const profile = userDoc.data().userProfile || {};
+                            if (profile.hasConsentedToGDPR === false) {
+                                console.log("User data exists but has not consented (Zombie Data). Treating as new.");
+                                isNewUser = true;
+                            }
+                        }
+                    } catch (err) {
+                        console.error("Error checking user doc:", err);
+                        isNewUser = true; // Fail safe
+                    }
+                }
+                // --- END NEW ---
+
+                if (isNewUser) {
+                    // --- STOP! GDPR CHECK REQUIRED ---
+                    console.log('New Google User (or Re-registering). Showing consent form...');
+                    
+                    // 1. Set the Pending Flag
+                    appState.pendingGoogleUser = user;
+
+                    // 2. Switch Views
+                    if (authViewForm) authViewForm.classList.add('hidden');
+                    if (authViewGoogleConsent) authViewGoogleConsent.classList.remove('hidden');
+                    
+                    // 3. Setup Listeners
+                    const checkGoogleConsent = () => {
+                        const t = googleCheckTerms.checked;
+                        const h = googleCheckHealth.checked;
+                        if (t && h) {
+                            googleConsentConfirmBtn.disabled = false;
+                            googleConsentConfirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        } else {
+                            googleConsentConfirmBtn.disabled = true;
+                            googleConsentConfirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                        }
+                    };
+
+                    googleCheckTerms.onclick = checkGoogleConsent;
+                    googleCheckHealth.onclick = checkGoogleConsent;
+                    
+                    // Reset checkboxes
+                    googleCheckTerms.checked = false;
+                    googleCheckHealth.checked = false;
+                    checkGoogleConsent(); 
+
+                    // Confirm Button (Success)
+                    googleConsentConfirmBtn.onclick = async () => { // Make async
+                        // 1. Update Firestore to mark as consented
+                        try {
+                            await db.collection('users').doc(user.uid).set({
+                                userProfile: { hasConsentedToGDPR: true }
+                            }, { merge: true });
+                            
+                            // Update local state too
+                            appState.userProfile.hasConsentedToGDPR = true;
+                        } catch (e) {
+                            console.error("Error saving consent:", e);
+                        }
+
+                        appState.pendingGoogleUser = null; 
+                        
+                        closeAuthModal();
+                        showToast("Welcome! Account created.", "success");
+                        
+                        googleConsentConfirmBtn.onclick = null;
+                        googleConsentCancelBtn.onclick = null;
+                    };
+
+                    // Cancel Button (Fail)
+                    googleConsentCancelBtn.onclick = closeAuthModal;
+
+                } else {
+                    // --- EXISTING USER ---
+                    console.log('Existing Google User with Data. Logging in...');
+                    closeAuthModal();
+                }
             })
             .catch((error) => {
-                // We don't use showAuthError here as the popup handles its own errors
                 console.error('Google sign-in error:', error.message);
+                showAuthError(error.message);
             });
     });
+
     // --- NEW: Auth Helper Listeners ---
     if (authPasswordToggle) {
         authPasswordToggle.addEventListener('click', () => {

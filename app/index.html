@@ -564,7 +564,8 @@
                             ?
                         </button>
                     </p>
-                    </div> <div id="auth-view-verify" class="hidden text-center space-y-4 py-2">
+                    </div> 
+                    <div id="auth-view-verify" class="hidden text-center space-y-4 py-2">
                         <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-2xl">
                             <i class="fas fa-envelope-open-text"></i>
                         </div>
@@ -589,6 +590,39 @@
                         <button id="auth-verify-skip-btn" class="text-xs text-muted hover:text-primary underline mt-2">
                             Skip for now
                         </button>
+                    </div>
+                    <div id="auth-view-google-consent" class="hidden space-y-4 py-2">
+                        <div class="text-center mb-4">
+                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-xl mb-2">
+                                <i class="fab fa-google"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-secondary">Finalize Account</h3>
+                            <p class="text-sm text-muted">Please accept our terms to continue.</p>
+                        </div>
+
+                        <div class="space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-200 text-left">
+                            <div class="flex items-start">
+                                <input type="checkbox" id="google-check-terms" class="mt-1 mr-2 accent-adaptive">
+                                <label for="google-check-terms" class="text-xs text-secondary leading-tight">
+                                    I agree to the <a href="https://fodmaplogmap-web.onrender.com/privacy.html" target="_blank" class="underline text-primary">Privacy Policy</a> and Terms of Service.
+                                </label>
+                            </div>
+                            <div class="flex items-start">
+                                <input type="checkbox" id="google-check-health" class="mt-1 mr-2 accent-adaptive">
+                                <label for="google-check-health" class="text-xs text-secondary leading-tight">
+                                    I explicitly consent to the processing of my health data (symptoms, diagnoses) for the purpose of this app.
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 mt-4">
+                            <button id="google-consent-confirm-btn" class="w-full bg-adaptive font-semibold py-2.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors shadow opacity-50 cursor-not-allowed" disabled>
+                                Create Account
+                            </button>
+                            <button id="google-consent-cancel-btn" class="w-full text-sm text-error hover:underline">
+                                Cancel
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
