@@ -94,6 +94,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const authForgotPasswordLink = document.getElementById('auth-forgot-password-link');
     const authContinueGuestBtn = document.getElementById('auth-continue-guest-btn');
     const authGuestHelpBtn = document.getElementById('auth-guest-help-btn');
+
+    // --- NEW: Verification Elements ---
+    const authViewForm = document.getElementById('auth-view-form');
+    const authViewVerify = document.getElementById('auth-view-verify');
+    const authVerifyEmailDisplay = document.getElementById('auth-verify-email-display');
+    const authVerifyDoneBtn = document.getElementById('auth-verify-done-btn');
+    const authVerifyResendBtn = document.getElementById('auth-verify-resend-btn');
+    const authVerifySkipBtn = document.getElementById('auth-verify-skip-btn');
+    
+    const verificationBanner = document.getElementById('verification-banner');
+    const bannerResendBtn = document.getElementById('banner-resend-btn');
+    const bannerVerifyCheckBtn = document.getElementById('banner-verify-check-btn'); // NEW
+    
+    const accountEmailStatus = document.getElementById('account-email-status');
+    // Removed accountResendBtn
+
     const menuLoginBtn = document.getElementById('menu-login-btn');
     const menuLoginLi = document.getElementById('menu-login-li');
     const menuPremiumLi = document.getElementById('menu-premium-li');
@@ -2288,6 +2304,10 @@ document.addEventListener('DOMContentLoaded', () => {
         authError.classList.add('hidden'); // Hide old errors
         authForm.reset(); // Clear old inputs
 
+        // Reset views
+        if (authViewForm) authViewForm.classList.remove('hidden');
+        if (authViewVerify) authViewVerify.classList.add('hidden');
+
         // Reset password visibility on modal open
         if (authPasswordInput) authPasswordInput.type = 'password';
         if (authPasswordToggle) authPasswordToggle.innerHTML = '<i class="fas fa-eye"></i>';
@@ -2364,9 +2384,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Handle Email/Password Form Submit ---
-authForm.addEventListener('submit', (e) => {
-    e.preventDefault(); // Stop the form from reloading
-    setAuthLoading(true);
+    authForm.addEventListener('submit', (e) => {
+        e.preventDefault(); // Stop the form from reloading
+        setAuthLoading(true);
 
     const email = authEmailInput.value;
     const password = authPasswordInput.value;
@@ -2390,7 +2410,23 @@ authForm.addEventListener('submit', (e) => {
                 // User is created and name is set
                 console.log('User signed up and profile updated:', auth.currentUser);
                 setAuthLoading(false);
-                closeAuthModal();
+                
+                // --- NEW: Send Verification & Switch View ---
+                const user = auth.currentUser;
+                if (user && !user.emailVerified) {
+                    // Send the email immediately
+                    user.sendEmailVerification().catch(err => console.error("Auto-send verify failed", err));
+                    
+                    // Switch modal view
+                    if (authVerifyEmailDisplay) authVerifyEmailDisplay.textContent = user.email;
+                    if (authViewForm) authViewForm.classList.add('hidden');
+                    if (authViewVerify) authViewVerify.classList.remove('hidden');
+                    
+                    // Don't close the modal yet
+                } else {
+                    closeAuthModal();
+                }
+                // --- END NEW ---
             })
             .catch((error) => {
                 let message = 'An unknown error occurred.';
@@ -2431,6 +2467,58 @@ authForm.addEventListener('submit', (e) => {
             });
     }
 });
+
+    // --- NEW: Verification View Listeners ---
+        if (authVerifyDoneBtn) {
+            authVerifyDoneBtn.addEventListener('click', () => {
+                // Reload user to get fresh token/status
+                const user = auth.currentUser;
+                if (user) {
+                    authVerifyDoneBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+                    user.reload().then(() => {
+                        if (user.emailVerified) {
+                            showToast("Email verified! Welcome aboard.", "success");
+                            closeAuthModal();
+                            updateVerificationUI(user);
+                        } else {
+                            showToast("Not verified yet. Check your inbox.", "warning");
+                            authVerifyDoneBtn.textContent = "I've Verified";
+                        }
+                    });
+                }
+            });
+        }
+
+        if (authVerifyResendBtn) {
+            authVerifyResendBtn.addEventListener('click', () => handleSendVerification(authVerifyResendBtn));
+        }
+        
+        if (authVerifySkipBtn) {
+            authVerifySkipBtn.addEventListener('click', closeAuthModal);
+        }
+        
+        if (bannerResendBtn) {
+            bannerResendBtn.addEventListener('click', () => handleSendVerification(bannerResendBtn));
+        }
+
+        if (bannerVerifyCheckBtn) {
+        bannerVerifyCheckBtn.addEventListener('click', () => {
+            const user = auth.currentUser;
+            if (user) {
+                const originalText = bannerVerifyCheckBtn.textContent;
+                bannerVerifyCheckBtn.textContent = "Checking...";
+                user.reload().then(() => {
+                    if (user.emailVerified) {
+                        showToast("Email verified! Thanks.", "success");
+                        updateVerificationUI(user);
+                    } else {
+                        showToast("Still unverified. Try refreshing.", "warning");
+                        bannerVerifyCheckBtn.textContent = originalText;
+                    }
+                });
+            }
+        });
+    }
 
     // --- Handle Google Sign-In Button ---
     authGoogleBtn.addEventListener('click', () => {
@@ -3129,6 +3217,86 @@ authForm.addEventListener('submit', (e) => {
         });
     }
 
+    /**
+     * Updates the UI to reflect the user's email verification status.
+     */
+    function updateVerificationUI(user) {
+        if (!user) {
+            if (verificationBanner) verificationBanner.classList.add('hidden');
+            return;
+        }
+
+        const isVerified = user.emailVerified;
+
+        // 1. Banner
+        if (verificationBanner) {
+            // Only show if NOT verified and NOT anonymous
+            if (!isVerified && !user.isAnonymous) {
+                verificationBanner.classList.remove('hidden');
+            } else {
+                verificationBanner.classList.add('hidden');
+            }
+        }
+
+        // 2. Account Settings Page
+        if (accountEmailStatus) {
+            if (isVerified) {
+                accountEmailStatus.textContent = 'Verified ✅';
+                accountEmailStatus.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700';
+                accountEmailStatus.classList.remove('hidden');
+            } else {
+                accountEmailStatus.textContent = 'Unverified ⚠️';
+                accountEmailStatus.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700';
+                accountEmailStatus.classList.remove('hidden');
+            }
+        }
+    }
+
+    /**
+     * Sends the verification email with cooldown protection and UI feedback.
+     * @param {HTMLElement} btnElement - The button that triggered the action (for visual feedback).
+     */
+    function handleSendVerification(btnElement) {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        // Visual feedback
+        const originalText = btnElement.textContent;
+        btnElement.disabled = true;
+        btnElement.textContent = "Sending...";
+
+        user.sendEmailVerification()
+            .then(() => {
+                showToast("Verification link sent! Check your inbox.", "success");
+                
+                // Cooldown UI
+                let count = 60;
+                btnElement.textContent = `Sent! Wait ${count}s`;
+                
+                const interval = setInterval(() => {
+                    count--;
+                    if (count <= 0) {
+                        clearInterval(interval);
+                        btnElement.textContent = originalText;
+                        btnElement.disabled = false;
+                    } else {
+                        btnElement.textContent = `Sent! Wait ${count}s`;
+                    }
+                }, 1000);
+            })
+            .catch((error) => {
+                console.error("Verification error:", error);
+                if (error.code === 'auth/too-many-requests') {
+                    showToast("Please wait a while before trying again.", "warning");
+                } else {
+                    showToast("Error sending email.", "error");
+                }
+                // Reset button
+                btnElement.textContent = originalText;
+                btnElement.disabled = false;
+            });
+    }
+
     // --- CENTRAL AUTH LISTENER ---
     // This function runs on page load and whenever the auth state changes
     auth.onAuthStateChanged((user) => {
@@ -3147,6 +3315,9 @@ authForm.addEventListener('submit', (e) => {
             menuLoginLi.classList.add('hidden');
             menuLogoutLi.classList.remove('hidden');
             menuAccountLi.classList.remove('hidden');
+
+            // --- NEW: Update Verification UI ---
+            updateVerificationUI(user);
             
             // Populate account details from the auth object (which we have now)
             if (menuAccountEmail) menuAccountEmail.textContent = user.email || 'Account Settings';
@@ -3160,6 +3331,9 @@ authForm.addEventListener('submit', (e) => {
         } else {
             // --- USER IS LOGGED OUT ---
             console.log('User is logged out.');
+
+            // --- NEW: Hide Verification UI ---
+            updateVerificationUI(null);
 
             // --- CRITICAL: Detach the real-time listeners ---
             if (unsubscribeFromFirestore) {
