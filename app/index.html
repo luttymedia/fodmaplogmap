@@ -532,6 +532,21 @@
                             </button>
                         </div>
 
+                        <div id="auth-legal-checkboxes" class="hidden space-y-2 mt-3">
+                            <div class="flex items-start">
+                                <input type="checkbox" id="auth-check-terms" class="mt-1 mr-2 accent-adaptive">
+                                <label for="auth-check-terms" class="text-xs text-secondary leading-tight">
+                                    I agree to the <a href="https://fodmaplogmap-web.onrender.com/privacy.html" target="_blank" class="underline text-primary">Privacy Policy</a> and Terms of Service.
+                                </label>
+                            </div>
+                            <div class="flex items-start">
+                                <input type="checkbox" id="auth-check-health" class="mt-1 mr-2 accent-adaptive">
+                                <label for="auth-check-health" class="text-xs text-secondary leading-tight">
+                                    I explicitly consent to the processing of my health data (symptoms, diagnoses) for the purpose of this app.
+                                </label>
+                            </div>
+                        </div>
+
                         <p id="auth-error" class="text-error text-sm hidden"></p>
 
                         <button type="submit" id="auth-submit-btn" class="w-full bg-adaptive font-semibold py-2.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow">

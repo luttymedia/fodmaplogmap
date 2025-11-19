@@ -52,6 +52,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const logModalClose = document.getElementById('log-modal-close');
     const logFormSubmitBtn = document.getElementById('log-form-submit-btn');
     const logFormCancelBtn = document.getElementById('log-form-cancel-edit');
+
+    // --- NEW: GDPR Elements ---
+    const authLegalCheckboxes = document.getElementById('auth-legal-checkboxes');
+    const authCheckTerms = document.getElementById('auth-check-terms');
+    const authCheckHealth = document.getElementById('auth-check-health');
+
     // --- Phase-Controlled Elements ---
     const progressCard = document.getElementById('home-progress-card');
     const insightsCard = document.getElementById('home-insights-card');
@@ -2316,6 +2322,14 @@ document.addEventListener('DOMContentLoaded', () => {
             authModalTitle.textContent = 'Sign Up';
             authNameField.classList.remove('hidden');
             authForgotPasswordLink.classList.add('hidden'); // Hide for signup
+            
+            // --- NEW: Show Legal Checkboxes ---
+            if (authLegalCheckboxes) authLegalCheckboxes.classList.remove('hidden');
+            
+            // Disable button initially for signup
+            authSubmitBtn.disabled = true;
+            authSubmitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            
             authSubmitBtn.textContent = 'Sign Up';
             authSwitchLink.innerHTML = 'Already have an account? <button id="auth-switch-btn" class="font-bold text-primary underline">Log In</button>';
         } else {
@@ -2323,6 +2337,14 @@ document.addEventListener('DOMContentLoaded', () => {
             authModalTitle.textContent = 'Log In';
             authNameField.classList.add('hidden');
             authForgotPasswordLink.classList.remove('hidden'); // Show for login
+            
+            // --- NEW: Hide Legal Checkboxes ---
+            if (authLegalCheckboxes) authLegalCheckboxes.classList.add('hidden');
+            
+            // Enable button for login
+            authSubmitBtn.disabled = false;
+            authSubmitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
             authSubmitBtn.textContent = 'Log In';
             authSwitchLink.innerHTML = 'Don\'t have an account? <button id="auth-switch-btn" class="font-bold text-primary underline">Sign Up</button>';
         }
@@ -2333,6 +2355,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeAuthModal() {
         authModal.classList.add('hidden');
         authForm.reset();
+        // --- NEW: Reset UI state ---
+        if (authCheckTerms) authCheckTerms.checked = false;
+        if (authCheckHealth) authCheckHealth.checked = false;
+        authSubmitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        authSubmitBtn.disabled = false;
     }
 
     /**
@@ -2467,6 +2494,28 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 });
+
+    // --- NEW: GDPR Checkbox Logic ---
+    function checkSignupConsent() {
+        // Only run this check if we are in signup mode
+        if (appState.currentAuthMode !== 'signup') return;
+
+        const terms = authCheckTerms.checked;
+        const health = authCheckHealth.checked;
+
+        if (terms && health) {
+            authSubmitBtn.disabled = false;
+            authSubmitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            authSubmitBtn.disabled = true;
+            authSubmitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    }
+
+    if (authCheckTerms && authCheckHealth) {
+        authCheckTerms.addEventListener('change', checkSignupConsent);
+        authCheckHealth.addEventListener('change', checkSignupConsent);
+    }
 
     // --- NEW: Verification View Listeners ---
         if (authVerifyDoneBtn) {
