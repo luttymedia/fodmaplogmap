@@ -16,6 +16,8 @@ firebase.initializeApp(firebaseConfig);
 // Get handles to the services
 const auth = firebase.auth();
 const db = firebase.firestore();
+// NEW: Initialize Cloud Functions
+const functions = firebase.functions();
 db.enablePersistence();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
@@ -267,6 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPageIndex: 0,
         currentlyEditingId: null,
         stagedImageData: null,
+        stagedImageMimeType: null,
         currentLogView: 'date', // 'group' or 'date'
         currentDateSort: 'newest', // 'newest' or 'oldest'
         currentPersonalizationView: 'tolerance', // 'group' or 'tolerance'
@@ -758,9 +761,9 @@ document.addEventListener('DOMContentLoaded', () => {
         hideAutocomplete(); // NEW: Hide autocomplete
     }
 
-    const handleAIQuery = (prompt, title, imageData = null) => {
+    const handleAIQuery = (prompt, title, imageData = null, mimeType = null) => {
          aiResultsLoader.classList.remove('hidden'); aiResultsContainer.classList.add('hidden'); aiResultsContent.innerHTML = '';
-         callGeminiAPI(prompt, imageData)
+         callGeminiAPI(prompt, imageData, mimeType)
             .then(response => {
                 if (response) { 
                     const profileHTML = getProfileForDisplay();
@@ -834,7 +837,7 @@ document.addEventListener('DOMContentLoaded', () => {
             Format: **bold** headings, *italics*, newlines, emojis.
             No tables, '###', '---', or '|'. No disclaimer.`;
             
-            handleAIQuery(prompt, title, appState.stagedImageData);
+            handleAIQuery(prompt, title, appState.stagedImageData, appState.stagedImageMimeType);
 
         } else if (foodName) {
             // We are searching with text only
@@ -847,7 +850,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             No tables, '###', '---', or '|'. No disclaimer.`;
             
-            handleAIQuery(prompt, title, null);
+            handleAIQuery(prompt, title, null, null);
         }
     });
 
@@ -875,6 +878,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     clearStagedImageBtn.addEventListener('click', () => {
         appState.stagedImageData = null;
+        appState.stagedImageMimeType = null;
         stagedImageContainer.classList.add('hidden');
         imagePreview.src = '';
     });
@@ -883,11 +887,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const file = event.target.files[0]; if (!file) return; 
         const reader = new FileReader();
         reader.onload = (e) => {
-            // 1. Get the base64 data
-            appState.stagedImageData = e.target.result.split(',')[1]; 
-            
+            const result = e.target.result;
+            // 1. Get the base64 data and MIME type
+            appState.stagedImageData = result.split(',')[1]; 
+            appState.stagedImageMimeType = result.split(';')[0].split(':')[1]; // <--- EXTRACT MIME TYPE
+
             // 2. Show the preview
-            imagePreview.src = e.target.result;
+            imagePreview.src = result;
             uploadPromptText.textContent = file.name;
             stagedImageContainer.classList.remove('hidden');
 
@@ -4955,19 +4961,31 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const openGemini = (title) => { geminiTitle.textContent = title; geminiMdl.classList.remove('hidden'); geminiLoader.classList.remove('hidden'); geminiContent.classList.add('hidden'); geminiError.classList.add('hidden'); }; const closeGemini = () => geminiMdl.classList.add('hidden'); geminiClose.addEventListener('click', closeGemini);
-    const callGeminiAPI = async (prompt, imgData = null, retries = 3, delay = 1000) => {
-        const key = appState.userProfile.apiKey || ""; 
-        if (!key) {
-            console.error("API Key is missing. Please add it in the Profile tab.");
-            showToast("API Key is missing. Add it in your Profile.", "error");
-            return null; // Stop the API call
-        }
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`; let parts = [{ text: prompt }]; if (imgData) parts.push({ inlineData: { mimeType: 'image/jpeg', data: imgData } }); const payload = { contents: [{ parts }] };
+    const callGeminiAPI = async (prompt, imgData = null, mimeType = null) => { // <--- ACCEPT MIME TYPE
+        const analyzeFodmap = functions.httpsCallable('analyzeFodmap');
+
         try {
-            const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (!res.ok) { if (res.status === 429 && retries > 0) { await new Promise(r => setTimeout(r, delay)); return callGeminiAPI(prompt, imgData, retries - 1, delay * 2); } throw new Error(`${res.statusText} (${res.status})`); }
-            const result = await res.json(); return result.candidates?.[0]?.content?.parts?.[0]?.text;
-        } catch (err) { console.error("API failed:", err); return null; }
+            const result = await analyzeFodmap({ 
+                text: prompt, 
+                image: imgData,
+                mimeType: mimeType // <--- SEND TO BACKEND
+            });
+            
+            return result.data.text; 
+
+        } catch (err) {
+            console.error("Cloud Function failed:", err);
+            
+            // Handle specific error codes for better user feedback
+            if (err.code === 'unauthenticated') {
+                showToast("Please log in to use the AI.", "error");
+            } else if (err.code === 'resource-exhausted') {
+                showToast("AI is busy. Please try again later.", "warning");
+            } else {
+                showToast("AI Service unavailable. Please try again.", "error");
+            }
+            return null;
+        }
     };
     document.getElementById('summarize-journey-btn').addEventListener('click', async () => {
         if (appState.logEntries.length === 0) { showToast("Need logs.", "warning"); return; } 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fodmap-logmap-v6';
+const CACHE_NAME = 'fodmap-logmap-v7';
 const FONT_CACHE = 'font-icon-cache-v1';
 const CACHE_WHITELIST = [CACHE_NAME, FONT_CACHE];
 
