@@ -215,12 +215,12 @@
                 <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
                     <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center">🧠 AI Food Assistant</h2>
                      <p class="text-subtle mb-3 text-sm">Get instant FODMAP info for any food or ingredient list based on your profile. This is not medical advice.</p>
-
-                     <div id="ai-upgrade-banner" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-lg text-center mb-3">
-                        <p class="text-sm font-semibold text-amber-700">You are out of free AI credits.</p>
-                        <button id="ai-premium-btn" class="mt-2 bg-amber-500 text-white font-bold py-1.5 px-4 rounded-full hover:bg-amber-600 text-sm">
+                    <div id="ai-upgrade-banner" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-lg text-center mb-3 transition-all duration-300">
+                        <p id="ai-credits-text" class="text-sm font-semibold text-amber-700">Checking credits...</p>
+                        <button id="ai-premium-btn" class="mt-2 bg-amber-500 text-white font-bold py-1.5 px-4 rounded-full hover:bg-amber-600 text-sm shadow-sm transition-transform hover:scale-105">
                             Go Premium
                         </button>
+                    </div>
                     </div>
 
                     <div id="ai-ad-placeholder" class="hidden w-full h-16 bg-slate-200 rounded-lg flex items-center justify-center text-subtle text-sm mb-3">
@@ -303,16 +303,6 @@
                     <p class="text-subtle mb-4 text-sm">Your selections here will customize the AI Assistant's advice to your specific needs.</p>
 
                     <form id="profile-form" class="space-y-4">
-                        <div id="api-key-accordion-container" class="api-key-accordion">
-                            <div class="api-key-header">
-                                <h3 class="font-semibold text-secondary">API Key</h3>
-                                <i class="fas fa-chevron-down api-key-icon"></i>
-                            </div>
-                            <div class="api-key-body">
-                                <p class="text-xs text-subtle mb-2">Get your key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-primary underline">Google AI Studio</a>. This is saved only in your browser.</p> 
-                                <input type="password" id="profile-api-key" placeholder="Enter your Google AI API Key" class="w-full p-2 border border-slate-300 rounded-xl"> 
-                        </div>
-                        </div>
 
                         <!-- NEW: Phase Countdown Settings -->
                         <div id="profile-phase-settings-card" class="api-key-accordion hidden">

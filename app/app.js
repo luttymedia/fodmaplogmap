@@ -539,13 +539,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // The floating action button is now always visible
         addEntryFab.classList.remove('hidden');
-        // --- TODO: Remove this block later ---
-        // --- This is just to make test UI visible ---
-        if (pageId === 'food-info') {
-            document.getElementById('ai-upgrade-banner').classList.remove('hidden');
-            document.getElementById('ai-ad-placeholder').classList.remove('hidden');
-        }
-        // --- END TODO ---
 
         window.scrollTo(0, 0);
          document.querySelectorAll('.nav-item span').forEach(span => { span.classList.remove('hidden', 'sm:inline'); span.classList.add('hidden', 'sm:inline'); });
@@ -633,6 +626,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const aiResultsLoader = document.getElementById('ai-results-loader');
     const aiResultsContainer = document.getElementById('ai-results-container');
     const aiResultsContent = document.getElementById('ai-results-content');
+
+    // --- NEW: AI Credits UI ---
+    const aiUpgradeBanner = document.getElementById('ai-upgrade-banner');
+    const aiCreditsText = document.getElementById('ai-credits-text'); // Add this selector
+
+    const updateAICounterUI = () => {
+        const user = auth.currentUser;
+        const profile = appState.userProfile;
+        
+        // 1. Guest or Not Logged In
+        if (!user) {
+            if (aiUpgradeBanner) aiUpgradeBanner.classList.add('hidden');
+            return;
+        }
+
+        // 2. Premium User (Hide the banner entirely)
+        if (profile.isPremium) {
+            if (aiUpgradeBanner) aiUpgradeBanner.classList.add('hidden');
+            return;
+        }
+
+        // 3. Free User (Always show banner, just change text)
+        const limit = 5; // Must match backend
+        const used = profile.aiUsageCount || 0;
+        const remaining = Math.max(0, limit - used);
+
+        if (aiUpgradeBanner && aiCreditsText) {
+            aiUpgradeBanner.classList.remove('hidden');
+            
+            if (remaining > 0) {
+                // Has credits: Show count
+                aiCreditsText.innerHTML = `⚡ <strong>${remaining} / ${limit}</strong> Free Credits Left`;
+            } else {
+                // No credits: Show warning
+                aiCreditsText.innerHTML = `You are out of free AI credits.`;
+            }
+        }
+    };
     
     const buildProfileContext = () => {
         let context = "User profile:"; let hasInfo = false;
@@ -796,14 +827,40 @@ document.addEventListener('DOMContentLoaded', () => {
                     aiResultsContent.innerHTML = html; 
                     aiResultsContainer.classList.remove('hidden'); 
 
-                    // --- NEW: Increment AI Count and check for rating ---
-                appState.userProfile.aiUsageCount = (appState.userProfile.aiUsageCount || 0) + 1;
-                localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
-                saveToCloud('userProfile', appState.userProfile);
-                checkAndShowRatePopup();
-                // --- END NEW ---
+                    // --- NEW: Check for rating (Count is handled by Backend now) ---
+                    checkAndShowRatePopup();
+                    // --- END NEW ---
                 }                    
-                else { aiResultsContent.innerHTML = `<p class="text-error">Sorry, error.</p>`; aiResultsContainer.classList.remove('hidden'); }
+                else { 
+                    // --- NEW: Handle specific failure states ---
+                    const profile = appState.userProfile;
+                    const limit = 5;
+                    const used = profile.aiUsageCount || 0;
+
+                    if (!profile.isPremium && used >= limit) {
+                        // Case 1: Limit Reached (Show "Locked" Teaser)
+                        aiResultsContent.innerHTML = `
+                            <div class="flex flex-col items-center justify-center py-6 text-center">
+                                <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-3">
+                                     <i class="fas fa-lock text-amber-600 text-xl"></i>
+                                </div>
+                                <h3 class="font-bold text-secondary">Limit Reached</h3>
+                                <p class="text-xs text-subtle mt-1 max-w-[200px] mx-auto">Upgrade to Premium to unlock unlimited AI analysis.</p>
+                            </div>
+                        `;
+                    } else {
+                        // Case 2: Actual Technical Error
+                        aiResultsContent.innerHTML = `
+                            <div class="text-center py-4">
+                                <p class="text-error font-semibold flex items-center justify-center gap-2">
+                                    <i class="fas fa-exclamation-circle"></i> Analysis Failed
+                                </p>
+                                <p class="text-xs text-subtle mt-1">Please check your connection or try again.</p>
+                            </div>
+                        `;
+                    }
+                    aiResultsContainer.classList.remove('hidden'); 
+                }
             }).finally(() => {
                 aiResultsLoader.classList.add('hidden');
                 // Clear inputs after search
@@ -2177,12 +2234,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('profile-intolerances').innerHTML = PROFILE_OPTIONS.intolerances.map(i => createCheckbox(`intol-${i}`, i, 'intolerances', appState.userProfile.intolerances.includes(i))).join('');
         document.getElementById('profile-preferences').innerHTML = PROFILE_OPTIONS.preferences.map(i => createCheckbox(`pref-${i}`, i, 'preferences', appState.userProfile.preferences.includes(i))).join('');
         document.getElementById('profile-allergies-other').value = appState.userProfile.allergiesOther || '';
-        document.getElementById('profile-api-key').value = appState.userProfile.apiKey || '';
-
-        // Smart-open the API key section if the key is missing
-        if (!appState.userProfile.apiKey) {
-            document.getElementById('api-key-accordion-container').classList.add('expanded');
-        }
     };
 
     profileForm.addEventListener('submit', (e) => {
@@ -2192,7 +2243,6 @@ document.addEventListener('DOMContentLoaded', () => {
         appState.userProfile.intolerances = Array.from(document.querySelectorAll('input[name=intolerances]:checked')).map(el => el.value); 
         appState.userProfile.preferences = Array.from(document.querySelectorAll('input[name=preferences]:checked')).map(el => el.value); 
         appState.userProfile.allergiesOther = toTitleCase(document.getElementById('profile-allergies-other').value.trim());
-        appState.userProfile.apiKey = document.getElementById('profile-api-key').value.trim();
 
         // --- 2. Phase-Specific Settings have been removed from this form ---
         // --- 3. Personalization Map logic REMOVED ---
@@ -3200,6 +3250,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateUiForPhase(appState.userProfile.currentPhase);
                 setupProfilePage();
 
+                // --- Update AI Counter ---
+                updateAICounterUI();
+
             } else {
                     // The user document was deleted. This is triggered on other
                     // clients (like Browser B) after an account deletion.
@@ -3530,6 +3583,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // --- NEW: Update Verification UI ---
             updateVerificationUI(user);
+
+            // --- Update AI Counter (Initial state) ---
+            updateAICounterUI();
             
             // Populate account details from the auth object (which we have now)
             if (menuAccountEmail) menuAccountEmail.textContent = user.email || 'Account Settings';
@@ -4976,13 +5032,27 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             console.error("Cloud Function failed:", err);
             
-            // Handle specific error codes for better user feedback
+            // 1. Check for Limit Reached (Code or Message)
+            if (err.code === 'resource-exhausted' || (err.message && err.message.includes('limit'))) {
+                showActionModal({
+                    title: 'Free Limit Reached',
+                    message: "You've reached the limit of 5 free AI requests.\n\nUpgrade to Premium for unlimited access to the AI Assistant tools!",
+                    confirmText: 'Go Premium',
+                    onConfirm: () => {
+                       // Future: Redirect to payment or open premium modal
+                       showToast("Premium flow coming soon!", "success");
+                    },
+                    cancelText: 'Not Now'
+                });
+                return null;
+            }
+
+            // 2. Handle other errors
             if (err.code === 'unauthenticated') {
                 showToast("Please log in to use the AI.", "error");
-            } else if (err.code === 'resource-exhausted') {
-                showToast("AI is busy. Please try again later.", "warning");
             } else {
-                showToast("AI Service unavailable. Please try again.", "error");
+                // Show the actual error message for better debugging
+                showToast(`AI Error: ${err.message || "Service unavailable"}`, "error");
             }
             return null;
         }
@@ -5006,7 +5076,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         const summary = await callGeminiAPI(prompt); 
                         geminiLoader.classList.add('hidden'); 
-                        if (summary === null && !appState.userProfile.apiKey) { geminiMdl.classList.add('hidden'); return; } 
+                        if (summary === null) { geminiMdl.classList.add('hidden'); return; } 
                         
                         // 2. FIXED PARSER:
                         if (summary) { 
@@ -5052,7 +5122,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const plan = await callGeminiAPI(prompt); 
         geminiLoader.classList.add('hidden'); 
-        if (plan === null && !appState.userProfile.apiKey) { geminiMdl.classList.add('hidden'); return; } 
+        if (plan === null) { geminiMdl.classList.add('hidden'); return; } 
         
         // 3. Use the full parser to render HTML
         if (plan) { 
