@@ -932,27 +932,42 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful');
-                    })
-                    .catch(err => {
-                        console.log('ServiceWorker registration failed: ', err);
+                navigator.serviceWorker.register('sw.js').then(registration => {
+                    console.log('ServiceWorker registration successful');
+                    
+                    // Check for updates on page load
+                    registration.update();
+
+                    // If a new SW is waiting (installed but not active), trigger it
+                    if (registration.waiting) {
+                        postMessageToSW(registration.waiting);
+                    }
+
+                    // Detect when a new SW installs
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // New content is available; notify user or auto-reload
+                                console.log('New version available. Reloading...');
+                                window.location.reload(); 
+                            }
+                        });
                     });
+                });
+
+                // When the new SW takes control, reload the page
+                let refreshing;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (refreshing) return;
+                    refreshing = true;
+                    window.location.reload();
+                });
             });
         }
-    </script>
-<script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful');
-                    })
-                    .catch(err => {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
-            });
+        
+        function postMessageToSW(sw) {
+            sw.postMessage({ type: 'SKIP_WAITING' });
         }
     </script>
 
