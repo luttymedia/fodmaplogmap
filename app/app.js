@@ -30,6 +30,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const installAppLi = document.getElementById('install-app-li');
     const installAppBtn = document.getElementById('install-app-btn');
 
+    // --- Offline Indicator Logic ---
+    const offlineIndicator = document.getElementById('offline-indicator');
+    const updateOnlineStatus = () => {
+        if (navigator.onLine) {
+            offlineIndicator.classList.add('hidden');
+        } else {
+            offlineIndicator.classList.remove('hidden');
+            showToast("You are offline.", "warning");
+        }
+    };
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    // Check initial state
+    if (!navigator.onLine) updateOnlineStatus();
+
      // --- CONSTANTS ---
      // These must be defined first to build the default profile
      const FODMAP_GROUP_DATA = [ { value: "Fructose", name: "Fructose", examples: "(e.g., Honey, Mango)" }, { value: "Lactose", name: "Lactose", examples: "(e.g., Milk, Yogurt)" }, { value: "Fructans (Grains)", name: "Fructans - Grains", examples: "(e.g., Wheat, Rye)" }, { value: "Fructans (Veg & Fruit)", name: "Fructans - Veg & Fruit", examples: "(e.g., Onion, Garlic)" }, { value: "GOS", name: "Galactans (GOS)", examples: "(e.g., Beans, Lentils)" }, { value: "Polyols (Sorbitol)", name: "Polyols - Sorbitol", examples: "(e.g., Avocado, Blackberry)" }, { value: "Polyols (Mannitol)", name: "Polyols - Mannitol", examples: "(e.g., Cauliflower, Mushroom)" }, { value: "Other", name: "Other / Unclassified", examples: "(Foods you're unsure how to classify)" }, { value: "Safe Meal", name: "Safe Meal", examples: "(A non-challenge or safe meal)" } ];
@@ -2282,6 +2297,50 @@ document.addEventListener('DOMContentLoaded', () => {
     if (resetAppBtn) {
         resetAppBtn.addEventListener('click', handleResetApp);
     }
+
+    // --- DEBUG: Testing Buttons ---
+    const debugResetBtn = document.getElementById('debug-reset-count');
+    const debugMaxBtn = document.getElementById('debug-max-count');
+
+    if (debugResetBtn) {
+        debugResetBtn.addEventListener('click', () => {
+            const user = auth.currentUser;
+            if (!user) { showToast("Not logged in", "error"); return; }
+            
+            debugResetBtn.disabled = true;
+            db.collection('users').doc(user.uid).update({
+                'userProfile.aiUsageCount': 0
+            }).then(() => {
+                showToast("✅ Counter Reset to 0", "success");
+                debugResetBtn.disabled = false;
+            }).catch(err => {
+                console.error(err);
+                showToast("Error resetting count", "error");
+                debugResetBtn.disabled = false;
+            });
+        });
+    }
+
+    if (debugMaxBtn) {
+        debugMaxBtn.addEventListener('click', () => {
+            const user = auth.currentUser;
+            if (!user) { showToast("Not logged in", "error"); return; }
+
+            debugMaxBtn.disabled = true;
+            db.collection('users').doc(user.uid).update({
+                'userProfile.aiUsageCount': 5
+            }).then(() => {
+                showToast("✅ Set to Limit (5)", "warning");
+                debugMaxBtn.disabled = false;
+            }).catch(err => {
+                console.error(err);
+                showToast("Error setting limit", "error");
+                debugMaxBtn.disabled = false;
+            });
+        });
+    }
+
+    // --- END DEBUG Testing buttons ---
 
     // --- Personalization Tab Listeners (with null checks) ---
     
