@@ -672,7 +672,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (remaining > 0) {
                 // Has credits: Show count
-                aiCreditsText.innerHTML = `⚡ <strong>${remaining} / ${limit}</strong> Free Credits Left`;
+                aiCreditsText.innerHTML = `⚡ <strong>${remaining} / ${limit}</strong> Free AI Credits Left`;
             } else {
                 // No credits: Show warning
                 aiCreditsText.innerHTML = `You are out of free AI credits.`;
@@ -5106,9 +5106,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return null;
             }
 
-            // 2. Handle other errors
-            if (err.code === 'unauthenticated') {
-                showToast("Please log in to use the AI.", "error");
+            // 2. Handle Auth Error (Covers "unauthenticated" code OR the specific error message you saw)
+            if (err.code === 'unauthenticated' || (err.message && err.message.includes('logged in'))) {
+                showToast("Please log in or create a free account to use the AI features.", "warning");
+                // Optional: Automatically open the login modal for better UX
+                openAuthModal('login'); 
             } else {
                 // Show the actual error message for better debugging
                 showToast(`AI Error: ${err.message || "Service unavailable"}`, "error");
