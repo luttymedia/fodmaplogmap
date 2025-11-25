@@ -3269,7 +3269,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }).catch(error => {
             console.error("Error checking user document:", error);
-            showToast('Could not connect to cloud.', 'error');
+            // If offline/error, we assume standard load and attach listeners anyway
+            // so the user can see their local data (if any) or at least the empty UI.
+            attachListener(userDocRef); 
         });
     }
 
