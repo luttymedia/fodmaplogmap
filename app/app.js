@@ -414,6 +414,40 @@ document.addEventListener('DOMContentLoaded', () => {
             .join(' ');
     }
 
+    // --- MOVED HELPER FUNCTIONS (Fixes Offline Crash) ---
+
+    // --- NEW: Symptom Check Helper ---
+    const hasSymptoms = (entry) => {
+        const symptoms = entry.symptoms || ['None'];
+        return !symptoms.includes('None') && symptoms.length > 0;
+    };
+
+    // Dynamically set nav top and body padding
+    const calculatePadding = () => { 
+        const h = document.querySelector('header');
+        const pb = document.getElementById('phase-bar'); 
+        const n = document.getElementById('main-nav'); 
+        
+        if (h && pb && n) { 
+            const headerHeight = h.offsetHeight;
+            const navHeight = n.offsetHeight;
+
+            // Position the phase bar right below the header
+            pb.style.top = `${headerHeight}px`; 
+            
+            // Get phase bar height AFTER setting its position
+            const phaseBarHeight = pb.offsetHeight; 
+            const totalTopHeight = headerHeight + phaseBarHeight;
+
+            // Set padding for header, phase bar, and bottom nav
+            document.body.style.paddingTop = `${totalTopHeight}px`;
+            document.body.style.paddingBottom = `${navHeight}px`;
+
+            // Set CSS variable to the TOTAL sticky height
+            document.documentElement.style.setProperty('--header-height', `${totalTopHeight}px`);
+        } 
+    };
+
     /**
      * Updates the UI contextually based on the user's current phase.
      * This function is called on startup and whenever the phase is changed.
@@ -3868,11 +3902,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const medModalSaveBtn = document.getElementById('medication-modal-save-btn');
     // --- END: Medication Settings Modal Elements ---
 
-    // --- NEW: Symptom Check Helper ---
-    const hasSymptoms = (entry) => {
-        const symptoms = entry.symptoms || ['None'];
-        return !symptoms.includes('None') && symptoms.length > 0;
-    };
     // --- END: Action Modal Elements ---
 
     /**
@@ -5292,32 +5321,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Dynamically set nav top and body padding
-    const calculatePadding = () => { 
-        const h = document.querySelector('header');
-        const pb = document.getElementById('phase-bar'); // Get new phase bar
-        const n = document.getElementById('main-nav'); 
-        
-        if (h && pb && n) { 
-            const headerHeight = h.offsetHeight;
-            const navHeight = n.offsetHeight;
-
-            // --- NEW LOGIC ---
-            // Position the phase bar right below the header
-            pb.style.top = `${headerHeight}px`; 
-            
-            // Get phase bar height AFTER setting its position
-            const phaseBarHeight = pb.offsetHeight; 
-            const totalTopHeight = headerHeight + phaseBarHeight;
-
-            // Set padding for header, phase bar, and bottom nav
-            document.body.style.paddingTop = `${totalTopHeight}px`;
-            document.body.style.paddingBottom = `${navHeight}px`;
-
-            // Set CSS variable to the TOTAL sticky height
-            document.documentElement.style.setProperty('--header-height', `${totalTopHeight}px`);
-        } 
-    };
     setupLogForm(); // Set up listeners in the (hidden) log modal
     document.getElementById('log-date').valueAsDate = new Date(); // Set default date in log modal
 
