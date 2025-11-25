@@ -416,14 +416,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- MOVED HELPER FUNCTIONS (Fixes Offline Crash) ---
 
-    // --- NEW: Symptom Check Helper ---
-    const hasSymptoms = (entry) => {
+    // 1. Symptom Helper (Converted to function for hoisting)
+    function hasSymptoms(entry) {
         const symptoms = entry.symptoms || ['None'];
         return !symptoms.includes('None') && symptoms.length > 0;
-    };
+    }
 
-    // Dynamically set nav top and body padding
-    const calculatePadding = () => { 
+    // 2. Layout Helper (Converted to function for hoisting)
+    function calculatePadding() { 
         const h = document.querySelector('header');
         const pb = document.getElementById('phase-bar'); 
         const n = document.getElementById('main-nav'); 
@@ -446,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Set CSS variable to the TOTAL sticky height
             document.documentElement.style.setProperty('--header-height', `${totalTopHeight}px`);
         } 
-    };
+    }
 
     /**
      * Updates the UI contextually based on the user's current phase.

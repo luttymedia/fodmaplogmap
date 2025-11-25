@@ -1,6 +1,6 @@
 // We use 'v0.9' to match your pre-launch status.
 // When you launch v1.0, you will change this to 'fodmap-logmap-v1.0'
-const CACHE_NAME = 'fodmap-logmap-v0.9'; 
+const CACHE_NAME = 'fodmap-logmap-v0.9.1'; // Bump version to force update
 const FONT_CACHE = 'font-icon-cache-v1';
 const CACHE_WHITELIST = [CACHE_NAME, FONT_CACHE];
 
