@@ -1,25 +1,49 @@
 // --- START: Firebase v9 Compat SDK ---
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyDqeMo-i8s1JlpeUk5aDRynPM8VVg7jHlg",
-  authDomain: "fodmaplogmap-app.firebaseapp.com",
-  projectId: "fodmaplogmap-app",
-  storageBucket: "fodmaplogmap-app.firebasestorage.app",
-  messagingSenderId: "616587045877",
-  appId: "1:616587045877:web:93e53301bba7b3350f4ebc"
-};
+let auth = null;
+let db = null;
+let functions = null;
+let googleProvider = null;
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+// Check if the Firebase SDK loaded successfully (it might fail offline)
+const isFirebaseAvailable = typeof firebase !== 'undefined';
 
-// Get handles to the services
-const auth = firebase.auth();
-const db = firebase.firestore();
-// NEW: Initialize Cloud Functions
-const functions = firebase.functions();
-db.enablePersistence();
-const googleProvider = new firebase.auth.GoogleAuthProvider();
+if (isFirebaseAvailable) {
+    try {
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyDqeMo-i8s1JlpeUk5aDRynPM8VVg7jHlg",
+          authDomain: "fodmaplogmap-app.firebaseapp.com",
+          projectId: "fodmaplogmap-app",
+          storageBucket: "fodmaplogmap-app.firebasestorage.app",
+          messagingSenderId: "616587045877",
+          appId: "1:616587045877:web:93e53301bba7b3350f4ebc"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Get handles to the services
+        auth = firebase.auth();
+        db = firebase.firestore();
+        // NEW: Initialize Cloud Functions
+        functions = firebase.functions();
+        
+        db.enablePersistence().catch(err => {
+            if (err.code == 'failed-precondition') {
+                console.warn('Multiple tabs open, persistence can only be enabled in one tab at a a time.');
+            } else if (err.code == 'unimplemented') {
+                console.warn('The current browser does not support all of the features required to enable persistence');
+            }
+        });
+        
+        googleProvider = new firebase.auth.GoogleAuthProvider();
+    } catch (e) {
+        console.error("Firebase init failed:", e);
+    }
+} else {
+    console.warn("Firebase SDK not loaded. App running in restricted offline mode.");
+}
 
 // --- END: Firebase v9 Compat SDK ---
 
@@ -647,6 +671,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const aiCreditsText = document.getElementById('ai-credits-text'); // Add this selector
 
     const updateAICounterUI = () => {
+        if (!auth) {
+            if (aiUpgradeBanner) aiUpgradeBanner.classList.add('hidden');
+            return;
+        }
         const user = auth.currentUser;
         const profile = appState.userProfile;
         
@@ -1271,9 +1299,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // --- 3. Handle Merging vs. Erasing (Cloud Batch Write) ---
-        const user = auth.currentUser;
+        const user = auth ? auth.currentUser : null;
         if (!user) {
-            // User is a guest. Perform the logic on the *local* appState array.
+            // User is a guest (or offline). Perform the logic on the *local* appState array.
             let existingFoods = [...appState.userProfile.personalizationFoods];
             let newFoodsAdded = 0;
             let foodsUpdated = 0;
@@ -2572,6 +2600,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Auth Modal Listeners ---
     menuLoginBtn.addEventListener('click', () => {
         closeSide(); // Close side menu first
+        if (!isFirebaseAvailable) {
+            showToast("Cannot log in while offline (SDK missing).", "error");
+            return;
+        }
         openAuthModal('login'); // Open modal in login mode
     });
 
@@ -2969,6 +3001,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {any} data - The data to save (e.g., appState.logEntries)
      */
     async function saveToCloud(key, data) {
+        if (!auth || !db) return; // Safety check
         const user = auth.currentUser;
         if (!user) return; // Not logged in, do nothing
 
@@ -3623,94 +3656,92 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
-    // --- CENTRAL AUTH LISTENER ---
-    // This function runs on page load and whenever the auth state changes
-    auth.onAuthStateChanged((user) => {
-        if (user) {
-            // --- USER IS LOGGED IN ---
-            console.log('User is logged in:', user.uid);
+    // --- CENTRAL AUTH LISTENER & OFFLINE FALLBACK ---
+    
+    const loadGuestState = () => {
+        console.log('Loading Guest/Offline State...');
 
-            // --- NEW FIX: Hide the onboarding modal if it's open ---
-            if (onboardingModal) {
-                onboardingModal.classList.add('hidden');
-            }
-            // --- END FIX ---
+        // --- NEW: Hide Verification UI ---
+        updateVerificationUI(null);
 
-            // --- 1. RENDER AUTH-DEPENDENT UI IMMEDIATELY ---
-            // This fixes the soft refresh race condition for the side menu.
-            menuLoginLi.classList.add('hidden');
-            menuLogoutLi.classList.remove('hidden');
-            menuAccountLi.classList.remove('hidden');
+        // Update UI for "Guest"
+        if (menuLoginLi) menuLoginLi.classList.remove('hidden');
+        if (menuPremiumLi) menuPremiumLi.classList.remove('hidden'); 
+        if (menuLogoutLi) menuLogoutLi.classList.add('hidden');
+        if (menuAccountLi) menuAccountLi.classList.add('hidden');
 
-            // --- NEW: Update Verification UI ---
-            updateVerificationUI(user);
+        // User is a guest. Load from localStorage.
+        appState.logEntries = JSON.parse(localStorage.getItem('fodmapLogEntries')) || [];
+        const savedProfile = JSON.parse(localStorage.getItem('fodmapUserProfile')) || {};
+        appState.userProfile = { 
+            ...defaultProfile, 
+            ...savedProfile,
+            personalizationFoods: (savedProfile.personalizationFoods || []) 
+        };
 
-            // --- Update AI Counter (Initial state) ---
-            updateAICounterUI();
-            
-            // Populate account details from the auth object (which we have now)
-            if (menuAccountEmail) menuAccountEmail.textContent = user.email || 'Account Settings';
-            if (accountNameInput) accountNameInput.value = user.displayName || '';
-            if (accountEmailInput) accountEmailInput.value = user.email || '';
-            
-            // --- 2. SET UP DATABASE SYNC ---
-            // This will now *add* the database-driven content when it loads.
-            setupRealtimeListener(user); 
-
-        } else {
-            // --- USER IS LOGGED OUT ---
-            console.log('User is logged out.');
-
-            // --- NEW: Hide Verification UI ---
-            updateVerificationUI(null);
-
-            // --- CRITICAL: Detach the real-time listeners ---
-            if (unsubscribeFromFirestore) {
-                unsubscribeFromFirestore(); // This now calls all unsub functions
-                unsubscribeFromFirestore = null;
-                console.log('Detached Firestore listeners.');
-            }
-
-            // Update UI for "Guest"
-            menuLoginLi.classList.remove('hidden');
-            menuPremiumLi.classList.remove('hidden'); 
-            menuLogoutLi.classList.add('hidden');
-            menuAccountLi.classList.add('hidden');
-
-            // User is a guest.
-            // Load from localStorage. This also handles a fresh guest load.
-            appState.logEntries = JSON.parse(localStorage.getItem('fodmapLogEntries')) || [];
-            const savedProfile = JSON.parse(localStorage.getItem('fodmapUserProfile')) || {};
-            appState.userProfile = { 
-                ...defaultProfile, 
-                ...savedProfile,
-                // Ensure the diet list is also loaded from the saved profile
-                personalizationFoods: (savedProfile.personalizationFoods || []) 
-            };
-
-            // Render the guest UI
-            updateUiForPhase(appState.userProfile.currentPhase);
-            setupProfilePage();
-            
-            // Only navigate if no other page is visible (i.e., on first load)
-            if (!document.querySelector('.page:not(.hidden)')) {
-                navigateTo('home');
-            }
-
-            // --- NEW LOCATION FOR ONBOARDING CHECK ---
-            // Only show for guests who have not completed it
-            if (!appState.userProfile.hasCompletedOnboarding) {
-                // Use a short timeout to let the app finish painting
-                setTimeout(() => {
-                    showOnboardingModal();
-                }, 100);
-            }
-            // --- END NEW LOCATION ---
-
-            // --- NEW: Show login modal for all guest users on load ---
-            openAuthModal('login');
+        // Render the guest UI
+        updateUiForPhase(appState.userProfile.currentPhase);
+        setupProfilePage();
+        
+        // Only navigate if no other page is visible (i.e., on first load)
+        if (!document.querySelector('.page:not(.hidden)')) {
+            navigateTo('home');
         }
-    });
+
+        // Only show onboarding for guests who have not completed it
+        if (!appState.userProfile.hasCompletedOnboarding) {
+            setTimeout(() => {
+                showOnboardingModal();
+            }, 100);
+        }
+        
+        // If Firebase is available but user is just logged out, prompt login.
+        // If Firebase is NOT available, do not show login modal.
+        if (isFirebaseAvailable) {
+            openAuthModal('login');
+        } else {
+            showToast("You are offline. Running in Guest Mode.", "warning");
+        }
+    };
+
+    if (isFirebaseAvailable && auth) {
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // --- USER IS LOGGED IN ---
+                console.log('User is logged in:', user.uid);
+
+                if (onboardingModal) onboardingModal.classList.add('hidden');
+
+                // Render Auth UI
+                if (menuLoginLi) menuLoginLi.classList.add('hidden');
+                if (menuLogoutLi) menuLogoutLi.classList.remove('hidden');
+                if (menuAccountLi) menuAccountLi.classList.remove('hidden');
+
+                updateVerificationUI(user);
+                updateAICounterUI();
+                
+                if (menuAccountEmail) menuAccountEmail.textContent = user.email || 'Account Settings';
+                if (accountNameInput) accountNameInput.value = user.displayName || '';
+                if (accountEmailInput) accountEmailInput.value = user.email || '';
+                
+                // Set up DB Sync
+                setupRealtimeListener(user); 
+
+            } else {
+                // --- USER IS LOGGED OUT ---
+                console.log('User is logged out.');
+                if (unsubscribeFromFirestore) {
+                    unsubscribeFromFirestore();
+                    unsubscribeFromFirestore = null;
+                }
+                loadGuestState();
+            }
+        });
+    } else {
+        // --- FIREBASE FAILED TO LOAD (OFFLINE START) ---
+        console.warn("Firebase Auth not available. Forcing Guest Mode.");
+        loadGuestState();
+    }
 
     const geminiMdl = document.getElementById('gemini-modal'); const geminiTitle = document.getElementById('gemini-modal-title'); const geminiContent = document.getElementById('gemini-modal-content'); const geminiLoader = document.getElementById('gemini-modal-loader'); const geminiError = document.getElementById('gemini-modal-error'); const geminiClose = document.getElementById('gemini-modal-close');
     
@@ -5079,6 +5110,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const openGemini = (title) => { geminiTitle.textContent = title; geminiMdl.classList.remove('hidden'); geminiLoader.classList.remove('hidden'); geminiContent.classList.add('hidden'); geminiError.classList.add('hidden'); }; const closeGemini = () => geminiMdl.classList.add('hidden'); geminiClose.addEventListener('click', closeGemini);
     const callGeminiAPI = async (prompt, imgData = null, mimeType = null) => { // <--- ACCEPT MIME TYPE
+        if (!functions) {
+            showToast("AI features unavailable offline.", "error");
+            return null;
+        }
         const analyzeFodmap = functions.httpsCallable('analyzeFodmap');
 
         try {
