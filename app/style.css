@@ -1,6 +1,51 @@
-/* --- CRITICAL FALLBACKS (For Offline/No-CDN) --- */
+/* --- OFFLINE CRITICAL CSS --- */
+/* These ensure the app is usable even if Tailwind CDN fails */
+
+/* 1. Utility Fallbacks */
 .hidden { display: none !important; }
 [hidden] { display: none !important; }
+
+/* 2. Offline Indicator (Header Pulse Icon) */
+#offline-indicator {
+    color: #dc2626; /* Red */
+    display: block; /* Ensure visibility */
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+}
+
+/* 3. Toast Notification Fallback (Make sure the user sees errors) */
+#toast {
+    position: fixed;
+    left: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transition: all 0.5s ease-in-out;
+    z-index: 100;
+    text-align: center;
+    /* Default colors if Tailwind classes fail */
+    background-color: #334155; 
+    color: white;
+    pointer-events: none;
+}
+/* Specific Toast Colors */
+#toast.bg-warning { background-color: #f59e0b !important; color: white !important; }
+#toast.bg-error { background-color: #dc2626 !important; color: white !important; }
+#toast.bg-success { background-color: #C5E0A5 !important; color: #537429 !important; }
+
+/* 4. Basic Layout Safety */
+header {
+    background-color: rgba(248, 250, 252, 0.9); /* slate-50 */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+}
+/* --- END CRITICAL CSS --- */
 
 :root {
   --header-height: 100px; /* Fallback, JS will correct */

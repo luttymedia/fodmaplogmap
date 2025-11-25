@@ -1,8 +1,6 @@
-const CACHE_NAME = 'fodmap-logmap-v0.9.2'; // Bumped version
+const CACHE_NAME = 'fodmap-logmap-v0.9.3'; // Bumped version
 const CACHE_WHITELIST = [CACHE_NAME];
 
-// 1. Critical Files - ONLY code required to boot the app.
-// If any of these fail, the app is considered broken offline.
 const CRITICAL_FILES = [
   './',
   './index.html',
@@ -11,18 +9,13 @@ const CRITICAL_FILES = [
   './style.css'
 ];
 
-// 2. Assets & Externals - Cached "Best Effort".
-// If these fail (e.g., 404 icon, opaque CDN), the app still installs.
 const OPTIONAL_FILES = [
-  // Local Images
   './images/fmlm_logo_h.png',
   './images/icon-192.png',
   './images/icon-512.png',
   './images/onboarding1.png',
   './images/onboarding2.png',
   './images/onboarding3.png',
-  
-  // External CDNs
   'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap',
@@ -36,27 +29,20 @@ const OPTIONAL_FILES = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
-      console.log(`[SW] Opening cache: ${CACHE_NAME}`);
-
-      // 1. Cache Critical Files (Strict)
+      // 1. Critical Files (Must work)
       try {
         await cache.addAll(CRITICAL_FILES);
-        console.log('[SW] Critical files cached');
       } catch (err) {
-        console.error('[SW] Critical file cache FAILED. Offline mode will not work.', err);
-        throw err; // Abort install
+        console.error('Critical cache failed:', err);
+        throw err; 
       }
 
-      // 2. Cache Optional Files (Loose)
-      // We loop individually so one failure doesn't kill the whole batch
+      // 2. Optional Files (Best effort - don't crash install if they fail)
       await Promise.allSettled(OPTIONAL_FILES.map(url => {
-        return fetch(url, { mode: 'no-cors' }) // 'no-cors' handles external CDNs
+        return fetch(url, { mode: 'no-cors' }) 
           .then(response => {
-            if (response && (response.status === 200 || response.type === 'opaque')) {
-              return cache.put(url, response);
-            }
-          })
-          .catch(e => console.warn(`[SW] Failed to cache asset: ${url}`, e));
+            if (response) return cache.put(url, response);
+          });
       }));
 
       return self.skipWaiting();
@@ -75,18 +61,19 @@ self.addEventListener('fetch', (event) => {
             return networkRes;
           });
         })
-        .catch(() => caches.match(event.request)) // Offline Fallback
+        .catch(() => caches.match(event.request)) // Fallback to cache
     );
     return;
   }
 
-  // 2. Assets - Cache First, then Network
+  // 2. Assets - Cache First, Fallback to Network, Fallback to 404
   event.respondWith(
     caches.match(event.request).then((cachedRes) => {
       if (cachedRes) return cachedRes;
+
       return fetch(event.request).catch(err => {
-        // Swallow errors to prevent console spam, return nothing (missing image)
-        return null; 
+        // FIX IS HERE: Return a valid Response object, not null
+        return new Response("Offline", { status: 404, statusText: "Offline" });
       });
     })
   );
@@ -97,7 +84,6 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keyList) => {
       return Promise.all(keyList.map((key) => {
         if (CACHE_WHITELIST.indexOf(key) === -1) {
-          console.log(`[SW] Cleaning old cache: ${key}`);
           return caches.delete(key);
         }
       }));
