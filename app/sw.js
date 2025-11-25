@@ -71,7 +71,7 @@ self.addEventListener('install', (event) => {
 
 // Fetch Event: Network First for HTML, Cache First for Assets
 self.addEventListener('fetch', (event) => {
-  // 1. Navigation (HTML) - Network First (to get updates faster)
+  // 1. Navigation (HTML) - Network First
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -86,14 +86,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Assets/Scripts - Cache First, Fallback to Network
+  // 2. Assets/Scripts/Images - Cache First, Fallback to Network
   event.respondWith(
     caches.match(event.request).then((cachedRes) => {
-      return cachedRes || fetch(event.request).catch(err => {
-         // If both cache and network fail (offline + missing asset), return null
-         // This prevents the "red error" spam in console
-         return null; 
-      });
+      // If found in cache, return it
+      if (cachedRes) return cachedRes;
+
+      // If not in cache, try network. 
+      // We do NOT catch the error here. If fetch fails (offline), 
+      // we let the promise reject naturally. This allows the 
+      // app (Firestore/Firebase) to detect "Offline" and handle it.
+      return fetch(event.request);
     })
   );
 });
