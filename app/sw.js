@@ -1,16 +1,29 @@
-const CACHE_NAME = 'fodmap-logmap-v8';
+const CACHE_NAME = 'fodmap-logmap-v9';
 const FONT_CACHE = 'font-icon-cache-v1';
 const CACHE_WHITELIST = [CACHE_NAME, FONT_CACHE];
 
 const FILES_TO_CACHE = [
+  // 1. App Shell (Local Files)
   '/',
-  'index.html',
-  'manifest.json',
-  'app.js',
-  'style.css',
-  'images/fmlm_logo_h.png',
-  'images/icon-192.png',
-  'images/icon-512.png'
+  '/index.html',
+  '/manifest.json',
+  '/app.js',
+  '/style.css',
+  '/images/fmlm_logo_h.png', 
+  '/images/icon-192.png',
+  '/images/icon-512.png',
+
+  // 2. UI Libraries (Layout & Icons)
+  'https://cdn.tailwindcss.com', // <--- Fixes the "Single Page" layout collapse
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap',
+  'https://cdn.jsdelivr.net/npm/chart.js',
+
+  // 3. Firebase SDKs (CRITICAL: Fixes the "Broken Buttons")
+  'https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js',
+  'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js',
+  'https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js'
 ];
 
 // Install event: Caches the app shell and takes control immediately
