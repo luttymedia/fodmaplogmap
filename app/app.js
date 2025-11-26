@@ -5374,8 +5374,8 @@ document.addEventListener('DOMContentLoaded', () => {
      * symptomatic days within the last 14-day lookback window.
      */
     function renderSymptomChart() {
-        const ctx = document.getElementById('symptom-chart');
-        if (!ctx) return; // Canvas not found
+        const container = document.getElementById('chart-container');
+        if (!container) return;
 
         // 1. Destroy old chart instance if it exists
         if (symptomChart) {
@@ -5394,10 +5394,23 @@ document.addEventListener('DOMContentLoaded', () => {
             hasSymptoms(entry) && entry.date >= lookbackDateKey
         );
 
-        // 3. If no symptoms in the window, don't render a chart
+        // 3. If no symptoms in the window, show a friendly message
         if (symptomEntries.length === 0) {
-            return; // Exit function
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full py-8 text-center opacity-70">
+                    <i class="fas fa-smile-beam text-4xl text-accent mb-2"></i>
+                    <p class="text-sm font-semibold text-secondary">No recent symptoms!</p>
+                    <p class="text-xs text-subtle">No symptoms logged in the past 14 days.</p>
+                </div>
+            `;
+            return; 
         }
+
+        // Restore canvas if missing (it might have been replaced by the message previously)
+        if (!document.getElementById('symptom-chart')) {
+            container.innerHTML = '<canvas id="symptom-chart"></canvas>';
+        }
+        const ctx = document.getElementById('symptom-chart');
 
         // 4. Find the first and last symptom date from this list
         symptomEntries.sort((a, b) => new Date(a.date) - new Date(b.date));

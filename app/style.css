@@ -359,6 +359,8 @@ main section > div { margin-bottom: 1rem; }
     border: none;
     overflow: hidden;
     margin-bottom: 0.75rem; /* space-y-3 */
+    margin-left: 0.5rem; 
+    margin-right: 0.5rem;
 }
 .accordion-header {
     display: flex;
@@ -729,7 +731,7 @@ main section > div { margin-bottom: 1rem; }
     font-size: 1.125rem; /* text-lg */
     font-weight: 700;
     color: var(--color-secondary-text);
-    padding: 0 0 0.5rem 0.25rem; /* pt-4 pb-2 px-1 */
+    padding: 1.25rem 0.5rem 0.5rem 1rem; 
     background-color: var(--color-page-bg, #f8fafc); /* bg-slate-50 */
     border-bottom: 1px solid #ced5dd; /* border-slate-200 */
 }
@@ -743,7 +745,16 @@ body {
     border-radius: 1rem; /* rounded-2xl */
     box-shadow: 0 1px 3px rgba(0,0,0,0.07);
     padding: 0.5rem 1rem; /* p-2 sm:p-4 */
-    margin-top: 0.75rem; /* space-y-3 */
+    
+    /* UPDATED: Added margin-bottom to reveal shadows */
+    margin-top: 0.75rem; 
+    margin-bottom: 0.75rem; /* Fixes shadow clipping */
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    
+    /* Optional: Ensure shadow sits on top of subsequent elements */
+    position: relative; 
+    z-index: 1; 
 }
 
 /* New Phase Bar Styles */

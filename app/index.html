@@ -954,9 +954,11 @@
                         const newWorker = registration.installing;
                         newWorker.addEventListener('statechange', () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // New content is available; notify user or auto-reload
-                                console.log('New version available. Reloading...');
-                                window.location.reload(); 
+                                // FIX: Prevent infinite reload loop. 
+                                // Instead of reloading directly, tell the new SW to skip waiting.
+                                // This triggers 'controllerchange', which handles the reload safely.
+                                console.log('New version available. Activating...');
+                                postMessageToSW(newWorker);
                             }
                         });
                     });
