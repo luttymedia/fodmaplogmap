@@ -47,6 +47,47 @@ if (isFirebaseAvailable) {
 
 // --- END: Firebase v9 Compat SDK ---
 
+// --- GLOBAL HELPERS (Safe for Offline/Early execution) ---
+
+/**
+ * Shows a toast message. Safe to call anytime.
+ */
+function showToast(message = "Saved!", status = 'success') {
+    const toast = document.getElementById('toast');
+    if (!toast) return; // Failsafe if DOM isn't ready
+
+    toast.textContent = message;
+    
+    // Calculate top position dynamically
+    const bodyPaddingTop = document.body.style.paddingTop || '100px';
+    
+    let colorClass = 'bg-accent'; // default
+    switch (status) {
+        case 'error': colorClass = 'bg-error'; break;
+        case 'warning': colorClass = 'bg-warning'; break;
+        case 'pre-treatment': colorClass = 'bg-toast-pre'; break;
+        case 'restriction': colorClass = 'bg-toast-restriction'; break;
+        case 'reintroduction': colorClass = 'bg-toast-reintro'; break;
+        case 'personalization': colorClass = 'bg-toast-personal'; break;
+    }
+    
+    // Reset classes
+    toast.className = `fixed left-4 right-4 mx-auto w-fit py-2 px-4 rounded-lg shadow-xl opacity-0 transform -translate-y-10 transition-all duration-500 ease-in-out text-sm z-[100] pointer-events-none ${colorClass}`;
+    
+    // Set position
+    toast.style.top = `calc(${bodyPaddingTop} + 0.5rem)`;
+    
+    // Show
+    requestAnimationFrame(() => {
+        toast.classList.remove('opacity-0', '-translate-y-10', 'pointer-events-none');
+    });
+    
+    // Hide after 3s
+    setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-10', 'pointer-events-none');
+    }, 3000);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
 
     let deferredPrompt; // This will store the event for later use
@@ -634,51 +675,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showLogModal(null); // null = new entry
     });
     
-    const toast = document.getElementById('toast');
-    function showToast(message = "Saved!", status = 'success') { // 'success', 'error', 'warning'
-        toast.textContent = message;
-        
-        // Get the calculated top padding of the body (which includes header + nav)
-        const bodyPaddingTop = document.body.style.paddingTop || '100px';
-        
-        let colorClass = 'bg-accent'; // default
-        switch (status) {
-            case 'error':
-                colorClass = 'bg-error';
-                break;
-            case 'warning':
-                colorClass = 'bg-warning';
-                break;
-            case 'pre-treatment':
-                colorClass = 'bg-toast-pre';
-                break;
-            case 'restriction':
-                colorClass = 'bg-toast-restriction';
-                break;
-            case 'reintroduction':
-                colorClass = 'bg-toast-reintro';
-                break;
-            case 'personalization':
-                colorClass = 'bg-toast-personal';
-                break;
-            // 'success' will just use the default 'bg-accent'
-        }
-        
-        // New classes: top-left, new animation, AND pointer-events-none by default
-        toast.className = `fixed left-4 right-4 mx-auto w-fit py-2 px-4 rounded-lg shadow-xl opacity-0 transform -translate-y-10 transition-all duration-500 ease-in-out text-sm z-[100] pointer-events-none ${colorClass}`;
-        
-        // Set the top position dynamically
-        toast.style.top = `calc(${bodyPaddingTop} + 0.5rem)`; // 0.5rem (8px) margin from nav
-        
-        // Show toast: remove opacity/translate AND remove pointer-events-none
-        toast.classList.remove('opacity-0', '-translate-y-10', 'pointer-events-none');
-        
-        // Hide toast: add back opacity/translate AND add back pointer-events-none
-        setTimeout(() => {
-            toast.classList.add('opacity-0', '-translate-y-10', 'pointer-events-none');
-        }, 3000);
-    }
-
     const aiFoodSearchInput = document.getElementById('ai-food-search-input');
     const imageUploadInput = document.getElementById('image-upload-input');
     const cameraUploadInput = document.getElementById('camera-upload-input');
