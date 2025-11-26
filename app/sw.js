@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fodmap-logmap-v0.12.2'; // Bumped version
+const CACHE_NAME = 'fodmap-logmap-v0.12.3'; // Bumped version
 const CACHE_WHITELIST = [CACHE_NAME];
 
 // 1. CRITICAL FILES (Strict - App Shell)
@@ -58,7 +58,8 @@ self.addEventListener('install', (event) => {
       await Promise.allSettled(LOCAL_ASSETS.map(url => {
         return fetch(url).then(res => {
             if (res.ok) return cache.put(url, res);
-        });
+            return Promise.resolve(); // Continue even if fetch fails
+        }).catch(() => Promise.resolve()); // Continue even if network fails
       }));
 
       // C. OPAQUE (No-Cors)
@@ -94,7 +95,7 @@ self.addEventListener('fetch', (event) => {
             return res;
           });
         })
-        .catch(() => caches.match('/index.html')) // Fallback to absolute path
+        .catch(() => caches.match('./index.html')) // Use relative path to match cache key
     );
     return;
   }
@@ -102,10 +103,27 @@ self.addEventListener('fetch', (event) => {
   // 2. Assets
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true }).then(cachedRes => {
+      // Return cached version if available
       if (cachedRes) return cachedRes;
 
-      return fetch(event.request).catch(() => {
-        // 404 Fallback
+      // For non-cached requests, try network but don't fail for images
+      return fetch(event.request).then(networkRes => {
+        // Cache successful requests for future use
+        if (networkRes.ok) {
+          const responseClone = networkRes.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return networkRes;
+      }).catch(() => {
+        // For image requests, provide a generic offline response instead of 404
+        if (event.request.destination === 'image') {
+          return new Response(
+            '<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#f3f4f6"/><text x="50%" y="50%" font-family="Arial" font-size="12" text-anchor="middle" dy=".3em" fill="#9ca3af">Offline</text></svg>',
+            { headers: { 'Content-Type': 'image/svg+xml' } }
+          );
+        }
         return new Response("Offline", { status: 404, statusText: "Offline" });
       });
     })
