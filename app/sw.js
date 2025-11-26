@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fodmap-logmap-v0.10.0'; // Final Version
+const CACHE_NAME = 'fodmap-logmap-v0.10.1'; // Bump version
 const CACHE_WHITELIST = [CACHE_NAME];
 
 // 1. CRITICAL FILES (Strict)
@@ -11,15 +11,16 @@ const CRITICAL_FILES = [
   './style.css'
 ];
 
-// 2. OPTIONAL FILES (Images)
-// Reverted to './' to ensure path matching with HTML requests
-const OPTIONAL_ASSETS = [
-  './images/fmlm_logo_h.png',
-  './images/icon-192.png',
-  './images/icon-512.png',
-  './images/onboarding1.png',
-  './images/onboarding2.png',
-  './images/onboarding3.png'
+// 2. Local Assets - Update to include maskable versions
+const LOCAL_ASSETS = [
+  'images/fmlm_logo_h.png',
+  'images/icon-192.png',
+  'images/icon-512.png',
+  'images/icon-maskable-192.png',
+  'images/icon-maskable-512.png',
+  'images/onboarding1.png',
+  'images/onboarding2.png',
+  'images/onboarding3.png'
 ];
 
 // 3. EXTERNAL ASSETS (Opaque - Tailwind/Firebase)
