@@ -1,29 +1,28 @@
-const CACHE_NAME = 'fodmap-logmap-v0.9.9';
+const CACHE_NAME = 'fodmap-logmap-v0.10.0'; // Final Version
 const CACHE_WHITELIST = [CACHE_NAME];
 
 // 1. CRITICAL FILES (Strict)
-// If any of these fail to download, the Service Worker will ABORT installation.
-// We removed './' to ensure better path matching on Render.
+// These controls the app shell. If missing, installation aborts.
 const CRITICAL_FILES = [
-  '/',
-  'index.html',
-  'manifest.json',
-  'app.js',
-  'style.css'
+  './',
+  './index.html',
+  './manifest.json',
+  './app.js',
+  './style.css'
 ];
 
-// 2. OPTIONAL FILES (Best Effort)
-// Images are moved here. If an image 404s, the app will still work.
+// 2. OPTIONAL FILES (Images)
+// Reverted to './' to ensure path matching with HTML requests
 const OPTIONAL_ASSETS = [
-  'images/fmlm_logo_h.png',
-  'images/icon-192.png',
-  'images/icon-512.png',
-  'images/onboarding1.png',
-  'images/onboarding2.png',
-  'images/onboarding3.png'
+  './images/fmlm_logo_h.png',
+  './images/icon-192.png',
+  './images/icon-512.png',
+  './images/onboarding1.png',
+  './images/onboarding2.png',
+  './images/onboarding3.png'
 ];
 
-// 3. EXTERNAL ASSETS (Mix)
+// 3. EXTERNAL ASSETS (Opaque - Tailwind/Firebase)
 const OPAQUE_ASSETS = [
   'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
@@ -35,6 +34,7 @@ const OPAQUE_ASSETS = [
   'https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js'
 ];
 
+// 4. FONT ASSETS (Cors - Icons)
 const FONT_ASSETS = [
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2',
   'https://fonts.gstatic.com/s/quicksand/v37/6xKtdSZaM9iE8KbpRA_hK1QN.woff2'
@@ -45,27 +45,31 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME).then(async (cache) => {
       console.log(`[SW] Installing ${CACHE_NAME}`);
 
-      // A. CRITICAL: Throw error if these fail
+      // A. Criticals
       try {
         await cache.addAll(CRITICAL_FILES);
       } catch (err) {
-        console.error('[SW] Critical cache failed. Aborting.', err);
-        throw err; // This stops the SW from activating if app.js is missing
+        console.error('[SW] Critical cache failed:', err);
+        throw err;
       }
 
-      // B. OPTIONAL: Best effort
+      // B. Images (Best Effort)
       await Promise.allSettled(OPTIONAL_ASSETS.map(url => {
-        return fetch(url).then(res => { if(res.ok) return cache.put(url, res); });
+        return fetch(url).then(res => { 
+            if (res.ok) return cache.put(url, res); 
+        });
       }));
 
-      // C. OPAQUE: No-cors
+      // C. Opaque (No-Cors)
       await Promise.allSettled(OPAQUE_ASSETS.map(url => {
         return fetch(url, { mode: 'no-cors' }).then(res => cache.put(url, res));
       }));
       
-      // D. FONTS: Cors
+      // D. Fonts (Cors)
       await Promise.allSettled(FONT_ASSETS.map(url => {
-        return fetch(url, { mode: 'cors' }).then(res => { if(res.ok) return cache.put(url, res); });
+        return fetch(url, { mode: 'cors' }).then(res => { 
+            if (res.ok) return cache.put(url, res); 
+        });
       }));
 
       return self.skipWaiting();
@@ -89,7 +93,7 @@ self.addEventListener('fetch', (event) => {
             return res;
           });
         })
-        .catch(() => caches.match('index.html')) // Fallback to index.html
+        .catch(() => caches.match('./index.html'))
     );
     return;
   }
@@ -99,8 +103,7 @@ self.addEventListener('fetch', (event) => {
     caches.match(event.request).then(cachedRes => {
       if (cachedRes) return cachedRes;
       return fetch(event.request).catch(() => {
-        // Only return 404 response for images/non-criticals
-        // We do NOT want to return this for app.js, but app.js should be cached by now.
+        // Return 404 for images/assets to prevent crashes
         return new Response("Offline", { status: 404, statusText: "Offline" });
       });
     })
