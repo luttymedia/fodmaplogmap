@@ -17,6 +17,34 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#FFFFFF">
+
+<script>
+        window.onerror = function (msg, url, lineNo, columnNo, error) {
+            const errorBox = document.getElementById('debug-console') || document.createElement('div');
+            errorBox.id = 'debug-console';
+            errorBox.style.cssText = "position:fixed; top:0; left:0; width:100%; background:rgba(200,0,0,0.9); color:white; z-index:9999; padding:10px; font-size:12px; font-family:monospace; white-space:pre-wrap; max-height: 50vh; overflow:auto;";
+            
+            const errorMsg = `🔴 ERROR: ${msg}\nLine: ${lineNo}\nURL: ${url}`;
+            errorBox.innerText += errorMsg + "\n\n";
+            
+            if (!document.getElementById('debug-console')) {
+                document.body.prepend(errorBox);
+            }
+            return false;
+        };
+        
+        // Log successful load of app.js
+        window.addEventListener('load', () => {
+            if (typeof appState === 'undefined') {
+                // If appState isn't defined, app.js didn't run
+                const warning = document.createElement('div');
+                warning.style.cssText = "position:fixed; bottom:0; left:0; width:100%; background:orange; color:black; z-index:9999; padding:10px; text-align:center;";
+                warning.innerText = "⚠️ app.js failed to initialize variables";
+                document.body.appendChild(warning);
+            }
+        });
+    </script>
+
 </head>
 <body class="bg-slate-50">
 
