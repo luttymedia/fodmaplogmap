@@ -1,16 +1,18 @@
-const CACHE_NAME = 'fodmap-logmap-v0.10.2'; // Bump version
+const CACHE_NAME = 'fodmap-logmap-v0.11.0'; // Fresh start
 const CACHE_WHITELIST = [CACHE_NAME];
 
 // 1. CRITICAL FILES (Strict)
+// Exact paths as they appear in your index.html
 const CRITICAL_FILES = [
-  './',
-  './index.html',
-  './manifest.json',
-  './app.js',
-  './style.css'
+  './',             // The root
+  'index.html',     // The shell
+  'manifest.json',  // The PWA config
+  'app.js',         // The logic
+  'style.css'       // The styling
 ];
 
-// 2. LOCAL ASSETS (Best Effort)
+// 2. LOCAL ASSETS (Best Effort - Standard Fetch)
+// Matches exact 'src' attributes in your HTML (No './' prefix)
 const LOCAL_ASSETS = [
   'images/fmlm_logo_h.png',
   'images/icon-192.png',
@@ -22,11 +24,10 @@ const LOCAL_ASSETS = [
   'images/onboarding3.png'
 ];
 
-// 3. EXTERNAL ASSETS (Opaque - Tailwind/Firebase)
+// 3. OPAQUE ASSETS (Best Effort - 'no-cors')
+// For CDNs like Tailwind and Firebase that might send opaque responses.
 const OPAQUE_ASSETS = [
   'https://cdn.tailwindcss.com',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap',
   'https://cdn.jsdelivr.net/npm/chart.js',
   'https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js',
@@ -34,9 +35,12 @@ const OPAQUE_ASSETS = [
   'https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js'
 ];
 
-// 4. FONT ASSETS (Cors - Icons)
+// 4. FONT ASSETS (Best Effort - 'cors')
+// Fonts MUST be fetched with CORS or they will fail to render.
 const FONT_ASSETS = [
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2',
+  'https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap',
   'https://fonts.gstatic.com/s/quicksand/v37/6xKtdSZaM9iE8KbpRA_hK1QN.woff2'
 ];
 
@@ -45,31 +49,30 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME).then(async (cache) => {
       console.log(`[SW] Installing ${CACHE_NAME}`);
 
-      // A. Criticals (Abort if failed)
+      // A. CRITICAL (Throw if failed)
       try {
         await cache.addAll(CRITICAL_FILES);
       } catch (err) {
         console.error('[SW] Critical cache failed:', err);
-        throw err;
+        throw err; // Abort install
       }
 
-      // B. Images (Best Effort)
-      // FIX WAS HERE: Changed OPTIONAL_ASSETS to LOCAL_ASSETS
+      // B. LOCAL ASSETS (Log errors but don't abort)
       await Promise.allSettled(LOCAL_ASSETS.map(url => {
-        return fetch(url).then(res => { 
-            if (res.ok) return cache.put(url, res); 
+        return fetch(url).then(res => {
+            if (res.ok) return cache.put(url, res);
         });
       }));
 
-      // C. Opaque (No-Cors)
+      // C. OPAQUE ASSETS (no-cors)
       await Promise.allSettled(OPAQUE_ASSETS.map(url => {
         return fetch(url, { mode: 'no-cors' }).then(res => cache.put(url, res));
       }));
       
-      // D. Fonts (Cors)
+      // D. FONT ASSETS (cors)
       await Promise.allSettled(FONT_ASSETS.map(url => {
-        return fetch(url, { mode: 'cors' }).then(res => { 
-            if (res.ok) return cache.put(url, res); 
+        return fetch(url, { mode: 'cors' }).then(res => {
+            if (res.ok) return cache.put(url, res);
         });
       }));
 
@@ -94,7 +97,7 @@ self.addEventListener('fetch', (event) => {
             return res;
           });
         })
-        .catch(() => caches.match('./index.html'))
+        .catch(() => caches.match('index.html'))
     );
     return;
   }
@@ -104,6 +107,7 @@ self.addEventListener('fetch', (event) => {
     caches.match(event.request).then(cachedRes => {
       if (cachedRes) return cachedRes;
       return fetch(event.request).catch(() => {
+        // Return 404 placeholder to prevent crashes
         return new Response("Offline", { status: 404, statusText: "Offline" });
       });
     })
