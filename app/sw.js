@@ -1,27 +1,26 @@
-const CACHE_NAME = 'fodmap-logmap-v0.12.1'; // Bumped version
+const CACHE_NAME = 'fodmap-logmap-v0.12.2'; // Bumped version
 const CACHE_WHITELIST = [CACHE_NAME];
 
 // 1. CRITICAL FILES (Strict - App Shell)
-// We use absolute paths (starting with /) to ensure they match the browser's request exactly.
+// We use relative paths to match the HTML references exactly.
 const CRITICAL_FILES = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/app.js',
-  '/style.css'
+  './', // Root
+  'index.html',
+  'manifest.json',
+  'app.js',
+  'style.css',
+  'images/fmlm_logo_h.png' // Moved here so the app fails to install if logo is missing
 ];
 
 // 2. LOCAL ASSETS (Best Effort - Images)
-// Absolute paths here too.
 const LOCAL_ASSETS = [
-  '/images/fmlm_logo_h.png',
-  '/images/icon-192.png',
-  '/images/icon-512.png',
-  '/images/icon-maskable-192.png',
-  '/images/icon-maskable-512.png',
-  '/images/onboarding1.png',
-  '/images/onboarding2.png',
-  '/images/onboarding3.png'
+  'images/icon-192.png',
+  'images/icon-512.png',
+  'images/icon-maskable-192.png',
+  'images/icon-maskable-512.png',
+  'images/onboarding1.png',
+  'images/onboarding2.png',
+  'images/onboarding3.png'
 ];
 
 // 3. EXTERNAL ASSETS (Opaque - Scripts/CSS)
