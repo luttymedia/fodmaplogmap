@@ -1,24 +1,25 @@
-const CACHE_NAME = 'fodmap-logmap-v0.11.0'; // Fresh start
+const CACHE_NAME = 'fodmap-logmap-v0.11.3'; // Bumped version
 const CACHE_WHITELIST = [CACHE_NAME];
 
 // 1. CRITICAL FILES (Strict)
-// Exact paths as they appear in your index.html
+// These control the app shell. If missing, installation aborts.
 const CRITICAL_FILES = [
-  './',             // The root
-  'index.html',     // The shell
-  'manifest.json',  // The PWA config
-  'app.js',         // The logic
-  'style.css'       // The styling
+  './',
+  './index.html',
+  './manifest.json',
+  './app.js',
+  './style.css'
 ];
 
 // 2. LOCAL ASSETS (Best Effort - Standard Fetch)
-// Matches exact 'src' attributes in your HTML (No './' prefix)
+// Includes your existing images AND the maskable ones shown in your screenshot.
+// Uses './' prefix as you confirmed this works for your setup.
 const LOCAL_ASSETS = [
   './images/fmlm_logo_h.png',
   './images/icon-192.png',
   './images/icon-512.png',
-  './images/icon-maskable-192.png',
-  './images/icon-maskable-512.png',
+  './images/icon-maskable-192.png', // Ensure these match the repo filename exactly
+  './images/icon-maskable-512.png', // Ensure these match the repo filename exactly
   './images/onboarding1.png',
   './images/onboarding2.png',
   './images/onboarding3.png'
@@ -58,6 +59,7 @@ self.addEventListener('install', (event) => {
       }
 
       // B. LOCAL ASSETS (Log errors but don't abort)
+      // FIX: Variable name matches the const defined above
       await Promise.allSettled(LOCAL_ASSETS.map(url => {
         return fetch(url).then(res => {
             if (res.ok) return cache.put(url, res);
@@ -97,7 +99,7 @@ self.addEventListener('fetch', (event) => {
             return res;
           });
         })
-        .catch(() => caches.match('index.html'))
+        .catch(() => caches.match('./index.html'))
     );
     return;
   }
