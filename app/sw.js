@@ -1,8 +1,7 @@
-const CACHE_NAME = 'fodmap-logmap-v0.10.1'; // Bump version
+const CACHE_NAME = 'fodmap-logmap-v0.10.2'; // Bump version
 const CACHE_WHITELIST = [CACHE_NAME];
 
 // 1. CRITICAL FILES (Strict)
-// These controls the app shell. If missing, installation aborts.
 const CRITICAL_FILES = [
   './',
   './index.html',
@@ -11,7 +10,7 @@ const CRITICAL_FILES = [
   './style.css'
 ];
 
-// 2. Local Assets - Update to include maskable versions
+// 2. LOCAL ASSETS (Best Effort)
 const LOCAL_ASSETS = [
   'images/fmlm_logo_h.png',
   'images/icon-192.png',
@@ -46,7 +45,7 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME).then(async (cache) => {
       console.log(`[SW] Installing ${CACHE_NAME}`);
 
-      // A. Criticals
+      // A. Criticals (Abort if failed)
       try {
         await cache.addAll(CRITICAL_FILES);
       } catch (err) {
@@ -55,7 +54,8 @@ self.addEventListener('install', (event) => {
       }
 
       // B. Images (Best Effort)
-      await Promise.allSettled(OPTIONAL_ASSETS.map(url => {
+      // FIX WAS HERE: Changed OPTIONAL_ASSETS to LOCAL_ASSETS
+      await Promise.allSettled(LOCAL_ASSETS.map(url => {
         return fetch(url).then(res => { 
             if (res.ok) return cache.put(url, res); 
         });
@@ -104,7 +104,6 @@ self.addEventListener('fetch', (event) => {
     caches.match(event.request).then(cachedRes => {
       if (cachedRes) return cachedRes;
       return fetch(event.request).catch(() => {
-        // Return 404 for images/assets to prevent crashes
         return new Response("Offline", { status: 404, statusText: "Offline" });
       });
     })
