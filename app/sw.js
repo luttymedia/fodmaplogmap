@@ -14,14 +14,14 @@ const CRITICAL_FILES = [
 // 2. LOCAL ASSETS (Best Effort - Standard Fetch)
 // Matches exact 'src' attributes in your HTML (No './' prefix)
 const LOCAL_ASSETS = [
-  'images/fmlm_logo_h.png',
-  'images/icon-192.png',
-  'images/icon-512.png',
-  'images/icon-maskable-192.png',
-  'images/icon-maskable-512.png',
-  'images/onboarding1.png',
-  'images/onboarding2.png',
-  'images/onboarding3.png'
+  './images/fmlm_logo_h.png',
+  './images/icon-192.png',
+  './images/icon-512.png',
+  './images/icon-maskable-192.png',
+  './images/icon-maskable-512.png',
+  './images/onboarding1.png',
+  './images/onboarding2.png',
+  './images/onboarding3.png'
 ];
 
 // 3. OPAQUE ASSETS (Best Effort - 'no-cors')
