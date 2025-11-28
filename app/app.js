@@ -700,6 +700,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const aiUpgradeBanner = document.getElementById('ai-upgrade-banner');
     const aiCreditsText = document.getElementById('ai-credits-text'); // Add this selector
 
+    const updatePremiumUI = () => {
+        const profile = appState.userProfile;
+        const isPremium = profile.isPremium === true;
+        
+        // 1. Menu Badge
+        const menuBadge = document.getElementById('menu-pro-badge');
+        if (menuBadge) menuBadge.classList.toggle('hidden', !isPremium);
+
+        // 2. Account Settings Status
+        const accountPremiumWrapper = document.getElementById('account-premium-wrapper');
+        if (accountPremiumWrapper) accountPremiumWrapper.classList.toggle('hidden', !isPremium);
+
+        // 3. Side Menu "Go Premium" Button (Hide if already premium)
+        if (menuPremiumLi) menuPremiumLi.classList.toggle('hidden', isPremium);
+
+        // 4. AI Banner (Hide if premium)
+        if (aiUpgradeBanner && isPremium) {
+            aiUpgradeBanner.classList.add('hidden');
+        }
+    };
+
     const updateAICounterUI = () => {
         if (!auth) {
             if (aiUpgradeBanner) aiUpgradeBanner.classList.add('hidden');
@@ -2327,6 +2348,59 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Profile Saved!", "success");
     });
 
+    // --- Payment / Premium Logic ---
+
+    const initiateCheckout = async () => {
+        if (!auth.currentUser) {
+            // If guest, prompt to sign up first to attach the purchase
+            showActionModal({
+                title: 'Create Account Required',
+                message: "To save your Lifetime Premium purchase securely, please create a free account or log in first.",
+                confirmText: 'Log In / Sign Up',
+                onConfirm: () => openAuthModal('signin'),
+                cancelText: 'Cancel'
+            });
+            return;
+        }
+
+        const btn = document.getElementById('menu-premium-btn');
+        const originalText = btn ? btn.innerHTML : '';
+        if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
+
+        showToast("Preparing secure checkout...", "phase-reintroduction");
+
+        try {
+            const createSession = functions.httpsCallable('createCheckoutSession');
+            // We pass the origin (e.g., http://127.0.0.1:5500) to ensure a clean redirect
+            const { data } = await createSession({ 
+                returnUrl: window.location.origin + window.location.pathname
+            });
+            
+            if (data && data.url) {
+                // Redirect to Stripe Hosted Page
+                window.location.assign(data.url);
+            } else {
+                throw new Error("No payment URL returned.");
+            }
+        } catch (error) {
+            console.error("Checkout failed:", error);
+            showToast("Connection failed. Please try again.", "error");
+            if (btn) btn.innerHTML = originalText;
+        }
+    };
+
+    // Attach listeners to "Go Premium" buttons
+    if (menuPremiumLi) {
+        // We attach to the button inside the LI
+        const btn = menuPremiumLi.querySelector('button');
+        if (btn) btn.addEventListener('click', initiateCheckout);
+    }
+
+    const aiPremiumBtn = document.getElementById('ai-premium-btn');
+    if (aiPremiumBtn) {
+        aiPremiumBtn.addEventListener('click', initiateCheckout);
+    }
+
     // --- Data Management Listeners ---
     const importFileInput = document.getElementById('import-file-input');
     const importDataBtn = document.getElementById('import-data-btn');
@@ -2395,6 +2469,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast("Error setting limit", "error");
                 debugMaxBtn.disabled = false;
             });
+        });
+    }
+
+    // New Downgrade Button
+    const debugDowngradeBtn = document.getElementById('debug-downgrade-btn');
+    if (debugDowngradeBtn) {
+        debugDowngradeBtn.addEventListener('click', async () => {
+            const user = auth.currentUser;
+            if (!user) { showToast("Not logged in", "error"); return; }
+            
+            debugDowngradeBtn.disabled = true;
+            debugDowngradeBtn.textContent = "...";
+
+            try {
+                // Manually set isPremium to false in Firestore
+                await db.collection('users').doc(user.uid).set({
+                    userProfile: { isPremium: false }
+                }, { merge: true });
+
+                showToast("⬇️ Downgraded to Free", "success");
+                
+                // Reload to refresh local state and UI
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } catch (err) {
+                console.error(err);
+                showToast("Error downgrading", "error");
+                debugDowngradeBtn.disabled = false;
+                debugDowngradeBtn.textContent = "Revert to Free";
+            }
         });
     }
 
@@ -3373,6 +3478,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Re-render UI
                 updateUiForPhase(appState.userProfile.currentPhase);
                 setupProfilePage();
+                updatePremiumUI();
 
                 // --- Update AI Counter ---
                 updateAICounterUI();
@@ -3712,6 +3818,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Render the guest UI
         updateUiForPhase(appState.userProfile.currentPhase);
         setupProfilePage();
+        updatePremiumUI(); // Update badges/banners
         
         // Only navigate if no other page is visible (i.e., on first load)
         if (!document.querySelector('.page:not(.hidden)')) {

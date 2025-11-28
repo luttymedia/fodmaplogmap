@@ -1,4 +1,4 @@
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const { setGlobalOptions } = require("firebase-functions/v2/options");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const admin = require("firebase-admin");
@@ -92,5 +92,106 @@ exports.analyzeFodmap = onCall(
       console.error("AI Processing Error:", error);
       throw new HttpsError("internal", `AI Error: ${error.message}`);
     }
+  }
+);
+
+// --- STRIPE PAYMENT INTEGRATION ---
+
+exports.createCheckoutSession = onCall(
+  {
+    secrets: ["STRIPE_SECRET_KEY"],
+    cors: true,
+  },
+  async (request) => {
+    // 1. Auth Check
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "User must be logged in.");
+    }
+
+    const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+    const uid = request.auth.uid;
+    const returnUrl = request.data.returnUrl || "https://fodmaplogmap-web.onrender.com";
+
+    try {
+      // 2. Create Session
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        mode: "payment",
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: "FODMAP LOGMAP - Lifetime Premium",
+                description: "Unlimited AI Assistant & Cloud Sync",
+              },
+              unit_amount: 799, // $7.99
+            },
+            quantity: 1,
+          },
+        ],
+        success_url: `${returnUrl}?status=success`,
+        cancel_url: `${returnUrl}?status=cancel`,
+        metadata: {
+          uid: uid, // Critical for the webhook to know who paid
+          source: "web_app",
+        },
+        client_reference_id: uid,
+      });
+
+      return { url: session.url };
+    } catch (error) {
+      console.error("Stripe Session Error:", error);
+      throw new HttpsError("internal", "Unable to create checkout session.");
+    }
+  }
+);
+
+exports.stripeWebhook = onRequest(
+  {
+    secrets: ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"],
+    cors: true, 
+  },
+  async (req, res) => {
+    const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+    const sig = req.headers["stripe-signature"];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    let event;
+
+    try {
+      // 1. Verify Signature
+      event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
+    } catch (err) {
+      console.error("Webhook Signature Error:", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // 2. Handle Event
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+      const uid = session.metadata.uid || session.client_reference_id;
+
+      if (uid) {
+        try {
+          // 3. Fulfill Purchase (Update Firestore)
+          await db.collection("users").doc(uid).set(
+            {
+              userProfile: {
+                isPremium: true,
+                premiumSince: admin.firestore.FieldValue.serverTimestamp(),
+              },
+            },
+            { merge: true }
+          );
+          console.log(`Premium activated for user: ${uid}`);
+        } catch (error) {
+          console.error("Firestore Update Error:", error);
+          return res.status(500).send("Database update failed");
+        }
+      }
+    }
+
+    res.json({ received: true });
   }
 );

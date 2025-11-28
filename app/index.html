@@ -270,12 +270,15 @@
                 <!-- Credit Testing buttons -->
                 <div class="mt-6 p-4 border-2 border-dashed border-indigo-200 rounded-xl bg-indigo-50">
                 <h3 class="text-sm font-bold text-indigo-800 mb-2 text-center">🛠️ Tester Zone</h3>
-                <div class="flex gap-2">
+                <div class="flex gap-2 flex-wrap">
                     <button id="debug-reset-count" class="flex-1 bg-indigo-600 text-white text-xs font-bold py-2 px-2 rounded-lg shadow hover:bg-indigo-700">
                         Reset Count (0)
                     </button>
                     <button id="debug-max-count" class="flex-1 bg-pink-600 text-white text-xs font-bold py-2 px-2 rounded-lg shadow hover:bg-pink-700">
                         Max Count (5)
+                    </button>
+                    <button id="debug-downgrade-btn" class="flex-1 bg-slate-600 text-white text-xs font-bold py-2 px-2 rounded-lg shadow hover:bg-slate-700">
+                        Revert to Free
                     </button>
                 </div>
             </div>
@@ -422,6 +425,18 @@
                     <p class="text-subtle mb-4 text-sm">Manage your account details and preferences.</p>
 
                     <form id="account-settings-form" class="space-y-4">
+                        <div id="account-premium-wrapper" class="hidden p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-sm">
+                                    <i class="fas fa-crown text-xs"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-amber-900 leading-tight">Lifetime Premium</p>
+                                    <p class="text-[10px] text-amber-700">All features unlocked</p>
+                                </div>
+                            </div>
+                            <i class="fas fa-check-circle text-orange-500 text-lg"></i>
+                        </div>
                         <div>
                             <label for="account-name" class="block mb-1.5 text-sm font-medium text-secondary">Name</label>
                             <div class="flex gap-2">
@@ -916,15 +931,16 @@
                     </li>
 
                     <li id="menu-account-li" class="hidden pt-2 border-t border-slate-200">
-                        <button id="menu-account-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
-                            <i id="menu-account-icon" class="fas fa-cog w-5 mr-2 text-subtle"></i>
+                        <button id="menu-account-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm flex items-center">
+                            <i id="menu-account-icon" class="fas fa-cog w-5 mr-2 text-subtle flex-shrink-0"></i>
                             <span id="menu-account-email" class="truncate text-xs font-bold">Not logged in</span>
+                            <span id="menu-pro-badge" class="hidden ml-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">PRO</span>
                         </button>
                     </li>
                     </ul>
             </nav>
             <div class="mt-4 pt-4 border-t border-slate-200 text-center">
-                <span class="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-1 rounded">v0.12.3 (Beta)</span>
+                <span class="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-1 rounded">v0.12.4 (Beta)</span>
             </div>
         </div>
     </div>
