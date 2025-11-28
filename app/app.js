@@ -2355,7 +2355,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // If guest, prompt to sign up first to attach the purchase
             showActionModal({
                 title: 'Create Account Required',
-                message: "To save your Lifetime Premium purchase securely, please create a free account or log in first.",
+                message: "To upgrade to a Lifetime Premium account securely, please create a free account or log in first.",
                 confirmText: 'Log In / Sign Up',
                 onConfirm: () => openAuthModal('signin'),
                 cancelText: 'Cancel'
@@ -5847,6 +5847,41 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // --- Premium Success Logic ---
+    const checkPremiumRedirect = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // 1. Check for success flag from Stripe
+        if (urlParams.get('status') === 'success') {
+            const successModal = document.getElementById('premium-success-modal');
+            const successCloseBtn = document.getElementById('premium-success-close');
+
+            if (successModal) {
+                // Show modal
+                successModal.classList.remove('hidden');
+                
+                // Play a simple "ta-da" style toast as backup
+                showToast("Welcome to Premium! 👑", "success");
+
+                // Clean the URL (remove ?status=success) so it doesn't show on refresh
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.replaceState({path: newUrl}, '', newUrl);
+
+                // Setup Close Button
+                if (successCloseBtn) {
+                    successCloseBtn.addEventListener('click', () => {
+                        successModal.classList.add('hidden');
+                        // Optional: Navigate to AI tab to show off the unlocked feature
+                        navigateTo('food-info');
+                    });
+                }
+            }
+        }
+    };
+
+    // Run the check
+    checkPremiumRedirect();
 
     window.appState = appState; // <-- ADD THIS LINE FOR TESTING
 });
