@@ -90,6 +90,46 @@ function showToast(message = "Saved!", status = 'success') {
 
 document.addEventListener('DOMContentLoaded', () => {
 
+    // --- START: i18next Initialization ---
+    i18next
+        .use(i18nextHttpBackend)
+        .use(i18nextBrowserLanguageDetector)
+        .init({
+            fallbackLng: 'en',
+            debug: true,
+            load: 'languageOnly',
+            backend: {
+                loadPath: './locales/{{lng}}/translation.json'
+            },
+            interpolation: {
+                escapeValue: false
+            }
+        }, function(err, t) {
+            if (err) {
+                console.error('i18n init failed:', err);
+                // Even if it fails, we keep the default English data
+                return;
+            }
+            console.log('i18n initialized. Language:', i18next.language);
+            updateContent();
+            updateDynamicData(); 
+        });
+
+    // Helper to update all static HTML elements
+    function updateContent() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            const options = el.getAttribute('data-i18n-options');
+            
+            if (options) {
+                el.innerHTML = i18next.t(key, JSON.parse(options));
+            } else {
+                el.innerHTML = i18next.t(key);
+            }
+        });
+    }
+    // --- END: i18next Initialization ---
+
     // --- NEW: Premium Info Modal Elements (Moved to top) ---
     const premiumInfoModal = document.getElementById('premium-info-modal');
     const premiumInfoClose = document.getElementById('premium-info-close');
@@ -118,7 +158,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
      // --- CONSTANTS ---
      // These must be defined first to build the default profile
-     const FODMAP_GROUP_DATA = [ { value: "Fructose", name: "Fructose", examples: "(e.g., Honey, Mango)" }, { value: "Lactose", name: "Lactose", examples: "(e.g., Milk, Yogurt)" }, { value: "Fructans (Grains)", name: "Fructans - Grains", examples: "(e.g., Wheat, Rye)" }, { value: "Fructans (Veg & Fruit)", name: "Fructans - Veg & Fruit", examples: "(e.g., Onion, Garlic)" }, { value: "GOS", name: "Galactans (GOS)", examples: "(e.g., Beans, Lentils)" }, { value: "Polyols (Sorbitol)", name: "Polyols - Sorbitol", examples: "(e.g., Avocado, Blackberry)" }, { value: "Polyols (Mannitol)", name: "Polyols - Mannitol", examples: "(e.g., Cauliflower, Mushroom)" }, { value: "Other", name: "Other / Unclassified", examples: "(Foods you're unsure how to classify)" }, { value: "Safe Meal", name: "Safe Meal", examples: "(A non-challenge or safe meal)" } ];
+     // Initialize with defaults so the app works even if i18n fails
+     let FODMAP_GROUP_DATA = [ 
+        { value: "Fructose", name: "Fructose", examples: "(e.g., Honey, Mango)" }, 
+        { value: "Lactose", name: "Lactose", examples: "(e.g., Milk, Yogurt)" }, 
+        { value: "Fructans (Grains)", name: "Fructans - Grains", examples: "(e.g., Wheat, Rye)" }, 
+        { value: "Fructans (Veg & Fruit)", name: "Fructans - Veg & Fruit", examples: "(e.g., Onion, Garlic)" }, 
+        { value: "GOS", name: "Galactans (GOS)", examples: "(e.g., Beans, Lentils)" }, 
+        { value: "Polyols (Sorbitol)", name: "Polyols - Sorbitol", examples: "(e.g., Avocado, Blackberry)" }, 
+        { value: "Polyols (Mannitol)", name: "Polyols - Mannitol", examples: "(e.g., Cauliflower, Mushroom)" }, 
+        { value: "Other", name: "Other / Unclassified", examples: "(Foods you're unsure how to classify)" }, 
+        { value: "Safe Meal", name: "Safe Meal", examples: "(A non-challenge or safe meal)" } 
+     ];
+
+     function updateDynamicData() {
+        FODMAP_GROUP_DATA = [ 
+            { value: "Fructose", name: i18next.t('fodmap_groups.fructose'), examples: "(e.g., Honey, Mango)" }, 
+            { value: "Lactose", name: i18next.t('fodmap_groups.lactose'), examples: "(e.g., Milk, Yogurt)" }, 
+            { value: "Fructans (Grains)", name: i18next.t('fodmap_groups.fructans_grain'), examples: "(e.g., Wheat, Rye)" }, 
+            { value: "Fructans (Veg & Fruit)", name: i18next.t('fodmap_groups.fructans_veg'), examples: "(e.g., Onion, Garlic)" }, 
+            { value: "GOS", name: i18next.t('fodmap_groups.gos'), examples: "(e.g., Beans, Lentils)" }, 
+            { value: "Polyols (Sorbitol)", name: i18next.t('fodmap_groups.sorbitol'), examples: "(e.g., Avocado, Blackberry)" }, 
+            { value: "Polyols (Mannitol)", name: i18next.t('fodmap_groups.mannitol'), examples: "(e.g., Cauliflower, Mushroom)" }, 
+            { value: "Other", name: i18next.t('fodmap_groups.other'), examples: "(Foods you're unsure how to classify)" }, 
+            { value: "Safe Meal", name: i18next.t('fodmap_groups.safe_meal'), examples: "(A non-challenge or safe meal)" } 
+        ];
+        
+        // Re-render components that depend on this data
+        if (typeof renderLogEntries === 'function') renderLogEntries();
+        if (typeof renderHomePage === 'function') renderHomePage();
+        if (typeof renderPersonalizationSummary === 'function') renderPersonalizationSummary();
+
+        // --- ADD THIS: Force refresh the dropdown options if they exist ---
+        const fodmapOptions = document.getElementById('custom-fodmap-select-options');
+        if (fodmapOptions) {
+            fodmapOptions.innerHTML = ''; // Clear old English options
+            // Re-run the build logic (we can't call buildDropdown() directly as it's scoped, so we repeat the simple loop)
+            FODMAP_GROUP_DATA.forEach(group => {
+                 const option = document.createElement('li');
+                 option.className = 'custom-select-option';
+                 option.dataset.value = group.value;
+                 const style = FODMAP_STYLES[group.value] || { icon: '❓' };
+                 option.innerHTML = `
+                    <div class="option-title">${style.icon} ${group.name}</div>
+                    <div class="option-examples">${group.examples}</div>
+                `;
+                fodmapOptions.appendChild(option);
+            });
+        }
+     }
+     
      const FODMAP_STYLES = { "Fructose": { color: "bg-yellow-100 text-yellow-800", icon: "🍎" }, "Lactose": { color: "bg-blue-100 text-blue-800", icon: "🥛" }, "Fructans (Grains)": { color: "bg-orange-100 text-orange-800", icon: "🍞" }, "Fructans (Veg & Fruit)": { color: "bg-purple-100 text-purple-800", icon: "🧅" }, "GOS": { color: "bg-teal-100 text-teal-800", icon: "🫘" }, "Polyols (Sorbitol)": { color: "bg-green-100 text-green-800", icon: "🥑" }, "Polyols (Mannitol)": { color: "bg-indigo-100 text-indigo-800", icon: "🍄" }, "Other": { color: "bg-gray-100 text-gray-800", icon: "❔" }, "Safe Meal": { color: "bg-slate-100 text-slate-800", icon: "🍴" } };
      const PROFILE_OPTIONS = { diagnoses: ["IMO", "SIBO", "IBS-D", "IBS-C", "IBS-M"], intolerances: ["Sorbitol", "Mannitol", "Lactose", "Fructose", "Gluten"], preferences: ["Vegetarian", "Vegan", "Pescatarian"] };
      const SYMPTOM_OPTIONS = ["Bloating", "Gas", "Abdominal pain", "Diarrhea", "Constipation", "Fatigue", "Headache"];
@@ -893,6 +982,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const handleAIQuery = (prompt, title, imageData = null, mimeType = null) => {
+         // Prepend language instruction to prompt
+         const currentLang = i18next.language;
+         prompt = `(Respond in ${currentLang} language) ` + prompt;
          aiResultsLoader.classList.remove('hidden'); aiResultsContainer.classList.add('hidden'); aiResultsContent.innerHTML = '';
          callGeminiAPI(prompt, imageData, mimeType)
             .then(response => {
@@ -1669,30 +1761,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const fodmapOptions = document.getElementById('custom-fodmap-select-options');
         const fodmapHiddenInput = document.getElementById('log-fodmap-group');
 
-        // Populate options list (only if it's empty)
-        if (fodmapOptions.children.length === 0) {
+        // Populate options list logic removed from here.
+        // It is now handled by updateDynamicData() to ensure translation availability.
+
+        // Toggle dropdown
+        // 1. Build the list immediately (using defaults or translated data)
+        const buildDropdown = () => {
+            fodmapOptions.innerHTML = '';
             FODMAP_GROUP_DATA.forEach(group => {
+                if (appState.userProfile.currentPhase === 'reintroduction' && (group.value === 'Safe Meal' || group.value === 'Other')) return;
+                
                 const option = document.createElement('li');
                 option.className = 'custom-select-option';
                 option.dataset.value = group.value;
-                
-                // --- THIS IS THE FIX ---
-                // The 'style' variable must be defined *before* it is used.
-                // The duplicate/broken block has been removed.
                 const style = FODMAP_STYLES[group.value] || { icon: '❓' };
                 option.innerHTML = `
                     <div class="option-title">${style.icon} ${group.name}</div>
                     <div class="option-examples">${group.examples}</div>
                 `;
-                // --- END FIX ---
-
                 fodmapOptions.appendChild(option);
             });
-        }
+        };
+        buildDropdown(); // Run once on init
 
-        // Toggle dropdown
+        // 2. Toggle dropdown on click
         fodmapTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
+            // Rebuild if empty (safety)
+            if (fodmapOptions.children.length === 0) buildDropdown();
+            
             fodmapOptions.classList.toggle('open');
             fodmapTrigger.classList.toggle('open');
         });
