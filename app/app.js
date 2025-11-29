@@ -52,7 +52,7 @@ if (isFirebaseAvailable) {
 /**
  * Shows a toast message. Safe to call anytime.
  */
-function showToast(message = "Saved!", status = 'success') {
+function showToast(message = i18next.t('log.toast_saved'), status = 'success') {
     const toast = document.getElementById('toast');
     if (!toast) return; // Failsafe if DOM isn't ready
 
@@ -112,19 +112,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             console.log('i18n initialized. Language:', i18next.language);
             updateContent();
-            updateDynamicData(); 
+            updateDynamicData();
+
+            // --- Populate forms only after translation data is ready ---
+            setupLogForm(); 
+            document.getElementById('log-date').valueAsDate = new Date();
         });
 
-    // Helper to update all static HTML elements
+    // Helper to update all static HTML elements AND attributes
     function updateContent() {
         document.querySelectorAll('[data-i18n]').forEach(el => {
-            const key = el.getAttribute('data-i18n');
-            const options = el.getAttribute('data-i18n-options');
+            const rawKey = el.getAttribute('data-i18n');
+            const optionsStr = el.getAttribute('data-i18n-options');
+            const options = optionsStr ? JSON.parse(optionsStr) : {};
+
+            // Check if it's an attribute binding (e.g. "[placeholder]my.key")
+            // Regex checks for content starting with brackets like [alt]...
+            const match = rawKey.match(/^\[([^\]]+)\](.+)$/);
             
-            if (options) {
-                el.innerHTML = i18next.t(key, JSON.parse(options));
+            if (match) {
+                const attr = match[1]; // e.g. "placeholder" or "alt"
+                const key = match[2];  // e.g. "ai.input_placeholder"
+                el.setAttribute(attr, i18next.t(key, options));
             } else {
-                el.innerHTML = i18next.t(key);
+                // Standard text content
+                el.innerHTML = i18next.t(rawKey, options);
             }
         });
     }
@@ -148,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
             offlineIndicator.classList.add('hidden');
         } else {
             offlineIndicator.classList.remove('hidden');
-            showToast("You are offline.", "warning");
+            showToast(i18next.t('offlineIndicator.title'), "warning");
         }
     };
     window.addEventListener('online', updateOnlineStatus);
@@ -156,44 +168,63 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check initial state
     if (!navigator.onLine) updateOnlineStatus();
 
-     // --- CONSTANTS ---
-     // These must be defined first to build the default profile
-     // Initialize with defaults so the app works even if i18n fails
-     let FODMAP_GROUP_DATA = [ 
-        { value: "Fructose", name: "Fructose", examples: "(e.g., Honey, Mango)" }, 
-        { value: "Lactose", name: "Lactose", examples: "(e.g., Milk, Yogurt)" }, 
-        { value: "Fructans (Grains)", name: "Fructans - Grains", examples: "(e.g., Wheat, Rye)" }, 
-        { value: "Fructans (Veg & Fruit)", name: "Fructans - Veg & Fruit", examples: "(e.g., Onion, Garlic)" }, 
-        { value: "GOS", name: "Galactans (GOS)", examples: "(e.g., Beans, Lentils)" }, 
-        { value: "Polyols (Sorbitol)", name: "Polyols - Sorbitol", examples: "(e.g., Avocado, Blackberry)" }, 
-        { value: "Polyols (Mannitol)", name: "Polyols - Mannitol", examples: "(e.g., Cauliflower, Mushroom)" }, 
-        { value: "Other", name: "Other / Unclassified", examples: "(Foods you're unsure how to classify)" }, 
-        { value: "Safe Meal", name: "Safe Meal", examples: "(A non-challenge or safe meal)" } 
-     ];
+     // --- CONSTANTS (Defined globally, populated later) ---
+     let FODMAP_GROUP_DATA = []; 
+     let PROFILE_OPTIONS = { diagnoses: [], intolerances: [], preferences: [] };
+     let SYMPTOM_OPTIONS = [];
+     let PHASE_STYLES = {};
+     
+     // Styles don't need translation, so they can stay const
+     const FODMAP_STYLES = { "Fructose": { color: "bg-yellow-100 text-yellow-800", icon: "🍎" }, "Lactose": { color: "bg-blue-100 text-blue-800", icon: "🥛" }, "Fructans (Grains)": { color: "bg-orange-100 text-orange-800", icon: "🍞" }, "Fructans (Veg & Fruit)": { color: "bg-purple-100 text-purple-800", icon: "🧅" }, "GOS": { color: "bg-teal-100 text-teal-800", icon: "🫘" }, "Polyols (Sorbitol)": { color: "bg-green-100 text-green-800", icon: "🥑" }, "Polyols (Mannitol)": { color: "bg-indigo-100 text-indigo-800", icon: "🍄" }, "Other": { color: "bg-gray-100 text-gray-800", icon: "❔" }, "Safe Meal": { color: "bg-slate-100 text-slate-800", icon: "🍴" } };
 
+     // This function is called ONLY after i18next is fully loaded
      function updateDynamicData() {
+        // 1. Populate FODMAP Groups
+        // We now use the '_short' keys for the dropdowns and home screen
         FODMAP_GROUP_DATA = [ 
-            { value: "Fructose", name: i18next.t('fodmap_groups.fructose'), examples: "(e.g., Honey, Mango)" }, 
-            { value: "Lactose", name: i18next.t('fodmap_groups.lactose'), examples: "(e.g., Milk, Yogurt)" }, 
-            { value: "Fructans (Grains)", name: i18next.t('fodmap_groups.fructans_grain'), examples: "(e.g., Wheat, Rye)" }, 
-            { value: "Fructans (Veg & Fruit)", name: i18next.t('fodmap_groups.fructans_veg'), examples: "(e.g., Onion, Garlic)" }, 
-            { value: "GOS", name: i18next.t('fodmap_groups.gos'), examples: "(e.g., Beans, Lentils)" }, 
-            { value: "Polyols (Sorbitol)", name: i18next.t('fodmap_groups.sorbitol'), examples: "(e.g., Avocado, Blackberry)" }, 
-            { value: "Polyols (Mannitol)", name: i18next.t('fodmap_groups.mannitol'), examples: "(e.g., Cauliflower, Mushroom)" }, 
-            { value: "Other", name: i18next.t('fodmap_groups.other'), examples: "(Foods you're unsure how to classify)" }, 
-            { value: "Safe Meal", name: i18next.t('fodmap_groups.safe_meal'), examples: "(A non-challenge or safe meal)" } 
+            { value: "Fructose", name: i18next.t('fodmap_groups.fructose'), examples: i18next.t('fodmap_groups.fructose_short') }, 
+            { value: "Lactose", name: i18next.t('fodmap_groups.lactose'), examples: i18next.t('fodmap_groups.lactose_short') }, 
+            { value: "Fructans (Grains)", name: i18next.t('fodmap_groups.fructans_grain'), examples: i18next.t('fodmap_groups.fructans_grain_short') }, 
+            { value: "Fructans (Veg & Fruit)", name: i18next.t('fodmap_groups.fructans_veg'), examples: i18next.t('fodmap_groups.fructans_veg_short') }, 
+            { value: "GOS", name: i18next.t('fodmap_groups.gos'), examples: i18next.t('fodmap_groups.gos_short') }, 
+            { value: "Polyols (Sorbitol)", name: i18next.t('fodmap_groups.sorbitol'), examples: i18next.t('fodmap_groups.sorbitol_short') }, 
+            { value: "Polyols (Mannitol)", name: i18next.t('fodmap_groups.mannitol'), examples: i18next.t('fodmap_groups.mannitol_short') }, 
+            { value: "Other", name: i18next.t('fodmap_groups.other'), examples: i18next.t('fodmap_groups.other_short') }, 
+            { value: "Safe Meal", name: i18next.t('fodmap_groups.safe_meal'), examples: i18next.t('fodmap_groups.safe_meal_short') } 
         ];
+
+        // 2. Populate Profile Options
+        PROFILE_OPTIONS = {
+          diagnoses: [i18next.t('profile.diagnosis_imo'), i18next.t('profile.diagnosis_sibo'), i18next.t('profile.diagnosis_ibsd'), i18next.t('profile.diagnosis_ibsc'), i18next.t('profile.diagnosis_ibsm')],
+          intolerances: [i18next.t('profile.intolerance_sorbitol'), i18next.t('profile.intolerance_mannitol'), i18next.t('profile.intolerance_lactose'), i18next.t('profile.intolerance_fructose'), i18next.t('profile.intolerance_gluten')],
+          preferences: [i18next.t('profile.pref_vegetarian'), i18next.t('profile.pref_vegan'), i18next.t('profile.pref_pescatarian')]
+        };
+
+        // 3. Populate Symptoms
+        SYMPTOM_OPTIONS = [i18next.t('symptoms.bloating'), i18next.t('symptoms.gas'), i18next.t('symptoms.pain'), i18next.t('symptoms.diarrhea'), i18next.t('symptoms.constipation'), i18next.t('symptoms.fatigue'), i18next.t('symptoms.headache')];
+
+        // 4. Populate Phase Styles
+        PHASE_STYLES = {
+            "pre-treatment": { label: i18next.t('phases.pre_treatment.name'), colorClass: "phase-pre-treatment", colorHex: "#f59e0b", colorHexDark: "#d97706", textColor: "#ffffff" },
+            "restriction": { label: i18next.t('phases.restriction.name'), colorClass: "phase-restriction", colorHex: "#8bb744", colorHexDark: "#6a9335", textColor: "#ffffff" },
+            "reintroduction": { label: i18next.t('phases.reintroduction.name'), colorClass: "phase-reintroduction", colorHex: "#2d61a0", colorHexDark: "#283b6c", textColor: "#ffffff" },
+            "personalization": { label: i18next.t('phases.personalization.name'), colorClass: "phase-personalization", colorHex: "#4a0076", colorHexDark: "#3b005f", textColor: "#ffffff" }
+        };
         
         // Re-render components that depend on this data
         if (typeof renderLogEntries === 'function') renderLogEntries();
         if (typeof renderHomePage === 'function') renderHomePage();
         if (typeof renderPersonalizationSummary === 'function') renderPersonalizationSummary();
+        
+        // Update the Phase Bar UI manually since it relies on PHASE_STYLES
+        if (typeof appState !== 'undefined' && appState.userProfile) {
+            updateUiForPhase(appState.userProfile.currentPhase);
+        }
 
-        // --- ADD THIS: Force refresh the dropdown options if they exist ---
+        // Force refresh the dropdown options if they exist
         const fodmapOptions = document.getElementById('custom-fodmap-select-options');
         if (fodmapOptions) {
-            fodmapOptions.innerHTML = ''; // Clear old English options
-            // Re-run the build logic (we can't call buildDropdown() directly as it's scoped, so we repeat the simple loop)
+            fodmapOptions.innerHTML = ''; 
             FODMAP_GROUP_DATA.forEach(group => {
                  const option = document.createElement('li');
                  option.className = 'custom-select-option';
@@ -206,18 +237,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 fodmapOptions.appendChild(option);
             });
         }
+        
+        // --- NEW: Fix the Sort Button Race Condition ---
+        const logSortBtn = document.getElementById('log-sort-btn');
+        if (logSortBtn) {
+             const currentSort = (typeof appState !== 'undefined') ? appState.currentDateSort : 'newest';
+             const sortIcon = currentSort === 'newest' ? 'fa-arrow-down-wide-short' : 'fa-arrow-up-wide-short';
+             const sortLabel = currentSort === 'newest' ? i18next.t('log.sort_newest') : i18next.t('log.sort_oldest');
+             logSortBtn.innerHTML = `<i class="fas ${sortIcon}"></i> <span class="text-sm ml-1">${i18next.t('log.sort_label')}: ${sortLabel}</span>`;
+        }
      }
-     
-     const FODMAP_STYLES = { "Fructose": { color: "bg-yellow-100 text-yellow-800", icon: "🍎" }, "Lactose": { color: "bg-blue-100 text-blue-800", icon: "🥛" }, "Fructans (Grains)": { color: "bg-orange-100 text-orange-800", icon: "🍞" }, "Fructans (Veg & Fruit)": { color: "bg-purple-100 text-purple-800", icon: "🧅" }, "GOS": { color: "bg-teal-100 text-teal-800", icon: "🫘" }, "Polyols (Sorbitol)": { color: "bg-green-100 text-green-800", icon: "🥑" }, "Polyols (Mannitol)": { color: "bg-indigo-100 text-indigo-800", icon: "🍄" }, "Other": { color: "bg-gray-100 text-gray-800", icon: "❔" }, "Safe Meal": { color: "bg-slate-100 text-slate-800", icon: "🍴" } };
-     const PROFILE_OPTIONS = { diagnoses: ["IMO", "SIBO", "IBS-D", "IBS-C", "IBS-M"], intolerances: ["Sorbitol", "Mannitol", "Lactose", "Fructose", "Gluten"], preferences: ["Vegetarian", "Vegan", "Pescatarian"] };
-     const SYMPTOM_OPTIONS = ["Bloating", "Gas", "Abdominal pain", "Diarrhea", "Constipation", "Fatigue", "Headache"];
-
-    const PHASE_STYLES = {
-        "pre-treatment": { label: "Pre-Treatment", colorClass: "phase-pre-treatment", colorHex: "#f59e0b", colorHexDark: "#d97706", textColor: "#ffffff" },
-        "restriction": { label: "Restriction", colorClass: "phase-restriction", colorHex: "#8bb744", colorHexDark: "#6a9335", textColor: "#ffffff" },
-        "reintroduction": { label: "Reintroduction", colorClass: "phase-reintroduction", colorHex: "#2d61a0", colorHexDark: "#283b6c", textColor: "#ffffff" },
-        "personalization": { label: "Personalization", colorClass: "phase-personalization", colorHex: "#4a0076", colorHexDark: "#3b005f", textColor: "#ffffff" }
-    };
 
     // --- DOM Elements (mostly constant) ---
     const pages = document.querySelectorAll('.page');
@@ -660,13 +689,13 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // *** MODIFICATION: Add "Personal Log" ***
             if (isReintro) {
-                if (reintroTabText) reintroTabText.textContent = 'Reintro Log';
+                if (reintroTabText) reintroTabText.textContent = i18next.t('nav.reintro_log');
                 if (reintroTabIcon) reintroTabIcon.className = 'fas fa-clipboard-list sm:mr-2';
             } else if (isPersonal) {
-                if (reintroTabText) reintroTabText.textContent = 'Personal Log';
+                if (reintroTabText) reintroTabText.textContent = i18next.t('nav.personal_log');
                 if (reintroTabIcon) reintroTabIcon.className = 'fas fa-book-medical sm:mr-2'; // Same icon as daily log
             } else {
-                if (reintroTabText) reintroTabText.textContent = 'Daily Log';
+                if (reintroTabText) reintroTabText.textContent = i18next.t('nav.daily_log');
                 if (reintroTabIcon) reintroTabIcon.className = 'fas fa-book-medical sm:mr-2';
             }
         }
@@ -702,13 +731,13 @@ document.addEventListener('DOMContentLoaded', () => {
         switch (phase) {
             case 'pre-treatment':
             case 'restriction':
-                infoBox.innerHTML = `<strong>Your Goal:</strong> Log your meals and any symptoms. This helps establish a baseline.`;
+                infoBox.innerHTML = i18next.t('log.info_pretreat_restrict');
                 infoBox.classList.remove('hidden');
                 // Fodmap select remains hidden
                 break;
 
             case 'reintroduction':
-                infoBox.innerHTML = `<strong>Your Goal:</strong> Log a <strong>specific</strong> FODMAP challenge. Select the group, food, and dose you are testing.`;
+                infoBox.innerHTML = i18next.t('log.info_reintro');
                 infoBox.classList.remove('hidden');
                 fodmapSelect.classList.remove('hidden');
                 planBtn.classList.remove('hidden');
@@ -723,7 +752,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
 
             case 'personalization':
-                infoBox.innerHTML = `<strong>Your Goal:</strong> Log new foods or mixed meals. This helps fine-tune your long-term, personalized diet.`;
+                infoBox.innerHTML = i18next.t('log.info_personal');
                 infoBox.classList.remove('hidden');
                 fodmapSelect.classList.remove('hidden');
                 // All dropdown options remain visible
@@ -846,10 +875,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (remaining > 0) {
                 // Has credits: Show count
-                aiCreditsText.innerHTML = `⚡ <strong>${remaining} / ${limit}</strong> Free AI Credits Left`;
+                aiCreditsText.innerHTML = i18next.t('ai.credits_left', { count: remaining, limit: limit });
             } else {
                 // No credits: Show warning
-                aiCreditsText.innerHTML = `You are out of free AI credits.`;
+                aiCreditsText.innerHTML = i18next.t('ai.credits_out');
             }
         }
     };
@@ -887,7 +916,7 @@ document.addEventListener('DOMContentLoaded', () => {
             triggerText.textContent = `${style.icon} ${groupData.name}`;
             trigger.classList.remove('placeholder');
         } else {
-            triggerText.textContent = 'Select FODMAP Group...';
+            triggerText.textContent = i18next.t('log.label_fodmap_group');
             trigger.classList.add('placeholder');
         }
         document.getElementById('log-food').value = entry.food;
@@ -936,8 +965,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Update UI ---
         // We now update the new modal's elements
-        logModalTitle.textContent = 'Edit Log Entry';
-        logFormSubmitBtn.textContent = 'Save Changes';
+        logModalTitle.textContent = i18next.t('log.modal_edit_title');
+        logFormSubmitBtn.textContent = i18next.t('log.btn_save_changes');
     };
 
     // --- Listener for the Cancel Edit button (will be moved/re-created) ---
@@ -953,8 +982,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- NEW ENTRY ---
             appState.currentlyEditingId = null;
             resetLogForm(); // Clear any old data
-            logModalTitle.textContent = 'Add Log Entry';
-            logFormSubmitBtn.textContent = 'Add Entry';
+            logModalTitle.textContent = i18next.t('log.modal_add_title');
+            logFormSubmitBtn.textContent = i18next.t('log.btn_add_entry');
         } else {
             // --- EDITING ENTRY ---
             const entryToEdit = appState.logEntries.find(entry => entry.id === entryId);
@@ -990,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(response => {
                 if (response) { 
                     const profileHTML = getProfileForDisplay();
-                    const disclaimer = `Disclaimer: I am a FODMAP expert analysis tool, not a medical professional. This information is for educational purposes regarding dietary management only and is not a substitute for personalized medical advice or treatment. Always consult with your doctor or a registered dietitian before making dietary changes.`;
+                    const disclaimer = i18next.t('ai.disclaimer');
 
                     // 1. Process the AI response
                     let aiContent = response
@@ -1036,8 +1065,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-3">
                                      <i class="fas fa-lock text-amber-600 text-xl"></i>
                                 </div>
-                                <h3 class="font-bold text-secondary">Limit Reached</h3>
-                                <p class="text-xs text-subtle mt-1 max-w-[200px] mx-auto">Upgrade to Premium to unlock unlimited AI analysis.</p>
+                                <h3 class="font-bold text-secondary">${i18next.t('ai.limit_reached_title')}</h3>
+                                <p class="text-xs text-subtle mt-1 max-w-[200px] mx-auto">${i18next.t('ai.limit_reached_msg')}</p>
                             </div>
                         `;
                     } else {
@@ -1045,9 +1074,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         aiResultsContent.innerHTML = `
                             <div class="text-center py-4">
                                 <p class="text-error font-semibold flex items-center justify-center gap-2">
-                                    <i class="fas fa-exclamation-circle"></i> Analysis Failed
+                                    <i class="fas fa-exclamation-circle"></i> ${i18next.t('ai.analysis_failed')}
                                 </p>
-                                <p class="text-xs text-subtle mt-1">Please check your connection or try again.</p>
+                                <p class="text-xs text-subtle mt-1">${i18next.t('ai.check_connection')}</p>
                             </div>
                         `;
                     }
@@ -1067,7 +1096,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Check if we have an image or text
         if (!appState.stagedImageData && !foodName) {
-            showToast("Please enter food or upload an image.", "warning");
+            showToast(i18next.t('ai.input_required'), "warning");
             return;
         }
 
@@ -1162,17 +1191,14 @@ document.addEventListener('DOMContentLoaded', () => {
         summaryContainer.innerHTML = '';
         let itemsAdded = 0; 
 
-    // --- NEW: Apply saved accordion state ---
-    const progressCardEl = document.getElementById('home-progress-card');
-    if (progressCardEl) {
-        progressCardEl.classList.toggle('expanded', appState.userProfile.uiSettings.isProgressExpanded);
-    }
+        const progressCardEl = document.getElementById('home-progress-card');
+        if (progressCardEl && appState.userProfile.uiSettings) {
+            progressCardEl.classList.toggle('expanded', appState.userProfile.uiSettings.isProgressExpanded);
+        }
 
         FODMAP_GROUP_DATA.forEach(groupData => {
-            // NEW: Skip non-challenge groups in this view
-            if (groupData.value === "Restriction" || groupData.value === "Other" || groupData.value === "Safe Meal") {
-                return; // Skip this group
-            }
+            if (groupData.value === "Restriction" || groupData.value === "Other" || groupData.value === "Safe Meal") return;
+            
             const entries = appState.logEntries.filter(entry => entry.group === groupData.value); 
             const count = entries.length;
             
@@ -1180,54 +1206,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 itemsAdded++; 
                 let statusText, icon, color;
                 
+                // --- FIX 1: Translated Status ---
                 if (count >= 3) { 
-                    statusText = `Completed (${count})`; 
+                    statusText = `${i18next.t('phases.reintroduction.status_completed')} (${count})`; 
                     icon = "fa-check-circle"; 
                     color = "text-accent"; 
                 } else { 
-                    statusText = `In Progress (${count})`; 
+                    statusText = `${i18next.t('phases.reintroduction.status_in_progress')} (${count})`; 
                     icon = "fa-spinner fa-spin"; 
                     color = "text-warning"; 
                 }
+                
                 const style = FODMAP_STYLES[groupData.value] || { icon: '❓' };
                 const item = document.createElement('div'); 
                 item.className = 'progress-item bg-slate-100 rounded-lg transition-colors duration-300'; 
                 item.dataset.group = groupData.value;
                 
-                // --- UPDATED INNERHTML for symptoms array ---
+                // --- FIX 2: Translated Date Format & Symptoms ---
                 item.innerHTML = `<div class="progress-item-header flex items-center justify-between p-3 cursor-pointer hover:bg-slate-200 rounded-lg"><div class="flex items-center gap-2"><i class="fas fa-chevron-right expand-icon text-slate-400 transition-transform duration-300 text-xs"></i><div><p class="font-semibold text-secondary text-sm"><span class="mr-1">${style.icon}</span>${groupData.name}</p><p class="text-xs text-subtle">${groupData.examples.slice(1, -1)}</p></div></div><div class="flex items-center gap-1.5 ${color}"><i class="fas ${icon} text-xs"></i><span class="text-xs font-medium">${statusText}</span></div></div><div class="progress-item-body border-t border-slate-200">${ entries.length > 0 ? entries.sort((a,b) => new Date(a.date) - new Date(b.date)).map(e => { 
-                    // --- START: UPDATED LOGIC ---
                     const symptoms = e.symptoms || ['None']; 
                     const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
+                    
+                    // Logic to display symptoms/severity translated
                     let symptomDisplay;
-
                     if (hasSymptoms) {
-                        symptomDisplay = `${symptoms.join(', ')} (${e.severity}/5)`; // Added parentheses
+                        symptomDisplay = `${symptoms.join(', ')} (${e.severity}/5)`;
                     } else {
-                        symptomDisplay = 'No symptoms'; // Lowercase 's'
+                        symptomDisplay = i18next.t('log.no_symptoms');
                     }
                     
-                    // Format date as "Oct 31, 25"
-                    const formattedDate = new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    // Date formatted to current language
+                    const formattedDate = new Date(e.date).toLocaleDateString(i18next.language, { month: 'short', day: 'numeric' });
 
-                    // Return the new format
                     return `<p><strong>${formattedDate}:</strong> ${e.food}, ${e.dose} - <em>${symptomDisplay}</em></p>`
-                    // --- END: UPDATED LOGIC ---
-                }).join('') : '<p class="text-subtle italic p-3 text-xs">No entries.</p>' }</div>`;
+                }).join('') : `<p class="text-subtle italic p-3 text-xs">${i18next.t('log.no_entries')}</p>` }</div>`;
                 summaryContainer.appendChild(item);
             }
         });
 
         if (itemsAdded === 0) {
-            summaryContainer.innerHTML = `<p class="text-center text-subtle italic text-sm p-4">Your progress will show here once you add your first log entry!</p>`;
+            summaryContainer.innerHTML = `<p class="text-center text-subtle italic text-sm p-4">${i18next.t('log.no_entries_prompt')}</p>`;
         }
 
-        try {
-            renderSymptomChart();
-        } catch (e) {
-            console.error("Failed to render symptom chart (this is expected if offline and not cached):", e);
-            // Don't let a chart error stop the app
-        }
+        try { renderSymptomChart(); } catch (e) { console.error(e); }
     };
     summaryContainer.addEventListener('click', (e) => {
             const header = e.target.closest('.progress-item-header'); if (header) { const item = header.parentElement; const expanded = item.classList.contains('expanded'); summaryContainer.querySelectorAll('.progress-item').forEach(i => i.classList.remove('expanded')); if (!expanded) item.classList.add('expanded'); }
@@ -1269,7 +1290,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (!settings || !settings.startDate) {
-            textContainer.innerHTML = `<span class="text-sm text-subtle">Set your <strong>Phase Start Date</strong> in your Profile to begin the countdown.</span>`;
+            textContainer.innerHTML = `<span class="text-sm text-subtle">${i18next.t('home.set_start_date')}</span>`;
             progressContainer.classList.add('hidden'); // Hide bar
             return;
         }
@@ -1289,7 +1310,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (totalDays <= 0) { // Avoid division by zero
             progressContainer.classList.add('hidden');
-            textContainer.innerHTML = `<span class="text-sm text-subtle">Please set a duration greater than 0 in your Profile.</span>`;
+            textContainer.innerHTML = `<span class="text-sm text-subtle">${i18next.t('home.set_duration_error')}</span>`;
             return;
         }
 
@@ -1335,10 +1356,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (daysRemaining > 0) {
+            let countdownText = '';
+            if (settings.durationUnit === 'weeks') {
+                countdownText = i18next.t('home.countdown_week', { current: currentUnitNum, total: settings.durationNum });
+            } else if (settings.durationUnit === 'days') {
+                countdownText = i18next.t('home.countdown_day', { current: currentUnitNum, total: settings.durationNum });
+            } else if (settings.durationUnit === 'months') {
+                countdownText = i18next.t('home.countdown_month', { current: currentUnitNum, total: settings.durationNum });
+            }
             textContainer.innerHTML = `
-                <div class="font-bold text-lg text-primary">${durationDisplay}</div>
-                <div class="text-sm text-muted">${daysRemaining} days remaining</div>
-                <div class="text-xs text-subtle mt-1">Starting date: ${formattedStartDate}</div>
+                <div class="font-bold text-lg text-primary">${countdownText}</div>
+                <div class="text-sm text-muted">${i18next.t('home.days_remaining', { count: daysRemaining })}</div>
+                <div class="text-xs text-subtle mt-1">${i18next.t('home.start_date_label', { date: formattedStartDate })}</div>
             `;
         } else {
             // --- FIX: Show bar and set to 100% on complete ---
@@ -1346,9 +1375,9 @@ document.addEventListener('DOMContentLoaded', () => {
             progressBar.style.width = `100%`;
             progressText.textContent = `100%`; // Show 100% on complete
             textContainer.innerHTML = `
-                <div class="font-bold text-lg text-accent">Phase Complete! 🎉</div>
-                <div class="text-sm text-muted">Congratulations!</div>
-                <div class="text-xs text-subtle mt-1">Starting date: ${formattedStartDate}</div>
+                <div class="font-bold text-lg text-accent">${i18next.t('home.phase_complete')}</div>
+                <div class="text-sm text-muted">${i18next.t('home.congrats')}</div>
+                <div class="text-xs text-subtle mt-1">${i18next.t('home.start_date_label', { date: formattedStartDate })}</div>
             `;
         }
     }
@@ -1361,7 +1390,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const rulesString = appState.userProfile.phaseSettings["pre-treatment"].rules;
         
         if (!rulesString || rulesString.trim() === '') {
-            rulesList.innerHTML = `<li class="list-none text-subtle italic">No rules set. Add them in your Profile.</li>`;
+            rulesList.innerHTML = `<li class="list-none text-subtle italic">${i18next.t('phases.pre_treatment.no_rules')}</li>`;
             return;
         }
 
@@ -1375,13 +1404,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- NEW: Auto-Scan now triggers a modal ---
     function runAutoScan() {
         showActionModal({
-            title: 'Auto-Scan Log',
-            message: `How do you want to scan? "Merge" adds new foods and updates existing ones from your log. "Erase" deletes your list and starts over with only what's in your log.`,
-            confirmText: 'Merge', // The safe, default option
+            title: i18next.t('modals.actions.autoscan_title'),
+            message: i18next.t('modals.actions.autoscan_msg'),
+            confirmText: i18next.t('modals.actions.autoscan_merge'), // The safe, default option
             onConfirm: () => {
                 performScan(true); // true = isMerging
             },
-            altText: 'Erase', // The destructive option
+            altText: i18next.t('modals.actions.autoscan_erase'), // The destructive option
             onAltConfirm: () => {
                 performScan(false); // false = !isMerging
             }
@@ -1473,7 +1502,7 @@ document.addEventListener('DOMContentLoaded', () => {
             appState.userProfile.personalizationFoods = existingFoods;
             localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
             renderPersonalizationSummary(); 
-            showToast(`Scan complete! ${newFoodsAdded} foods added, ${foodsUpdated} updated.`, "success");
+            showToast(i18next.t('modals.actions.autoscan_success', { added: newFoodsAdded, updated: foodsUpdated }), "success");
             return; // Exit, no cloud operations
         }
 
@@ -1551,14 +1580,14 @@ document.addEventListener('DOMContentLoaded', () => {
             renderPersonalizationSummary(); 
             
             if (isMerging) {
-                showToast(`Scan complete! ${newFoodsAdded} foods added, ${foodsUpdated} updated.`, "success");
+                showToast(i18next.t('modals.actions.autoscan_success', { added: newFoodsAdded, updated: foodsUpdated }), "success");
             } else {
-                showToast(`Scan complete! Found ${finalFoodCount} unique foods.`, "success");
+                showToast(i18next.t('modals.actions.autoscan_unique', { count: finalFoodCount }), "success");
             }
 
         } catch (e) {
             console.error("AutoScan batch write failed:", e);
-            showToast("AutoScan failed to sync with cloud.", "error");
+            showToast(i18next.t('modals.actions.autoscan_failed'), "error");
         }
     }
 
@@ -1646,9 +1675,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (groupsRendered === 0) {
             if (filterText) {
-                container.innerHTML = `<p class="text-subtle text-sm text-center p-4">No foods found matching "${filterText}".</p>`;
+                container.innerHTML = `<p class="text-subtle text-sm text-center p-4">${i18next.t('phases.personalization.empty_search', { query: filterText })}</p>`;
             } else {
-                container.innerHTML = `<p class="text-subtle text-sm text-center p-4">Your diet list is empty. Use the Auto-Scan or Add button to start.</p>`;
+                container.innerHTML = `<p class="text-subtle text-sm text-center p-4">${i18next.t('phases.personalization.empty_list')}</p>`;
             }
         }
     }
@@ -1675,28 +1704,28 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = ''; // Clear container
 
         const emptyText = filterText 
-            ? `No foods found matching "${filterText}".` 
-            : 'No foods in this category yet.';
+            ? i18next.t('phases.personalization.empty_search', { query: filterText })
+            : i18next.t('phases.personalization.empty_category');
 
         // 1. Create "Tolerated" Accordion
         container.appendChild(createToleranceAccordion(
-            'Tolerated Foods', 'fa-check-circle text-accent',
+            i18next.t('phases.personalization.tolerated'), 'fa-check-circle text-accent',
             toleratedFoods, 
-            filterText ? emptyText : 'No tolerated foods added yet.'
+            filterText ? emptyText : i18next.t('phases.personalization.empty_tolerated')
         ));
         
         // 2. Create "Mixed" Accordion
         container.appendChild(createToleranceAccordion(
-            'Mixed Tolerance', 'fa-circle-half-stroke text-warning',
+            i18next.t('phases.personalization.mixed'), 'fa-circle-half-stroke text-warning',
             mixedFoods, 
-            filterText ? emptyText : 'No dose-dependent foods added yet.'
+            filterText ? emptyText : i18next.t('phases.personalization.empty_mixed')
         ));
         
         // 3. Create "Triggers" Accordion
         container.appendChild(createToleranceAccordion(
-            'Potential Triggers', 'fa-exclamation-triangle text-error',
+            i18next.t('phases.personalization.triggers'), 'fa-exclamation-triangle text-error',
             triggerFoods, 
-            filterText ? emptyText : 'No triggers identified yet. Great news!'
+            filterText ? emptyText : i18next.t('phases.personalization.empty_triggers')
         ));
     }
 
@@ -1711,7 +1740,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const status = getFoodStatus(food);
         let doseNote = '';
         if (status === 'mixed') {
-            const logic = food.doseLogic === 'up to' ? 'Up to' : 'Starting at';
+            const logic = food.doseLogic === 'up to' ? i18next.t('modals.logic_upto') : i18next.t('modals.logic_starting');
             doseNote = `<span class="dose-note">(${logic} ${food.dose})</span>`;
         }
         return `<a class="p13n-food-link ${status}" data-food-id="${food.id}">${food.name}${doseNote}</a>`;
@@ -2002,15 +2031,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     let noteText = ''; 
                     const symptoms = entry.symptoms || ['None'];
                     const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
+
                     if (hasSymptoms) {
-                        symptomText = `Symptoms: <strong>${symptoms.join(', ')}</strong>`;
-                        severityText = `<div>Severity: <strong>${entry.severity}/5</strong></div>`;
+                        // FIX: Use translation with interpolation
+                        symptomText = i18next.t('log.symptom_display', { symptoms: `<strong>${symptoms.join(', ')}</strong>` });
+                        severityText = `<div>${i18next.t('log.severity_display', { value: entry.severity })}</div>`;
                     } else {
-                        symptomText = 'Symptoms: <strong>None</strong>';
+                        symptomText = i18next.t('log.symptom_display', { symptoms: `<strong>${i18next.t('log.no_symptoms')}</strong>` });
                     }
+
                     const trimmedNote = entry.notes ? entry.notes.trim() : '';
                     if (trimmedNote !== '' && trimmedNote.toLowerCase() !== 'no notes') {
-                        noteText = `<div style="margin-top: 0.25rem;">Note: <em>${entry.notes.replace(/\n/g, '<br>')}</em></div>`;
+                        // FIX: Use translation
+                        noteText = `<div style="margin-top: 0.25rem;">${i18next.t('log.note_display', { note: entry.notes.replace(/\n/g, '<br>') })}</div>`;
                     }
                     const entryDiv = document.createElement('div');
                     entryDiv.className = 'accordion-entry';
@@ -2053,7 +2086,8 @@ document.addEventListener('DOMContentLoaded', () => {
         dateContainer.innerHTML = '';
         
         if (appState.logEntries.length === 0) {
-            dateContainer.innerHTML = `<p class="text-subtle text-center py-6 bg-white rounded-lg shadow-sm col-span-full text-sm">No log entries yet. Add one above!</p>`;
+            // FIX: Use translation for empty state
+            dateContainer.innerHTML = `<p class="text-subtle text-center py-6 bg-white rounded-lg shadow-sm col-span-full text-sm">${i18next.t('log.no_entries_prompt')}</p>`;
             return;
         }
 
@@ -2074,9 +2108,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // 3. Add date header if it's a new day
             if (entryDate !== currentHeaderDate) {
-                let dateHeaderText = new Date(entry.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-                if (entryDate === today) dateHeaderText = 'Today';
-                else if (entryDate === yesterday) dateHeaderText = 'Yesterday';
+                // FIX: Use i18next.language for formatting and i18next.t for Today/Yesterday
+                let dateHeaderText = new Date(entry.date).toLocaleDateString(i18next.language, { month: 'long', day: 'numeric', year: 'numeric' });
+                
+                if (entryDate === today) dateHeaderText = i18next.t('log.today');
+                else if (entryDate === yesterday) dateHeaderText = i18next.t('log.yesterday');
                 
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'timeline-date-header';
@@ -2085,7 +2121,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentHeaderDate = entryDate;
             }
 
-            // 4. Build the entry card (similar to accordion, but as a standalone card)
+            // 4. Build the entry card
             const style = FODMAP_STYLES[entry.group] || { icon: '❓' };
             const groupInfo = FODMAP_GROUP_DATA.find(g => g.value === entry.group);
             const groupName = groupInfo ? groupInfo.name : entry.group;
@@ -2095,19 +2131,23 @@ document.addEventListener('DOMContentLoaded', () => {
             let noteText = ''; 
             const symptoms = entry.symptoms || ['None'];
             const hasSymptoms = !symptoms.includes('None') && symptoms.length > 0;
+
+            // FIX: Use translation interpolation for labels
             if (hasSymptoms) {
-                symptomText = `Symptoms: <strong>${symptoms.join(', ')}</strong>`;
-                severityText = `<div>Severity: <strong>${entry.severity}/5</strong></div>`;
+                symptomText = i18next.t('log.symptom_display', { symptoms: `<strong>${symptoms.join(', ')}</strong>` });
+                severityText = `<div>${i18next.t('log.severity_display', { value: entry.severity })}</div>`;
             } else {
-                symptomText = 'Symptoms: <strong>None</strong>';
+                symptomText = i18next.t('log.symptom_display', { symptoms: `<strong>${i18next.t('log.no_symptoms')}</strong>` });
             }
+
             const trimmedNote = entry.notes ? entry.notes.trim() : '';
             if (trimmedNote !== '' && trimmedNote.toLowerCase() !== 'no notes') {
-                noteText = `<div style="margin-top: 0.25rem;">Note: <em>${entry.notes.replace(/\n/g, '<br>')}</em></div>`;
+                // FIX: Use translation interpolation for notes
+                noteText = `<div style="margin-top: 0.25rem;">${i18next.t('log.note_display', { note: entry.notes.replace(/\n/g, '<br>') })}</div>`;
             }
 
             const entryDiv = document.createElement('div');
-            entryDiv.className = 'timeline-entry-card'; // Use new card style
+            entryDiv.className = 'timeline-entry-card'; 
             entryDiv.innerHTML = `
                 <div class="entry-header flex justify-between items-start">
                     <p class="font-semibold text-secondary text-sm">${entry.food}, ${entry.dose}</p>
@@ -2149,10 +2189,10 @@ document.addEventListener('DOMContentLoaded', () => {
         logSortContainer.classList.toggle('hidden', isGroupView); // Sort button only for date view
 
         if (isGroupView) {
-            logSubtitle.textContent = 'Tap a group to see entries.';
+            logSubtitle.textContent = i18next.t('log.subtitle_group');
             renderLogByGroup();
         } else {
-            logSubtitle.textContent = 'Showing all entries by date.';
+            logSubtitle.textContent = i18next.t('log.subtitle_date');
             renderLogByDate();
         }
     };
@@ -2179,7 +2219,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 3. Save local state & re-render
             saveLogEntries();
-            showToast("Entry deleted.", "success");
+            showToast(i18next.t('log.toast_deleted'), "success");
 
         } else if (header) {
             // --- HANDLE EXPAND ---
@@ -2201,9 +2241,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- New View Toggle Listeners ---
     const logViewToggleBtns = document.querySelectorAll('.log-view-toggle .log-view-toggle-btn');
-    const logSortBtn = document.getElementById('log-sort-btn');
-    // Set initial text for the sort button
-    logSortBtn.innerHTML = `<i class="fas fa-arrow-down-wide-short"></i> <span class="text-sm ml-1">Sort: Newest</span>`;
     const logSubtitle = document.getElementById('log-subtitle');
     const groupContainer = document.getElementById('log-accordion-container');
     const dateContainer = document.getElementById('log-date-container');
@@ -2222,17 +2259,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    logSortBtn.addEventListener('click', () => {
-        // Flip the sort order
-        appState.currentDateSort = (appState.currentDateSort === 'newest') ? 'oldest' : 'newest';
-        
-        // Update the icon and text
-        logSortBtn.innerHTML = `<i class="fas ${appState.currentDateSort === 'newest' ? 'fa-arrow-down-wide-short' : 'fa-arrow-up-wide-short'}"></i>
-        <span class="text-sm ml-1">Sort: ${appState.currentDateSort === 'newest' ? 'Newest' : 'Oldest'}</span>`;
-        
-        // Re-render the date list
-        renderLogByDate();
-    });
+    const logSortBtn = document.getElementById('log-sort-btn'); 
+
+    if (logSortBtn) { // Added safety check just in case
+        logSortBtn.addEventListener('click', () => {
+            // Flip the sort order
+            appState.currentDateSort = (appState.currentDateSort === 'newest') ? 'oldest' : 'newest';
+            
+            // Update the icon and text
+            // Note: We re-fetch translations here to ensure they switch dynamically if language changes
+            const sortIcon = appState.currentDateSort === 'newest' ? 'fa-arrow-down-wide-short' : 'fa-arrow-up-wide-short';
+            const sortLabel = appState.currentDateSort === 'newest' ? i18next.t('log.sort_newest') : i18next.t('log.sort_oldest');
+            
+            logSortBtn.innerHTML = `<i class="fas ${sortIcon}"></i> <span class="text-sm ml-1">${i18next.t('log.sort_label')}: ${sortLabel}</span>`;
+            
+            // Re-render the date list
+            renderLogByDate();
+        });
+    }
 
     const saveLogEntries = () => { 
         // 1. Save local copy for offline use
@@ -2262,15 +2306,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentPhase === 'reintroduction' && !selectedGroup) {
             // Use 'true' for isError, which will make the toast red.
             // This is now consistent with the other fields.
-            showToast("Please select a FODMAP group.", "warning");
+            showToast(i18next.t('log.select_group_warning'), "warning");
             return; 
         }
         if (!foodName) {
-            showToast("Please enter a food name.", "warning");
+            showToast(i18next.t('log.enter_food_warning'), "warning");
             return;
         }
         if (!dose) {
-            showToast("Please enter a dose.", "warning");
+            showToast(i18next.t('log.enter_dose_warning'), "warning");
             return;
         }
         // --- END: Consistent Validation Block ---
@@ -2328,7 +2372,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateLogInCloud(logIdToUpdate, updatedLog); // Async
 
             appState.currentlyEditingId = null; // Reset edit state
-            showToast("Entry updated!", "success");
+            showToast(i18next.t('log.toast_updated'), "success");
 
         } else {
             // --- ADD NEW ENTRY ---
@@ -2340,7 +2384,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 2. Add to cloud
             addLogToCloud(newEntry); // Async
 
-            showToast("Added!", "success");
+            showToast(i18next.t('log.toast_added'), "success");
         }
 
         // 3. Save local state, re-render, and check for rating
@@ -2363,7 +2407,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset all form fields
         document.getElementById('log-date').valueAsDate = new Date(); 
         // Reset custom dropdown
-        document.getElementById('custom-fodmap-select-text').textContent = 'Select FODMAP Group...';
+        document.getElementById('custom-fodmap-select-text').textContent = i18next.t('log.label_fodmap_group');
         document.getElementById('custom-fodmap-select-trigger').classList.add('placeholder');
         document.getElementById('log-fodmap-group').value = '';
 
@@ -2373,8 +2417,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('severity-section').classList.add('hidden'); 
         
         // Reset modal button texts
-        logModalTitle.textContent = 'Add Log Entry';
-        logFormSubmitBtn.textContent = 'Add Entry';
+        logModalTitle.textContent = i18next.t('log.modal_add_title');
+        logFormSubmitBtn.textContent = i18next.t('log.btn_add_entry');
         
         // Reset severity button group
         document.getElementById('log-severity-value').value = '1';
@@ -2414,8 +2458,8 @@ document.addEventListener('DOMContentLoaded', () => {
             clickedButton.classList.add('active');
             
             // 4. Show toast
-            const phaseName = newPhase.charAt(0).toUpperCase() + newPhase.slice(1);
-            showToast(`Switched to ${phaseName} phase!`, newPhase);
+            const phaseName = PHASE_STYLES[newPhase] ? PHASE_STYLES[newPhase].label : newPhase.charAt(0).toUpperCase() + newPhase.slice(1);
+            showToast(i18next.t('phases.switched', { phase: phaseName }), newPhase);
             
             // 5. Update the rest of the app
             updateUiForPhase(newPhase);
@@ -2448,7 +2492,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- 4. Final Save to localStorage + cloud & Toast ---
         localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
         saveToCloud('userProfile', appState.userProfile);
-        showToast("Profile Saved!", "success");
+        showToast(i18next.t('profile.toast_saved'), "success");
     });
 
     // --- Payment / Premium Logic ---
@@ -2468,9 +2512,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const btn = document.getElementById('menu-premium-btn');
         const originalText = btn ? btn.innerHTML : '';
-        if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
+        if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>' + i18next.t('loading.loading');
 
-        showToast("Preparing secure checkout...", "phase-reintroduction");
+        showToast(i18next.t('checkout.preparing'), "phase-reintroduction");
 
         try {
             const createSession = functions.httpsCallable('createCheckoutSession');
@@ -2487,7 +2531,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error("Checkout failed:", error);
-            showToast("Connection failed. Please try again.", "error");
+            showToast(i18next.t('network.connection_failed'), "error");
             if (btn) btn.innerHTML = originalText;
         }
     };
@@ -2531,9 +2575,9 @@ document.addEventListener('DOMContentLoaded', () => {
         importDataBtn.addEventListener('click', () => {
             // --- NEW: Show confirmation modal FIRST ---
             showActionModal({
-                title: 'Import Backup',
-                message: "This will overwrite ALL current data (logs and profile) with the data from this file. This cannot be undone.",
-                confirmText: 'Overwrite',
+                title: i18next.t('modals.actions.import_title'),
+                message: i18next.t('modals.actions.import_msg'),
+                confirmText: i18next.t('modals.actions.import_overwrite'),
                 onConfirm: () => {
                     importFileInput.click(); // Trigger the hidden file input
                 }
@@ -2557,17 +2601,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (debugResetBtn) {
         debugResetBtn.addEventListener('click', () => {
             const user = auth.currentUser;
-            if (!user) { showToast("Not logged in", "error"); return; }
+            if (!user) { showToast(i18next.t('auth.not_logged_in'), "error"); return; }
             
             debugResetBtn.disabled = true;
             db.collection('users').doc(user.uid).update({
                 'userProfile.aiUsageCount': 0
             }).then(() => {
-                showToast("✅ Counter Reset to 0", "success");
+                showToast(i18next.t('debug.counter_reset'), "success");
                 debugResetBtn.disabled = false;
             }).catch(err => {
                 console.error(err);
-                showToast("Error resetting count", "error");
+                showToast(i18next.t('debug.counter_reset_error'), "error");
                 debugResetBtn.disabled = false;
             });
         });
@@ -2576,17 +2620,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (debugMaxBtn) {
         debugMaxBtn.addEventListener('click', () => {
             const user = auth.currentUser;
-            if (!user) { showToast("Not logged in", "error"); return; }
+            if (!user) { showToast(i18next.t('auth.not_logged_in'), "error"); return; }
 
             debugMaxBtn.disabled = true;
             db.collection('users').doc(user.uid).update({
                 'userProfile.aiUsageCount': 5
             }).then(() => {
-                showToast("✅ Set to Limit (5)", "warning");
+                showToast(i18next.t('debug.set_limit'), "warning");
                 debugMaxBtn.disabled = false;
             }).catch(err => {
                 console.error(err);
-                showToast("Error setting limit", "error");
+                showToast(i18next.t('debug.set_limit_error'), "error");
                 debugMaxBtn.disabled = false;
             });
         });
@@ -2597,10 +2641,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (debugDowngradeBtn) {
         debugDowngradeBtn.addEventListener('click', async () => {
             const user = auth.currentUser;
-            if (!user) { showToast("Not logged in", "error"); return; }
+            if (!user) { showToast(i18next.t('auth.not_logged_in'), "error"); return; }
             
             debugDowngradeBtn.disabled = true;
-            debugDowngradeBtn.textContent = "...";
+            debugDowngradeBtn.textContent = i18next.t('loading.ellipsis');
 
             try {
                 // Manually set isPremium to false in Firestore
@@ -2608,7 +2652,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     userProfile: { isPremium: false }
                 }, { merge: true });
 
-                showToast("⬇️ Downgraded to Free", "success");
+                showToast(i18next.t('debug.downgraded'), "success");
                 
                 // Reload to refresh local state and UI
                 setTimeout(() => {
@@ -2616,9 +2660,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 1000);
             } catch (err) {
                 console.error(err);
-                showToast("Error downgrading", "error");
+                showToast(i18next.t('debug.downgrade_error'), "error");
                 debugDowngradeBtn.disabled = false;
-                debugDowngradeBtn.textContent = "Revert to Free";
+                debugDowngradeBtn.textContent = i18next.t('debug.downgrade_btn');
             }
         });
     }
@@ -2727,7 +2771,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (authPasswordToggle) authPasswordToggle.innerHTML = '<i class="fas fa-eye"></i>';
 
         if (mode === 'signup') {
-            authModalTitle.textContent = 'Sign Up';
+            authModalTitle.textContent = i18next.t('auth.signup_title');
             authNameField.classList.remove('hidden');
             authForgotPasswordLink.classList.add('hidden'); // Hide for signup
             
@@ -2738,11 +2782,11 @@ document.addEventListener('DOMContentLoaded', () => {
             authSubmitBtn.disabled = true;
             authSubmitBtn.classList.add('opacity-50', 'cursor-not-allowed');
             
-            authSubmitBtn.textContent = 'Sign Up';
-            authSwitchLink.innerHTML = 'Already have an account? <button id="auth-switch-btn" class="font-bold text-primary underline">Log In</button>';
+            authSubmitBtn.textContent = i18next.t('auth.submit_signup');
+            authSwitchLink.innerHTML = i18next.t('auth.switch_login');
         } else {
             // Default to login
-            authModalTitle.textContent = 'Log In';
+            authModalTitle.textContent = i18next.t('auth.login_title');
             authNameField.classList.add('hidden');
             authForgotPasswordLink.classList.remove('hidden'); // Show for login
             
@@ -2753,8 +2797,8 @@ document.addEventListener('DOMContentLoaded', () => {
             authSubmitBtn.disabled = false;
             authSubmitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
 
-            authSubmitBtn.textContent = 'Log In';
-            authSwitchLink.innerHTML = 'Don\'t have an account? <button id="auth-switch-btn" class="font-bold text-primary underline">Sign Up</button>';
+            authSubmitBtn.textContent = i18next.t('auth.submit_login');
+            authSwitchLink.innerHTML = i18next.t('auth.switch_signup');
         }
 
         authModal.classList.remove('hidden');
@@ -2792,7 +2836,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(() => {
                 console.log('Pending user deleted on modal close.');
-                showToast("Account creation cancelled.", "warning");
+                showToast(i18next.t('auth.cancelled'), "warning");
                 // 4. Reload to ensure a clean Guest state
                 window.location.reload();
             })
@@ -2828,10 +2872,10 @@ document.addEventListener('DOMContentLoaded', () => {
         authError.classList.add('hidden'); // Hide old errors
         authSubmitBtn.disabled = isLoading;
         if (isLoading) {
-            authSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            authSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + i18next.t('auth.processing');
         } else {
             // Restore text based on the current mode
-            authSubmitBtn.textContent = (appState.currentAuthMode === 'login') ? 'Log In' : 'Sign Up';
+            authSubmitBtn.textContent = (appState.currentAuthMode === 'login') ? i18next.t('auth.submit_login') : i18next.t('auth.submit_signup');
         }
     }
 
@@ -2856,7 +2900,7 @@ document.addEventListener('DOMContentLoaded', () => {
     menuLoginBtn.addEventListener('click', () => {
         closeSide(); // Close side menu first
         if (!isFirebaseAvailable) {
-            showToast("Cannot log in while offline (SDK missing).", "error");
+            showToast(i18next.t('auth.errors.offline'), "error");
             return;
         }
         openAuthModal('login'); // Open modal in login mode
@@ -2991,15 +3035,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Reload user to get fresh token/status
                 const user = auth.currentUser;
                 if (user) {
-                    authVerifyDoneBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+                    authVerifyDoneBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + i18next.t('loading.checking');
                     user.reload().then(() => {
                         if (user.emailVerified) {
-                            showToast("Email verified! Welcome aboard.", "success");
+                            showToast(i18next.t('auth.email_verified'), "success");
                             closeAuthModal();
                             updateVerificationUI(user);
                         } else {
-                            showToast("Not verified yet. Check your inbox.", "warning");
-                            authVerifyDoneBtn.textContent = "I've Verified";
+                            showToast(i18next.t('auth.not_verified'), "warning");
+                            authVerifyDoneBtn.textContent = i18next.t('auth.verify_btn_done');
                         }
                     });
                 }
@@ -3023,13 +3067,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const user = auth.currentUser;
             if (user) {
                 const originalText = bannerVerifyCheckBtn.textContent;
-                bannerVerifyCheckBtn.textContent = "Checking...";
+                bannerVerifyCheckBtn.textContent = i18next.t('loading.checking');
                 user.reload().then(() => {
                     if (user.emailVerified) {
-                        showToast("Email verified! Thanks.", "success");
+                        showToast(i18next.t('auth.email_verified_thanks'), "success");
                         updateVerificationUI(user);
                     } else {
-                        showToast("Still unverified. Try refreshing.", "warning");
+                        showToast(i18next.t('auth.still_unverified'), "warning");
                         bannerVerifyCheckBtn.textContent = originalText;
                     }
                 });
@@ -3120,7 +3164,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         appState.pendingGoogleUser = null; 
                         
                         closeAuthModal();
-                        showToast("Welcome! Account created.", "success");
+                        showToast(i18next.t('auth.created'), "success");
                         
                         googleConsentConfirmBtn.onclick = null;
                         googleConsentCancelBtn.onclick = null;
@@ -3164,19 +3208,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             showActionModal({
-                title: 'Reset Password',
-                message: `This will send a password reset link to ${email}. Please check your inbox and spam folder.`,
-                confirmText: 'Send Link',
+                title: i18next.t('auth.reset_password_title'),
+                message: i18next.t('auth.reset_password_msg', { email: email }),
+                confirmText: i18next.t('auth.send_link'),
                 onConfirm: () => {
                     auth.sendPasswordResetEmail(email)
                         .then(() => {
-                            showToast("Password reset email sent! Check your inbox and spam folder.", "success");
+                            showToast(i18next.t('auth.pw_reset_sent'), "success");
                             closeAuthModal();
                         })
                         .catch((error) => {
                             // Close the action modal, show error in the auth modal
                             console.error("Password reset error:", error);
-                            showAuthError("Error: " + error.message);
+                            showAuthError(i18next.t('auth.errors.generic') + ": " + error.message);
                         });
                 }
             });
@@ -3194,9 +3238,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (authGuestHelpBtn) {
         authGuestHelpBtn.addEventListener('click', () => {
             showActionModal({
-                title: 'Guest vs. Account',
-                message: "Guest data is stored locally on your device's browser. If you clear your browser cache or switch devices, your data will be lost.\n\nCreating a free account saves your data to the cloud, allowing you to sync between devices and keep a secure backup.",
-                confirmText: 'Got it!',
+                title: i18next.t('auth.guest_help_title'),
+                message: i18next.t('auth.guest_help_msg'),
+                confirmText: i18next.t('modals.btn_got_it'),
                 onConfirm: () => {}, // Just closes the modal
                 cancelText: null // Hides the cancel button
             });
@@ -3270,7 +3314,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(`Saved "${key}" to cloud.`);
         } catch (e) {
             console.error(`Error saving "${key}" to cloud:`, e);
-            showToast('Error syncing changes to cloud.', 'error');
+            showToast(i18next.t('cloud.error_sync'), 'error');
         }
     }
 
@@ -3290,7 +3334,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Log added to cloud:', docId);
         } catch (e) {
             console.error('Error adding log to cloud:', e);
-            showToast('Error saving new log to cloud.', 'error');
+            showToast(i18next.t('cloud.error_save_new_log'), 'error');
         }
     }
 
@@ -3309,7 +3353,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Log updated in cloud:', docId);
         } catch (e) {
             console.error('Error updating log in cloud:', e);
-            showToast('Error updating log in cloud.', 'error');
+            showToast(i18next.t('cloud.error_update_log'), 'error');
         }
     }
 
@@ -3326,7 +3370,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Log deleted from cloud:', docId);
         } catch (e) {
             console.error('Error deleting log from cloud:', e);
-            showToast('Error deleting log from cloud.', 'error');
+            showToast(i18next.t('cloud.error_delete_log'), 'error');
         }
     }
 
@@ -3344,7 +3388,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Diet food added to cloud:', docId);
         } catch (e) {
             console.error('Error adding diet food to cloud:', e);
-            showToast('Error saving new food to cloud.', 'error');
+            showToast(i18next.t('cloud.error_save_food'), 'error');
         }
     }
 
@@ -3363,7 +3407,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Diet food updated in cloud:', docId);
         } catch (e) {
             console.error('Error updating diet food in cloud:', e);
-            showToast('Error updating food in cloud.', 'error');
+            showToast(i18next.t('cloud.error_update_food'), 'error');
         }
     }
 
@@ -3380,7 +3424,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Diet food deleted from cloud:', docId);
         } catch (e) {
             console.error('Error deleting diet food from cloud:', e);
-            showToast('Error deleting food from cloud.', 'error');
+            showToast(i18next.t('cloud.error_delete_food'), 'error');
         }
     }
 
@@ -3469,7 +3513,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Commit the batch and then attach listeners
                 batch.commit().then(() => {
                     console.log('Guest data uploaded to new cloud account.');
-                    showToast('Account created & data backed up!', 'success');
+                    showToast(i18next.t('cloud.account_created_backup'), 'success');
                     
                     // --- NEW FIX: Clear local data after successful upload ---
                     localStorage.removeItem('fodmapLogEntries');
@@ -3478,7 +3522,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     attachListener(userDocRef); // Now attach
                 }).catch(error => {
                     console.error("Error creating new user document:", error);
-                    showToast('Error saving data to cloud.', 'error');
+                    showToast(i18next.t('cloud.error_save_cloud'), 'error');
                     attachListener(userDocRef); // Attach anyway as a fallback
                 });
                 return; // Stop execution here
@@ -3514,7 +3558,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             });
                             
                             await batch.commit();
-                            showToast('Local data merged!', 'success');
+                            showToast(i18next.t('cloud.local_data_merged'), 'success');
                             
                             // Clear local data *after* successful merge
                             localStorage.removeItem('fodmapLogEntries');
@@ -3524,13 +3568,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                         } catch (e) {
                             console.error("Merge failed:", e);
-                            showToast("Merge failed. Discarding local data.", "error");
+                            showToast(i18next.t('cloud.merge_failed'), "error");
                             attachListener(userDocRef);
                         }
                     },
                     altText: 'Discard',
                     onAltConfirm: () => {
-                        showToast('Discarding local data...', 'warning');
+                        showToast(i18next.t('cloud.discarding_data'), 'warning');
                         
                         // Clear local storage
                         localStorage.removeItem('fodmapLogEntries');
@@ -3608,7 +3652,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // clients (like Browser B) after an account deletion.
                     // We must force a full reload.
                     console.warn("User document does not exist. Forcing logout and reload.");
-                    showToast("Account deleted. Logging out...", "warning");
+                    showToast(i18next.t('account.deleted'), "warning");
                     forceLogoutAndReload(); // <-- This is the fix
                 }
             }, (error) => {
@@ -3619,14 +3663,14 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (error.code === 'permission-denied' || error.code === 'unauthenticated') {
                 console.warn("Permission denied listening to profile. Forcing logout.");
-                showToast("Account logged out. Logging out...", "warning");
+                showToast(i18next.t('account.logged_out'), "warning");
                 
                 // Call the new, reliable helper function
                 forceLogoutAndReload();
                 
             } else {
                 // A different error, like network loss
-                showToast('Sync connection lost.', 'error');
+                showToast(i18next.t('cloud.sync_lost'), 'error');
             }
         });
         listeners.push(profileUnsub);
@@ -3744,15 +3788,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 user.updateProfile({
                     displayName: newName
                 }).then(() => {
-                    showToast("Name updated!", "success");
+                    showToast(i18next.t('account.name_updated'), "success");
                     // Update the profile page form just in case
                     if (authNameInput) authNameInput.value = newName;
                 }).catch((error) => {
                     console.error("Error updating name:", error);
-                    showToast("Error saving name.", "error");
+                    showToast(i18next.t('account.save_name_error'), "error");
                 }).finally(() => {
                     accountSaveNameBtn.disabled = false;
-                    accountSaveNameBtn.textContent = 'Save';
+                    accountSaveNameBtn.textContent = i18next.t('account.btn_save');
                 });
             }
         });
@@ -3763,7 +3807,7 @@ document.addEventListener('DOMContentLoaded', () => {
         accountPasswordResetBtn.addEventListener('click', () => {
             const user = auth.currentUser;
             if (!user || !user.email) {
-                showToast("Error: No user found.", "error");
+                showToast(i18next.t('account.no_user_error'), "error");
                 return;
             }
 
@@ -3774,11 +3818,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 onConfirm: () => {
                     auth.sendPasswordResetEmail(user.email)
                         .then(() => {
-                            showToast("Password reset email sent!", "success");
+                            showToast(i18next.t('account.pw_reset_sent'), "success");
                         })
                         .catch((error) => {
                             console.error("Password reset error:", error);
-                            showToast("Error: " + error.message, "error");
+                            showToast(i18next.t('auth.errors.generic') + ": " + error.message, "error");
                         });
                 }
             });
@@ -3813,7 +3857,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.log('Firestore data deleted.');
                         
                         // Step 3: Success! Show toast and force reload.
-                        showToast("Account deleted. Logging you out.", "success");
+                        showToast(i18next.t('account.deleted_success'), "success");
                         forceLogoutAndReload(); // <--- SUCCESS PATH (for Browser A)
 
                     } catch (error) {
@@ -3821,9 +3865,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         // Step 4: Failure. Show correct toast and force reload.
                         if (error.code === 'auth/requires-recent-login') {
-                            showToast("Please log in again to confirm deletion.", "warning");
+                            showToast(i18next.t('account.deletion_confirm'), "warning");
                         } else {
-                            showToast("Error: " + error.message, "error");
+                            showToast(i18next.t('auth.errors.generic') + ": " + error.message, "error");
                         }
                         forceLogoutAndReload(); // <--- FAILURE PATH
                     }
@@ -3856,11 +3900,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Account Settings Page
         if (accountEmailStatus) {
             if (isVerified) {
-                accountEmailStatus.textContent = 'Verified ✅';
+                accountEmailStatus.textContent = i18next.t('account.status_verified');
                 accountEmailStatus.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700';
                 accountEmailStatus.classList.remove('hidden');
             } else {
-                accountEmailStatus.textContent = 'Unverified ⚠️';
+                accountEmailStatus.textContent = i18next.t('account.status_unverified');
                 accountEmailStatus.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700';
                 accountEmailStatus.classList.remove('hidden');
             }
@@ -3878,11 +3922,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Visual feedback
         const originalText = btnElement.textContent;
         btnElement.disabled = true;
-        btnElement.textContent = "Sending...";
+        btnElement.textContent = i18next.t('loading.sending');
 
         user.sendEmailVerification()
             .then(() => {
-                showToast("Verification link sent! Check your inbox.", "success");
+                showToast(i18next.t('account.verification_link_sent'), "success");
                 
                 // Cooldown UI
                 let count = 60;
@@ -3902,9 +3946,9 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch((error) => {
                 console.error("Verification error:", error);
                 if (error.code === 'auth/too-many-requests') {
-                    showToast("Please wait a while before trying again.", "warning");
+                    showToast(i18next.t('account.wait_before_retry'), "warning");
                 } else {
-                    showToast("Error sending email.", "error");
+                    showToast(i18next.t('account.error_send_email'), "error");
                 }
                 // Reset button
                 btnElement.textContent = originalText;
@@ -3957,7 +4001,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isFirebaseAvailable) {
             openAuthModal('login');
         } else {
-            showToast("You are offline. Running in Guest Mode.", "warning");
+            showToast(i18next.t('guest.offline'), "warning");
         }
     };
 
@@ -4301,7 +4345,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Close modal and show toast
         closePreTreatmentModal();
-        showToast("Pre-treatment settings saved!", "success");
+        showToast(i18next.t('phases.pre_treatment.settings_saved'), "success");
     }
 
     // --- NEW: Pre-Treatment Modal Listeners ---
@@ -4354,7 +4398,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Close modal and show toast
         closeRestrictionModal();
-        showToast("Restriction settings saved!", "success");
+        showToast(i18next.t('phases.restriction.settings_saved'), "success");
     }
 
     // --- NEW: Restriction Modal Listeners ---
@@ -4468,7 +4512,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Close modal and show toast
         medModal.classList.add('hidden'); // Use direct class manipulation
-        showToast("Medication settings saved!", "success");
+        showToast(i18next.t('medication.settings_saved'), "success");
     }
 
     // --- START: ONBOARDING LOGIC ---
@@ -4708,7 +4752,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUiForPhase(appState.userProfile.currentPhase);
         setupProfilePage(); // Sync the main profile page with new data
         
-        showToast("Welcome! Your profile is all set.", appState.userProfile.currentPhase);
+        showToast(i18next.t('onboarding.profile_complete'), appState.userProfile.currentPhase);
     }
 
     // --- END: ONBOARDING LOGIC ---
@@ -4904,11 +4948,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (foodId !== null) {
                 // Editing existing food
-                foodModalTitle.textContent = 'Edit Food';
+                foodModalTitle.textContent = i18next.t('modals.food_edit_title');
                 foodData = appState.userProfile.personalizationFoods.find(f => f.id === foodId);
             } else {
                 // Creating new food
-                foodModalTitle.textContent = 'Add New Food';
+                foodModalTitle.textContent = i18next.t('modals.food_add_title');
                 // --- UPDATED DEFAULTS ---
                 foodData = { name: '', group: '', status: '', doseLogic: null, dose: '', notes: '' };
             }
@@ -4956,7 +5000,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const foodData = appState.userProfile.personalizationFoods.find(f => f.id === foodId);
             if (!foodData) return; // Safety check
 
-            foodModalTitle.textContent = 'View Food';
+            foodModalTitle.textContent = i18next.t('modals.food_view_title');
             
             // Build the view HTML
             
@@ -5261,7 +5305,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveToCloud('userProfile', appState.userProfile); // Save main settings
                 renderPersonalizationSummary();
                 closeFoodModal();
-                showToast("Food deleted.", "success");
+                showToast(i18next.t('food.toast_deleted'), "success");
             }
         });
     });
@@ -5285,7 +5329,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 2. Validate required fields (This is a final check)
         if (!newFoodData.name || !newFoodData.status) {
-            showToast("Please fill in all required fields (*).", "warning");
+            showToast(i18next.t('log.toast_error'), "warning");
             return; // Should be impossible if validation passed, but good for safety
         }
 
@@ -5321,7 +5365,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 4. Close modal, re-render Home, and show toast
         closeFoodModal();
         renderPersonalizationSummary();
-        showToast("Food saved!", "success");
+        showToast(i18next.t('food.toast_saved'), "success");
     }
 
     // --- NEW: Modal Main Action - SAVE (with Validation) ---
@@ -5334,7 +5378,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 1. Check for required fields *first*
         if (!newName || !foodModalStatus.value) {
-            showToast("Please fill in all required fields (*).", "warning");
+            showToast(i18next.t('log.toast_error'), "warning");
             return;
         }
 
@@ -5384,7 +5428,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const openGemini = (title) => { geminiTitle.textContent = title; geminiMdl.classList.remove('hidden'); geminiLoader.classList.remove('hidden'); geminiContent.classList.add('hidden'); geminiError.classList.add('hidden'); }; const closeGemini = () => geminiMdl.classList.add('hidden'); geminiClose.addEventListener('click', closeGemini);
     const callGeminiAPI = async (prompt, imgData = null, mimeType = null) => { // <--- ACCEPT MIME TYPE
         if (!functions) {
-            showToast("AI features unavailable offline.", "error");
+            showToast(i18next.t('ai.offline_error'), "error");
             return null;
         }
         const analyzeFodmap = functions.httpsCallable('analyzeFodmap');
@@ -5408,8 +5452,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     message: "You've reached the limit of 5 free AI requests.\n\nUpgrade to Premium for unlimited access to the AI Assistant tools!",
                     confirmText: 'Go Premium',
                     onConfirm: () => {
-                       // Future: Redirect to payment or open premium modal
-                       showToast("Premium flow coming soon!", "success");
+                       openPremiumInfoModal(); // Opens the sales modal
                     },
                     cancelText: 'Not Now'
                 });
@@ -5418,7 +5461,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 2. Handle Auth Error (Covers "unauthenticated" code OR the specific error message you saw)
             if (err.code === 'unauthenticated' || (err.message && err.message.includes('logged in'))) {
-                showToast("Please log in or create a free account to use the AI features.", "warning");
+                showToast(i18next.t('ai.require_login'), "warning");
                 // Optional: Automatically open the login modal for better UX
                 openAuthModal('login'); 
             } else {
@@ -5429,7 +5472,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     document.getElementById('summarize-journey-btn').addEventListener('click', async () => {
-        if (appState.logEntries.length === 0) { showToast("Need logs.", "warning"); return; } 
+        if (appState.logEntries.length === 0) { showToast(i18next.t('log.no_log_entries'), "warning"); return; } 
         openGemini('✨ Summary'); 
         const logTxt = appState.logEntries.map(e => `Date:${e.date},Grp:${e.group},Food:${e.food},Dose:${e.dose},Sym:${e.symptom==='Other'?e.otherSymptom:e.symptom},Sev:${e.severity}/5`).join('; '); 
         
@@ -5460,14 +5503,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             geminiContent.innerHTML = html; // Use .innerHTML, not .textContent
                             geminiContent.classList.remove('hidden'); 
                         } else { 
-                            geminiError.textContent = 'Summary failed.'; 
+                            geminiError.textContent = i18next.t('ai.summary_failed'); 
                             geminiError.classList.remove('hidden'); 
                         }
                     });
     document.getElementById('plan-challenge-btn').addEventListener('click', async () => {
         const sel = document.getElementById('log-fodmap-group'); 
         const val = sel.value; // This gets the clean value, e.g., "Fructose"
-        if (!val) { showToast("Select group.", "warning"); return; } 
+        if (!val) { showToast(i18next.t('log.select_group_warning'), "warning"); return; } 
         
         // 1. Use `val` for the modal title, not the full text
         openGemini(`✨ ${val} Plan`); 
@@ -5505,7 +5548,7 @@ document.addEventListener('DOMContentLoaded', () => {
             geminiContent.innerHTML = html; // Use .innerHTML
             geminiContent.classList.remove('hidden'); 
         } else { 
-            geminiError.textContent = 'Plan failed.'; 
+            geminiError.textContent = i18next.t('ai.plan_failed'); 
             geminiError.classList.remove('hidden'); 
         }
     });
@@ -5564,9 +5607,6 @@ document.addEventListener('DOMContentLoaded', () => {
             installAppLi.style.display = 'none';
         }
     }
-
-    setupLogForm(); // Set up listeners in the (hidden) log modal
-    document.getElementById('log-date').valueAsDate = new Date(); // Set default date in log modal
 
     // --- REMOVED setupProfilePage() and updateUiForPhase() ---
     // All rendering is now handled *exclusively* by the onAuthStateChanged
@@ -5868,11 +5908,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.body.removeChild(a);
 
                     URL.revokeObjectURL(url);
-                    showToast("Data exported!", "success");
+                    showToast(i18next.t('modals.actions.export_success'), "success");
 
                 } catch (err) {
                     console.error("Export failed:", err);
-                    showToast("Data export failed.", "error");
+                    showToast(i18next.t('modals.actions.export_failed'), "error");
                 }
             }
         });
@@ -5940,20 +5980,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 // 3. Show confirmation and reload
-                showToast("Import successful! Restarting app...", "success");
+                showToast(i18next.t('modals.actions.import_success'), "success");
                 setTimeout(() => {
                     location.reload();
                 }, 2000);
 
             } catch (err) {
                 console.error("Import failed:", err);
-                showToast("Import failed. File may be invalid.", "error");
+                showToast(i18next.t('modals.actions.import_failed'), "error");
             }
         };
         
         reader.onerror = () => {
             console.error("File reading failed:", reader.error);
-            showToast("Could not read the file.", "error");
+            showToast(i18next.t('modals.actions.import_read_error'), "error");
         };
 
         reader.readAsText(file);
@@ -5975,7 +6015,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.removeItem('fodmapLogEntries');
                     localStorage.removeItem('fodmapUserProfile');
 
-                    showToast("App data cleared! Restarting...", "success");
+                    showToast(i18next.t('modals.actions.reset_success'), "success");
 
                     setTimeout(() => {
                         location.reload();
@@ -5983,7 +6023,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 } catch (err) {
                     console.error("Reset failed:", err);
-                    showToast("Data reset failed.", "error");
+                    showToast(i18next.t('modals.actions.reset_failed'), "error");
                 }
             }
         });
@@ -6003,7 +6043,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 successModal.classList.remove('hidden');
                 
                 // Play a simple "ta-da" style toast as backup
-                showToast("Welcome to Premium! 👑", "success");
+                showToast(i18next.t('premium.success_title'), "success");
 
                 // Clean the URL (remove ?status=success) so it doesn't show on refresh
                 const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;

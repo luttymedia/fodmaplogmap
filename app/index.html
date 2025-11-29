@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FODMAP LOGMAP</title>
+    <title data-i18n="app_name"></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
@@ -36,15 +36,11 @@
             </button>
             
              <div class="flex flex-col items-center">
-                 <img src="images/fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" class="h-8 sm:h-8">
+                 <img src="images/fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" class="h-8 sm:h-8" data-i18n="[alt]app_name">
              </div>
              
              <div class="w-9 flex justify-center items-center">
-                 <div id="offline-indicator" class="hidden text-error animate-pulse" title="You are offline">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-6 h-6">
-                        <path d="M10.706 3.294A12.6 12.6 0 0 0 8 3C5.259 3 2.723 3.882.663 5.379a.485.485 0 0 0-.048.736.52.52 0 0 0 .668.05A11.45 11.45 0 0 1 8 4q.946 0 1.852.148zM8 6c-1.905 0-3.68.56-5.166 1.526a.48.48 0 0 0-.063.745.525.525 0 0 0 .652.065 8.45 8.45 0 0 1 3.51-1.27zm2.596 1.404.785-.785q.947.362 1.785.907a.482.482 0 0 1 .063.745.525.525 0 0 1-.652.065 8.5 8.5 0 0 0-1.98-.932zM8 10l.933-.933a6.5 6.5 0 0 1 2.013.637c.285.145.326.524.1.75l-.015.015a.53.53 0 0 1-.611.09A5.5 5.5 0 0 0 8 10m4.905-4.905.747-.747q.886.451 1.685 1.03a.485.485 0 0 1 .047.737.52.52 0 0 1-.668.05 11.5 11.5 0 0 0-1.811-1.07M9.02 11.78c.238.14.236.464.04.66l-.707.706a.5.5 0 0 1-.707 0l-.707-.707c-.195-.195-.197-.518.04-.66A2 2 0 0 1 8 11.5c.374 0 .723.102 1.021.28zm4.355-9.905a.53.53 0 0 1 .75.75l-10.75 10.75a.53.53 0 0 1-.75-.75z"/>
-                    </svg>
-                 </div>
+                 <div id="offline-indicator" class="hidden text-error animate-pulse" data-i18n="offline_indicator.title"></div>
              </div> 
         </header>
 
@@ -53,16 +49,16 @@
         </div>
         <nav id="main-nav" class="fixed bottom-0 left-0 right-0 z-10 flex justify-center border-t border-slate-200 bg-white shadow-sm md:max-w-3xl md:mx-auto md:border-t-0 md:rounded-tl-lg md:rounded-tr-lg">
             <button data-page="home" class="nav-item flex-1 text-center px-2 sm:px-4 text-muted transition-colors duration-300 ease-in-out hover:bg-slate-100 text-xs sm:text-base">
-                <i class="fas fa-home-alt sm:mr-2"></i><span class="hidden sm:inline" data-i18n="nav.home">Home</span>
+                <i class="fas fa-home-alt sm:mr-2"></i><span class="hidden sm:inline" data-i18n="nav.home"></span>
             </button>
             <button data-page="food-info" class="nav-item flex-1 text-center px-2 sm:px-4 text-muted transition-colors duration-300 ease-in-out hover:bg-slate-100 text-xs sm:text-base">
-                <i class="fas fa-brain sm:mr-2"></i><span class="hidden sm:inline">AI Assistant</span>
+                <i class="fas fa-brain sm:mr-2"></i><span class="hidden sm:inline" data-i18n="nav.ai_assistant"></span>
             </button>
             <button data-page="daily-log" class="nav-item flex-1 text-center px-2 sm:px-4 text-muted transition-colors duration-300 ease-in-out hover:bg-slate-100 text-xs sm:text-base">
-                <i class="fas fa-clipboard-list sm:mr-2"></i><span class="hidden sm:inline">Reintro Log</span>
+                <i class="fas fa-clipboard-list sm:mr-2"></i><span class="hidden sm:inline" data-i18n="nav.reintro_log"></span>
             </button>
             <button data-page="profile" class="nav-item flex-1 text-center px-2 sm:px-4 text-muted transition-colors duration-300 ease-in-out hover:bg-slate-100 text-xs sm:text-base">
-                <i class="fas fa-user-cog sm:mr-2"></i><span class="hidden sm:inline">Profile</span>
+                <i class="fas fa-user-cog sm:mr-2"></i><span class="hidden sm:inline" data-i18n="nav.profile"></span>
             </button>
         </nav>
 
@@ -71,19 +67,19 @@
                 <div class="bg-amber-100 border border-amber-200 px-4 py-3 rounded-lg text-sm text-amber-800 sm:flex justify-between items-center">
                     <div class="flex items-center mb-2 sm:mb-0">
                         <i class="fas fa-exclamation-triangle mr-2"></i>
-                        <span><strong>Email not verified.</strong> Please check your inbox.</span>
+                        <span><strong data-i18n="auth.verify_title"></strong> <span data-i18n="auth.verify_check"></span></span>
                     </div>
                     <div class="flex items-center gap-3 pl-6 sm:pl-0">
-                        <button id="banner-verify-check-btn" class="text-amber-900 font-semibold hover:text-amber-700 text-xs sm:text-sm border-b border-amber-900 border-dashed">I've Verified</button>
+                        <button id="banner-verify-check-btn" class="text-amber-900 font-semibold hover:text-amber-700 text-xs sm:text-sm border-b border-amber-900 border-dashed" data-i18n="auth.verify_btn_done"></button>
                         <span class="text-amber-300">|</span>
-                        <button id="banner-resend-btn" class="text-amber-900 font-bold hover:text-amber-700 text-xs sm:text-sm">Resend</button>
+                        <button id="banner-resend-btn" class="text-amber-900 font-bold hover:text-amber-700 text-xs sm:text-sm" data-i18n="auth.verify_btn_resend"></button>
                     </div>
                 </div>
             </div>
             <section id="home" class="page hidden max-w-3xl mx-auto">
                 <div id="home-progress-card" class="bg-white rounded-2xl shadow-md accordion-group expanded">
                 <div class="accordion-header">
-                    <h2 class="text-xl sm:text-2xl font-semibold text-secondary">📈 Reintroduction Progress</h2>
+                    <h2 class="text-xl sm:text-2xl font-semibold text-secondary" data-i18n="home.progress_card"></h2>
                     <i class="fas fa-chevron-down accordion-icon"></i>
                 </div>
                 <div class="accordion-body">
@@ -93,43 +89,43 @@
             </div>
                  <div id="home-insights-card" class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
                     <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center">
-                        <i class="fas fa-magic-sparkles text-warning mr-2"></i> 💡 AI Insights
+                        <i class="fas fa-magic-sparkles text-warning mr-2"></i><span data-i18n="home.insights_card"></span>
                     </h2>
                     <div class="space-y-3"> 
                         <button id="summarize-journey-btn" class="w-full bg-ai-reintro font-semibold py-2.5 px-4 rounded-full hover:bg-ai-reintro-dark transition-colors duration-300 shadow flex items-center justify-center gap-2"> 
-                            ✨ Summarize My Journey
+                            <span data-i18n="home.summarize_btn"></span>
                         </button>
-                         <p class="text-xs text-slate-400 text-center">Get an AI-powered summary of your daily log to spot potential patterns.</p>
+                         <p class="text-xs text-slate-400 text-center" data-i18n="home.summarize_desc"></p>
                     </div>
                 </div>
 
                 <div id="home-chart-card" class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
-                    <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary">📊 Symptom Trends</h2>
-                    <p class="text-subtle mb-3 text-sm">This chart shows the symptom severity you logged each day for any category with symptoms, within the last 14 days.</p>
+                    <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary" data-i18n="home.chart_title"></h2>
+                    <p class="text-subtle mb-3 text-sm" data-i18n="home.chart_desc"></p>
                     <div id="chart-container" class="mb-4">
                         <canvas id="symptom-chart"></canvas>
                     </div>
                 </div>
 
                 <div id="home-pre-treatment-card" class="hidden bg-white p-4 sm:p-6 rounded-2xl shadow-md space-y-4">
-                    <h2 class="text-xl sm:text-2xl font-semibold text-secondary flex items-center"><i class="fas fa-list-check text-primary mr-2"></i>Pre-Treatment Focus</h2>
+                    <h2 class="text-xl sm:text-2xl font-semibold text-secondary flex items-center"><i class="fas fa-list-check text-primary mr-2"></i><span data-i18n="phases.pre_treatment.title"></span></h2>
                     
                     <div class="p-3 bg-slate-50 rounded-lg text-sm text-secondary">
-                        <p><strong>Goal:</strong> Follow your specific diet rules to calm symptoms before your treatment and the Restriction phase begin.</p>
+                        <p><strong data-i18n="phases.pre_treatment.goal_label"></strong> <span data-i18n="phases.pre_treatment.goal_text"></span></p>
                     </div>
                     <div class="relative p-3 bg-slate-100 rounded-lg">
-                        <button id="pretreatment-rules-settings-btn" class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200" title="Edit Diet Rules">
+                        <button id="pretreatment-rules-settings-btn" class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200" data-i18n="[title]phases.pre_treatment.edit_rules">
                             <i class="fas fa-cog text-sm"></i>
                         </button>
-                        <h3 class="font-semibold text-secondary mb-2">My Diet Rules:</h3>
+                        <h3 class="font-semibold text-secondary mb-2" data-i18n="phases.pre_treatment.my_rules"></h3>
                         <ul id="home-pretreatment-rules-list" class="list-disc list-inside text-muted space-y-1 text-sm">
                             </ul>
                     </div>
                     <div class="relative p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                        <button id="pretreatment-settings-btn" class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200" title="Edit Settings">
+                        <button id="pretreatment-settings-btn" class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200" data-i18n="[title]modals.btn_edit">
                             <i class="fas fa-cog text-sm"></i>
                         </button>
-                        <h3 class="font-semibold text-amber-700 mb-2 text-center">Phase Countdown</h3>
+                        <h3 class="font-semibold text-amber-700 mb-2 text-center" data-i18n="home.phase_countdown"></h3>
                         <div id="home-pre-treatment-countdown-text" class="text-sm text-secondary text-center mb-2"></div>
                         <div id="home-pre-treatment-progress-container" class="hidden w-full bg-slate-200 rounded-full h-3.5 relative">
                             <div id="home-pre-treatment-progress-bar" class="bg-phase-pre h-3.5 rounded-full flex items-center justify-center">
@@ -140,34 +136,33 @@
                 </div>
 
                 <div id="home-restriction-card" class="hidden bg-white p-4 sm:p-6 rounded-2xl shadow-md space-y-4">
-                    <h2 class="text-xl sm:text-2xl font-semibold text-secondary flex items-center"><i class="fas fa-shield-alt text-accent mr-2"></i>Restriction Phase</h2>
+                    <h2 class="text-xl sm:text-2xl font-semibold text-secondary flex items-center"><i class="fas fa-shield-alt text-accent mr-2"></i><span data-i18n="phases.restriction.title"></span></h2>
                     <div class="p-3 bg-slate-50 rounded-lg text-sm text-secondary">
-                        <p><strong>Goal:</strong> Avoid all high-FODMAP foods to establish a baseline. Use the AI Assistant to check foods before you eat!</p>
+                        <p><strong data-i18n="phases.restriction.goal_label"></strong> <span data-i18n="phases.restriction.goal_text"></span></p>
                     </div>
                     <div id="medication-tracker-card" class="hidden">
 
                         <div id="medication-tracker-empty" class="hidden">
                             <div class="relative p-3 bg-slate-100 rounded-lg text-center">
-                                <h3 class="font-semibold text-secondary mb-2">💊 Medication Tracker</h3>
-                                <p class="text-sm text-subtle mb-3">Track your antibiotics or other medications.</p>
-                                <button id="medication-setup-btn" class="w-full bg-adaptive font-semibold py-2 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow">
-                                    Set Up Tracker
+                                <h3 class="font-semibold text-secondary mb-2" data-i18n="home.med_tracker_title"></h3>
+                                <p class="text-sm text-subtle mb-3" data-i18n="home.med_tracker_empty"></p>
+                                <button id="medication-setup-btn" class="w-full bg-adaptive font-semibold py-2 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow" data-i18n="home.med_tracker_setup">
                                 </button>
                             </div>
                         </div>
 
                         <div id="medication-tracker-full" class="hidden relative p-3 bg-slate-100 rounded-lg">
-                            <button id="medication-settings-btn" class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200" title="Edit Medication Settings">
+                            <button id="medication-settings-btn" class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200" data-i18n="[title]medication.edit_settings">
                                 <i class="fas fa-cog text-sm"></i>
                             </button>
-                            <h3 class="font-semibold text-secondary mb-3 text-center">💊 Today's Medication</h3>
+                            <h3 class="font-semibold text-secondary mb-3 text-center" data-i18n="home.med_today_title"></h3>
 
                             <div id="medication-checklist" class="space-y-2 mb-3">
                                 </div>
 
                             <div id="medication-log-accordion" class="accordion-group bg-white">
                                 <div class="accordion-header" style="padding-top: 0.5rem; padding-bottom: 0.5rem;">
-                                    <h3 style="font-size: 0.875rem;">View Medication Log</h3>
+                                    <h3 style="font-size: 0.875rem;" data-i18n="home.med_view_log"></h3>
                                     <i class="fas fa-chevron-down accordion-icon" style="font-size: 0.875rem;"></i>
                                 </div>
                                 <div class="accordion-body">
@@ -178,10 +173,10 @@
                         </div>
                     </div>
                     <div class="relative p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <button id="restriction-settings-btn" class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200" title="Edit Settings">
+                        <button id="restriction-settings-btn" class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200" data-i18n="[title]modals.btn_edit">
                             <i class="fas fa-cog text-sm"></i>
                         </button>
-                        <h3 class="font-semibold text-green-700 mb-2 text-center">Phase Countdown</h3>
+                        <h3 class="font-semibold text-green-700 mb-2 text-center" data-i18n="home.phase_countdown"></h3>
                         <div id="home-restriction-countdown-text" class="text-sm text-secondary text-center mb-2"></div>
                         <div id="home-restriction-progress-container" class="hidden w-full bg-slate-200 rounded-full h-3.5 relative">
                             <div id="home-restriction-progress-bar" class="bg-phase-restrict h-3.5 rounded-full flex items-center justify-center">
@@ -195,28 +190,26 @@
                     <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
                         <div class="flex justify-between items-center mb-3">
                             <div>
-                                <h2 class="text-xl sm:text-2xl font-semibold text-secondary flex items-center"><i class="fas fa-clipboard-check mr-2" style="color: var(--phase-color-personal);"></i>My Final Diet</h2>
-                                <p class="text-sm text-subtle mt-1">Tap a food to view or edit.</p>
+                                <h2 class="text-xl sm:text-2xl font-semibold text-secondary flex items-center"><i class="fas fa-clipboard-check mr-2" style="color: var(--phase-color-personal);"></i><span data-i18n="phases.personalization.title"></span></h2>
+                                <p class="text-sm text-subtle mt-1" data-i18n="phases.personalization.subtitle"></p>
                             </div>
                             <div class="log-view-toggle">
-                                <button class="log-view-toggle-btn active" id="p13n-view-tolerance-btn" data-view="tolerance" title="View Alphabetically (by Tolerance)">
-                                    <i class="fas fa-sort-alpha-down"></i>
+                                <button class="log-view-toggle-btn active" id="p13n-view-tolerance-btn" data-view="tolerance" data-i18n="[title]phases.personalization.tolerated">
+                                    <i class="fas fa-arrow-down-a-z"></i>
                                 </button>
-                                <button class="log-view-toggle-btn" id="p13n-view-group-btn" data-view="group" title="Group by FODMAP">
+                                <button class="log-view-toggle-btn" id="p13n-view-group-btn" data-view="group" data-i18n="[title]phases.personalization.btn_autoscan">
                                     <i class="fas fa-layer-group"></i>
                                 </button>
                             </div>
                         </div>
 
                         <div class="flex gap-2 mb-3">
-                            <input type="text" id="p13n-search-input" class="flex-1 p-2.5 border border-slate-300 rounded-xl" placeholder="Search foods...">
-                            <button id="p13n-add-food-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm flex-shrink-0" title="Add New Food">
-                                Add
+                            <input type="text" id="p13n-search-input" class="flex-1 p-2.5 border border-slate-300 rounded-xl" data-i18n="[placeholder]phases.personalization.search_placeholder">
+                            <button id="p13n-add-food-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm flex-shrink-0" data-i18n="phases.personalization.btn_add"></button>
+                            
+                            <button id="p13n-autoscan-btn" class="log-sort-btn flex-shrink-0" data-i18n="[title]phases.personalization.btn_autoscan">
+                                <i class="fas fa-wand-magic-sparkles"></i>
                             </button>
-                            <button id="p13n-autoscan-btn" class="log-sort-btn flex-shrink-0" title="Auto-Scan Log">
-                                <i class="fas fa-magic-wand-sparkles"></i>
-                            </button>
-
                         </div>
                         
                         <div id="personalization-group-view" class="space-y-3">
@@ -230,12 +223,12 @@
 
             <section id="food-info" class="page hidden max-w-3xl mx-auto">
                 <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
-                    <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center">🧠 AI Food Assistant</h2>
-                     <p class="text-subtle mb-3 text-sm">Get instant FODMAP info for any food or ingredient list based on your profile. This is not medical advice.</p>
+                    <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center" data-i18n="ai.title"></h2>
+                     <p class="text-subtle mb-3 text-sm" data-i18n="ai.subtitle"></p>
                     <div id="ai-upgrade-banner" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-lg text-center mb-3 transition-all duration-300">
-                        <p id="ai-credits-text" class="text-sm font-semibold text-amber-700">Checking credits...</p>
+                        <p id="ai-credits-text" class="text-sm font-semibold text-amber-700" data-i18n="ai.credits_left"></p>
                         <button id="ai-premium-btn" class="mt-2 bg-amber-500 text-white font-bold py-1.5 px-4 rounded-full hover:bg-amber-600 text-sm shadow-sm transition-transform hover:scale-105">
-                            Go Premium
+                            <span data-i18n="ai.go_premium"></span>
                         </button>
                     </div>
                     </div>
@@ -255,10 +248,10 @@
                     <div class="ai-chat-bar">
                         <div class="ai-attach-popup" id="ai-attach-popup">
                             <button class="ai-popup-btn" id="popup-gallery-btn">
-                                <i class="fas fa-images"></i> Gallery
+                                <i class="fas fa-images"></i><span data-i18n="ai.btn_gallery"></span>
                             </button>
                             <button class="ai-popup-btn" id="popup-camera-btn">
-                                <i class="fas fa-camera"></i> Camera
+                                <i class="fas fa-camera"></i><span data-i18n="ai.btn_camera"></span>
                             </button>
                         </div>
                         
@@ -266,7 +259,7 @@
                             <i class="fas fa-plus"></i>
                         </button>
 
-                        <input type="text" class="ai-chat-input" id="ai-food-search-input" placeholder="e.g., 'avocado' or 'cashews'">
+                        <input type="text" class="ai-chat-input" id="ai-food-search-input" data-i18n="[placeholder]ai.input_placeholder">
 
                         <button class="ai-chat-bar-btn ai-send-btn" id="ai-send-btn">
                             <i class="fa-solid fa-magnifying-glass"></i>
@@ -275,16 +268,13 @@
 
                 <!-- Credit Testing buttons -->
                 <div class="mt-6 p-4 border-2 border-dashed border-indigo-200 rounded-xl bg-indigo-50">
-                <h3 class="text-sm font-bold text-indigo-800 mb-2 text-center">🛠️ Tester Zone</h3>
+                <h3 class="text-sm font-bold text-indigo-800 mb-2 text-center" data-i18n="ai.tester_zone"></h3>
                 <div class="flex gap-2 flex-wrap">
-                    <button id="debug-reset-count" class="flex-1 bg-indigo-600 text-white text-xs font-bold py-2 px-2 rounded-lg shadow hover:bg-indigo-700">
-                        Reset Count (0)
+                    <button id="debug-reset-count" class="flex-1 bg-indigo-600 text-white text-xs font-bold py-2 px-2 rounded-lg shadow hover:bg-indigo-700" data-i18n="debug.reset_count">
                     </button>
-                    <button id="debug-max-count" class="flex-1 bg-pink-600 text-white text-xs font-bold py-2 px-2 rounded-lg shadow hover:bg-pink-700">
-                        Max Count (5)
+                    <button id="debug-max-count" class="flex-1 bg-pink-600 text-white text-xs font-bold py-2 px-2 rounded-lg shadow hover:bg-pink-700" data-i18n="debug.max_count">
                     </button>
-                    <button id="debug-downgrade-btn" class="flex-1 bg-slate-600 text-white text-xs font-bold py-2 px-2 rounded-lg shadow hover:bg-slate-700">
-                        Revert to Free
+                    <button id="debug-downgrade-btn" class="flex-1 bg-slate-600 text-white text-xs font-bold py-2 px-2 rounded-lg shadow hover:bg-slate-700" data-i18n="debug.downgrade_btn">
                     </button>
                 </div>
             </div>
@@ -307,14 +297,14 @@
             <section id="daily-log" class="page hidden max-w-3xl mx-auto">
                  <div class="space-y-3 max-w-3xl mx-auto"> 
                     <div class="px-2 space-y-2"> <div class="flex justify-between items-center"> <div>
-                                <h2 class="text-xl sm:text-2xl font-semibold text-secondary">🧾 Daily Log</h2>
-                                <p id="log-subtitle" class="text-sm text-subtle">Tap a group to see entries.</p>
+                                <h2 class="text-xl sm:text-2xl font-semibold text-secondary" data-i18n="log.title"></h2>
+                                <p id="log-subtitle" class="text-sm text-subtle" data-i18n="log.subtitle_group"></p>
                             </div>
                             <div class="log-view-toggle">
-                            <button class="log-view-toggle-btn active" id="log-view-date-btn" data-view="date" title="View by Date">
+                            <button class="log-view-toggle-btn active" id="log-view-date-btn" data-view="date" data-i18n="[title]log.subtitle_date">
                                 <i class="fas fa-calendar-alt"></i>
                             </button>
-                            <button class="log-view-toggle-btn" id="log-view-group-btn" data-view="group" title="Group by FODMAP">
+                            <button class="log-view-toggle-btn" id="log-view-group-btn" data-view="group" data-i18n="[title]phases.personalization.btn_autoscan">
                                 <i class="fas fa-layer-group"></i>
                             </button>
                         </div>
@@ -333,37 +323,37 @@
             
             <section id="profile" class="page hidden max-w-3xl mx-auto">
                  <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
-                    <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center">👤 Personalize Your Profile</h2>
-                    <p class="text-subtle mb-4 text-sm">Your selections here will customize the AI Assistant's advice to your specific needs.</p>
+                    <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center" data-i18n="profile.title"></h2>
+                    <p class="text-subtle mb-4 text-sm" data-i18n="profile.subtitle"></p>
 
                     <form id="profile-form" class="space-y-4">
 
                         <!-- NEW: Phase Countdown Settings -->
                         <div id="profile-phase-settings-card" class="api-key-accordion hidden">
                             <div class="api-key-header">
-                                <h3 id="profile-phase-settings-title" class="font-semibold text-secondary">Phase Settings</h3>
+                                <h3 id="profile-phase-settings-title" class="font-semibold text-secondary" data-i18n="profile.phase_settings"></h3>
                                 <i class="fas fa-chevron-down api-key-icon"></i>
                             </div>
                             <div class="api-key-body">
                                 <div class="space-y-3"> <!-- Added this wrapper for correct padding -->
                                     <div>
-                                        <label for="profile-phase-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Phase Start Date</label>
+                                        <label for="profile-phase-start-date" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="profile.start_date"></label>
                                         <input type="date" id="profile-phase-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
                                     </div>
                                     <div>
-                                        <label class="block mb-1.5 text-sm font-medium text-secondary">Phase Duration</label>
+                                        <label class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="profile.duration"></label>
                                         <div class="flex gap-2">
-                                            <input type="number" id="profile-phase-duration-num" placeholder="e.g., 4" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
+                                            <input type="number" id="profile-phase-duration-num" data-i18n="[placeholder]profile.duration" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
                                             <select id="profile-phase-duration-unit" class="w-1/2 p-2.5 border border-slate-300 rounded-xl bg-white">
-                                                <option value="days">Days</option>
-                                                <option value="weeks" selected>Weeks</option>
-                                                <option value="months">Months</option>
+                                                <option value="days" data-i18n="units.days">Days</option>
+                                                <option value="weeks" selected data-i18n="units.weeks">Weeks</option>
+                                                <option value="months" data-i18n="units.months">Months</option>
                                             </select>
                                         </div>
                                     </div>
                                     <div id="profile-pretreatment-rules-container" class="hidden">
-                                        <label for="profile-pretreatment-rules" class="block mb-1.5 text-sm font-medium text-secondary">Pre-Treatment Diet Rules</label>
-                                        <textarea id="profile-pretreatment-rules" rows="4" class="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="List your rules, one per line..."></textarea>
+                                        <label for="profile-pretreatment-rules" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="profile.rules_label"></label>
+                                        <textarea id="profile-pretreatment-rules" rows="4" class="w-full p-2.5 border border-slate-300 rounded-xl" data-i18n="[placeholder]profile.rules_label"></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -373,45 +363,45 @@
 
                         <div>
                         <div>
-                            <h3 class="font-semibold text-secondary mb-1.5">Health Conditions</h3>
+                            <h3 class="font-semibold text-secondary mb-1.5" data-i18n="profile.health_conditions"></h3>
                             <div id="profile-diagnoses" class="flex flex-wrap gap-2"> 
                             </div>
                         </div>
                         
                         <div>
-                            <h3 class="font-semibold text-secondary mb-1.5 mt-4">Intolerances & Allergies</h3> 
+                            <h3 class="font-semibold text-secondary mb-1.5 mt-4" data-i18n="profile.intolerances"></h3> 
                             <div id="profile-intolerances" class="flex flex-wrap gap-2"> 
                             </div>
-                            <input type="text" id="profile-allergies-other" placeholder="List other allergies (comma separated)" class="mt-2 w-full p-2 border border-slate-300 rounded-xl mt-4"> 
+                            <input type="text" id="profile-allergies-other" data-i18n="[placeholder]profile.other_allergies" class="mt-2 w-full p-2 border border-slate-300 rounded-xl mt-4"> 
                         </div>
                         
                         <div>
-                            <h3 class="font-semibold text-secondary mb-1.5 mt-4">Dietary Preferences</h3> 
+                            <h3 class="font-semibold text-secondary mb-1.5 mt-4" data-i18n="profile.dietary_prefs"></h3> 
                             <div id="profile-preferences" class="flex flex-wrap gap-2"> 
                             </div>
                         </div>
                         
-                        <button type="submit" class="w-full bg-adaptive font-semibold py-2.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow mt-4">Save Profile</button> 
+                        <button type="submit" class="w-full bg-adaptive font-semibold py-2.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow mt-4" data-i18n="profile.save_btn"></button> 
                     </form>
 
                     <div class="mt-6 pt-4 border-t border-slate-200">
-                        <h3 class="text-lg font-semibold text-secondary mb-3">🗃️ Data Management</h3>
-                        <p class="text-subtle mb-4 text-sm">Export a backup of your data, import a backup from a file, or reset the app to its default state.</p>
+                        <h3 class="text-lg font-semibold text-secondary mb-3" data-i18n="profile.data_mgmt_title"></h3>
+                        <p class="text-subtle mb-4 text-sm" data-i18n="profile.data_mgmt_desc"></p>
                         
                         <input type="file" id="import-file-input" class="hidden" accept="application/json">
                         
                         <div class="space-y-2">
                             <button type="button" id="export-data-btn" class="w-full text-center p-2.5 font-semibold text-primary bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200">
-                                <i class="fas fa-download mr-2"></i> Export Data
+                                <i class="fas fa-download mr-2"></i><span data-i18n="profile.export_btn"></span>
                             </button>
                             <button type="button" id="import-data-btn" class="w-full text-center p-2.5 font-semibold text-primary bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200">
-                                <i class="fas fa-upload mr-2"></i> Import Data
+                                <i class="fas fa-upload mr-2"></i><span data-i18n="profile.import_btn"></span>
                             </button>
                             <button type="button" id="reset-app-btn" class="w-full text-center p-2.5 font-semibold text-error bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 mt-2">
-                                <i class="fas fa-trash-alt mr-2"></i> Reset App
+                                <i class="fas fa-trash-alt mr-2"></i><span data-i18n="profile.reset_btn"></span>
                             </button>
                             <a href="https://fodmaplogmap-web.onrender.com/privacy.html" target="_blank" class="block text-center text-sm text-subtle hover:underline pt-2">
-                                Privacy Policy
+                                <span data-i18n="profile.privacy_policy"></span>
                             </a>
                         </div>
                     </div>
@@ -425,10 +415,10 @@
                         <button id="account-back-btn" class="text-muted hover:text-primary text-xl w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 -ml-2 mr-2">
                             <i class="fas fa-arrow-left"></i>
                         </button>
-                        <h2 class="text-xl sm:text-2xl font-semibold text-secondary">Account Settings</h2>
+                        <h2 class="text-xl sm:text-2xl font-semibold text-secondary" data-i18n="account.title"></h2>
                     </div>
                     
-                    <p class="text-subtle mb-4 text-sm">Manage your account details and preferences.</p>
+                    <p class="text-subtle mb-4 text-sm" data-i18n="account.subtitle"></p>
 
                     <form id="account-settings-form" class="space-y-4">
                         <div id="account-premium-wrapper" class="hidden p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl flex justify-between items-center">
@@ -437,25 +427,24 @@
                                     <i class="fas fa-crown text-xs"></i>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-bold text-amber-900 leading-tight">Lifetime Premium</p>
-                                    <p class="text-[10px] text-amber-700">All features unlocked</p>
+                                    <p class="text-sm font-bold text-amber-900 leading-tight" data-i18n="account.premium_badge"></p>
+                                    <p class="text-[10px] text-amber-700" data-i18n="account.premium_sub"></p>
                                 </div>
                             </div>
                             <i class="fas fa-check-circle text-orange-500 text-lg"></i>
                         </div>
                         <div>
-                            <label for="account-name" class="block mb-1.5 text-sm font-medium text-secondary">Name</label>
+                            <label for="account-name" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="account.label_name"></label>
                             <div class="flex gap-2">
-                                <input type="text" id="account-name" placeholder="Your Name" class="w-full p-2.5 border border-slate-300 rounded-xl">
-                                <button type="submit" id="account-save-name-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm flex-shrink-0">
-                                    Save
+                                <input type="text" id="account-name" data-i18n="[placeholder]account.label_name" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                                <button type="submit" id="account-save-name-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm flex-shrink-0" data-i18n="account.btn_save">
                                 </button>
                             </div>
                         </div>
 
                         <div>
                             <div class="flex justify-between items-center mb-1.5">
-                                <label for="account-email" class="text-sm font-medium text-secondary">Email</label>
+                                <label for="account-email" class="text-sm font-medium text-secondary" data-i18n="account.label_email"></label>
                                 <span id="account-email-status" class="text-xs font-bold px-2 py-0.5 rounded-full hidden"></span>
                             </div>
                             <input type="email" id="account-email" class="w-full p-2.5 border border-slate-300 rounded-xl bg-slate-100 text-subtle" disabled>
@@ -464,13 +453,13 @@
                         <hr>
 
                         <div class="space-y-2">
-                            <h3 class="font-semibold text-secondary">Account Actions</h3>
+                            <h3 class="font-semibold text-secondary" data-i18n="account.actions_title"></h3>
                             <button type="button" id="account-password-reset-btn" class="w-full text-center p-2.5 font-semibold text-primary bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200">
-                                <i class="fas fa-key mr-2"></i> Send Password Reset Email
+                                <i class="fas fa-key mr-2"></i><span data-i18n="account.btn_reset_pw"></span>
                             </button>
                             
                             <button type="button" id="account-delete-btn" class="w-full text-center p-2.5 font-semibold text-error bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 mt-2">
-                                <i class="fas fa-trash-alt mr-2"></i> Delete My Account
+                                <i class="fas fa-trash-alt mr-2"></i><span data-i18n="account.btn_delete"></span>
                             </button>
                         </div>
                     </form>
@@ -479,26 +468,26 @@
             </main>
         
         <div id="toast" class="fixed left-4 py-2 px-4 rounded-lg shadow-xl opacity-0 transform -translate-y-10 transition-all duration-500 ease-in-out text-sm z-50" style="top: 100px;">
-            Saved successfully!
+            <span data-i18n="log.toast_saved"></span>
         </div>
 
         <div id="gemini-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[85] hidden"> 
             <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full">
                 <div class="p-4 border-b border-slate-200 flex justify-between items-center"> 
-                    <h3 id="gemini-modal-title" class="text-lg font-semibold text-secondary">AI Assistant</h3> 
+                    <h3 id="gemini-modal-title" class="text-lg font-semibold text-secondary" data-i18n="ai.title"></h3> 
                     <button id="gemini-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
                 </div>
                 <div class="p-4 max-h-[60vh] overflow-y-auto"> 
                     <div id="gemini-modal-loader" class="flex justify-center items-center py-8">
-                        <div class="modal-loader-text">
-                            Thinking, hold tight<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+                        <div class="modal-loader-text" data-i18n="loading.thinking">
+                            <span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
                         </div>
                     </div> 
                     <div id="gemini-modal-content" class="text-secondary leading-relaxed hidden text-sm"></div> 
                     <div id="gemini-modal-error" class="text-error bg-red-50 p-3 rounded-lg hidden text-sm"></div> 
                 </div>
                  <div class="p-3 bg-slate-50 border-t border-slate-200 text-center text-xs text-slate-500 rounded-b-xl"> 
-                    Disclaimer: AI-generated responses are for informational purposes only.
+                    <span data-i18n="ai.disclaimer"></span>
                 </div>
             </div>
         </div>
@@ -506,7 +495,7 @@
         <div id="action-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[99] hidden"> 
             <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
                 <div class="p-4 border-b border-slate-200 flex justify-between items-center"> 
-                    <h3 id="action-modal-title" class="text-lg font-semibold text-secondary">Action</h3> 
+                    <h3 id="action-modal-title" class="text-lg font-semibold text-secondary" data-i18n="modals.action_title"></h3> 
                     <button id="action-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
                 </div>
                 <div class="p-4 space-y-3"> 
@@ -516,9 +505,9 @@
                     </div>
                 </div>
                  <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl"> 
-                    <button id="action-modal-btn-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button> 
-                    <button id="action-modal-btn-alt" class="hidden bg-error text-white font-semibold py-1.5 px-4 rounded-full hover:bg-error-dark transition-colors text-sm">Alternate</button> 
-                    <button id="action-modal-btn-confirm" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Confirm</button> 
+                    <button id="action-modal-btn-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm"><span data-i18n="modals.btn_cancel"></span></button> 
+                    <button id="action-modal-btn-alt" class="hidden bg-error text-white font-semibold py-1.5 px-4 rounded-full hover:bg-error-dark transition-colors text-sm"><span data-i18n="modals.btn_alt"></span></button> 
+                    <button id="action-modal-btn-confirm" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm"><span data-i18n="modals.btn_confirm"></span></button> 
                 </div>
             </div>
         </div>
@@ -526,46 +515,45 @@
         <div id="auth-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[98] hidden">
             <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
                 <div class="p-4 border-b border-slate-200 flex justify-between items-center">
-                    <h3 id="auth-modal-title" class="text-lg font-semibold text-secondary">Log In</h3>
+                    <h3 id="auth-modal-title" class="text-lg font-semibold text-secondary" data-i18n="auth.login_title"></h3>
                     <button id="auth-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
                 </div>
 
                 <div class="p-4">
                     <div id="auth-view-form">
                         <button id="auth-google-btn" class="w-full bg-white border border-slate-300 text-secondary font-semibold py-2.5 px-4 rounded-full hover:bg-slate-50 transition-colors duration-300 shadow-sm flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                        Sign in with Google
-                    </button>
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                            <span data-i18n="auth.google_sign_in"></span>
+                        </button>
 
-                    <div class="relative flex items-center justify-center my-4">
-                        <div class="absolute inset-0 flex items-center">
-                            <div class="w-full border-t border-slate-200"></div>
-                        </div>
-                        <div class="relative px-3 bg-white text-sm text-subtle">or</div>
-                    </div>
-
-                    <form id="auth-form" class="space-y-3">
-                        <div id="auth-name-field" class="hidden">
-                            <label for="auth-name" class="block mb-1.5 text-sm font-medium text-secondary">Name</label>
-                            <input type="text" id="auth-name" placeholder="Your Name" class="w-full p-2.5 border border-slate-300 rounded-xl">
-                        </div>
-                        <div>
-                            <label for="auth-email" class="block mb-1.5 text-sm font-medium text-secondary">Email</label>
-                            <input type="email" id="auth-email" placeholder="you@example.com" class="w-full p-2.5 border border-slate-300 rounded-xl" required>
-                        </div>
-                        <div>
-                            <label for="auth-password" class="block mb-1.5 text-sm font-medium text-secondary">Password</label>
-                            <div class="relative">
-                                <input type="password" id="auth-password" placeholder="••••••••" class="w-full p-2.5 pr-10 border border-slate-300 rounded-xl" required>
-                                <button type="button" id="auth-password-toggle" class="absolute top-0 right-0 bottom-0 w-10 flex items-center justify-center text-subtle hover:text-primary">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                        <div class="relative flex items-center justify-center my-4">
+                            <div class="absolute inset-0 flex items-center">
+                                <div class="w-full border-t border-slate-200"></div>
                             </div>
+                            <div class="relative px-3 bg-white text-sm text-subtle" data-i18n="auth.or_divider"></div>
                         </div>
+
+                        <form id="auth-form" class="space-y-3">
+                            <div id="auth-name-field" class="hidden">
+                                <label for="auth-name" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="auth.name_label"></label>
+                                <input type="text" id="auth-name" data-i18n="[placeholder]auth.name_label" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                            </div>
+                            <div>
+                                <label for="auth-email" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="auth.email_label"></label>
+                                <input type="email" id="auth-email" data-i18n="[placeholder]auth.email_placeholder" class="w-full p-2.5 border border-slate-300 rounded-xl" required>
+                            </div>
+                            <div>
+                                <label for="auth-password" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="auth.password_label"></label>
+                                <div class="relative">
+                                    <input type="password" id="auth-password" data-i18n="[placeholder]auth.password_placeholder" class="w-full p-2.5 pr-10 border border-slate-300 rounded-xl" required>
+                                    <button type="button" id="auth-password-toggle" class="absolute top-0 right-0 bottom-0 w-10 flex items-center justify-center text-subtle hover:text-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
 
                         <div class="flex justify-end mt-1">
-                            <button type="button" id="auth-forgot-password-link" class="text-xs font-semibold text-primary hover:underline hidden">
-                                Forgot password?
+                            <button type="button" id="auth-forgot-password-link" class="text-xs font-semibold text-primary hover:underline hidden" data-i18n="auth.forgot_password">
                             </button>
                         </div>
 
@@ -573,13 +561,13 @@
                             <div class="flex items-start">
                                 <input type="checkbox" id="auth-check-terms" class="mt-1 mr-2 accent-adaptive">
                                 <label for="auth-check-terms" class="text-xs text-secondary leading-tight">
-                                    I agree to the <a href="https://fodmaplogmap-web.onrender.com/privacy.html" target="_blank" class="underline text-primary">Privacy Policy</a> and Terms of Service.
+                                    <span data-i18n="auth.terms_agree"></span>
                                 </label>
                             </div>
                             <div class="flex items-start">
                                 <input type="checkbox" id="auth-check-health" class="mt-1 mr-2 accent-adaptive">
                                 <label for="auth-check-health" class="text-xs text-secondary leading-tight">
-                                    I explicitly consent to the processing of my health data (symptoms, diagnoses) for the purpose of this app.
+                                    <span data-i18n="auth.health_consent"></span>
                                 </label>
                             </div>
                         </div>
@@ -587,17 +575,17 @@
                         <p id="auth-error" class="text-error text-sm hidden"></p>
 
                         <button type="submit" id="auth-submit-btn" class="w-full bg-adaptive font-semibold py-2.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow">
-                            Log In
+                            <span data-i18n="auth.submit_login"></span>
                         </button>
                     </form>
 
                     <p id="auth-switch-link" class="text-sm text-center text-secondary mt-4">
-                        Don't have an account? <button id="auth-switch-btn" class->Sign Up</button>
+                        <span data-i18n="auth.switch_signup"></span>
                     </p>
 
                     <p class="text-sm text-center text-secondary mt-4">
-                        <button id="auth-continue-guest-btn" class="font-bold text-primary underline">Continue as a guest</button>
-                        <button id="auth-guest-help-btn" class="ml-1 w-5 h-5 inline-flex items-center justify-center text-xs bg-slate-200 text-slate-600 rounded-full hover:bg-slate-300" title="Why create an account?">
+                        <button id="auth-continue-guest-btn" class="font-bold text-primary underline" data-i18n="auth.continue_guest"></button>
+                        <button id="auth-guest-help-btn" class="ml-1 w-5 h-5 inline-flex items-center justify-center text-xs bg-slate-200 text-slate-600 rounded-full hover:bg-slate-300" data-i18n="[title]auth.guest_help_title">
                             ?
                         </button>
                     </p>
@@ -606,26 +594,20 @@
                         <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-2xl">
                             <i class="fas fa-envelope-open-text"></i>
                         </div>
-                        <h3 class="text-xl font-bold text-secondary">Verify your email</h3>
-                        <p class="text-sm text-muted">
-                            We sent a verification link to <br>
-                            <strong id="auth-verify-email-display" class="text-secondary">user@example.com</strong>
+                        <h3 class="text-xl font-bold text-secondary" data-i18n="auth.verify_title"></h3>
+                        <p class="text-sm text-muted" data-i18n="auth.verify_msg">
                         </p>
-                        <p class="text-xs text-subtle">
-                            Please check your inbox (and spam folder) to secure your account.
+                        <p class="text-xs text-subtle" data-i18n="auth.verify_check">
                         </p>
                         
                         <div class="space-y-2 pt-2">
-                            <button id="auth-verify-done-btn" class="w-full bg-adaptive font-semibold py-2.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors shadow">
-                                I've Verified
+                            <button id="auth-verify-done-btn" class="w-full bg-adaptive font-semibold py-2.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors shadow" data-i18n="auth.verify_btn_done">
                             </button>
-                            <button id="auth-verify-resend-btn" class="w-full bg-white border border-slate-300 text-secondary font-semibold py-2.5 px-4 rounded-full hover:bg-slate-50 transition-colors">
-                                Resend Link
+                            <button id="auth-verify-resend-btn" class="w-full bg-white border border-slate-300 text-secondary font-semibold py-2.5 px-4 rounded-full hover:bg-slate-50 transition-colors" data-i18n="auth.verify_btn_resend">
                             </button>
                         </div>
                         
-                        <button id="auth-verify-skip-btn" class="text-xs text-muted hover:text-primary underline mt-2">
-                            Skip for now
+                        <button id="auth-verify-skip-btn" class="text-xs text-muted hover:text-primary underline mt-2" data-i18n="auth.verify_skip">
                         </button>
                     </div>
                     <div id="auth-view-google-consent" class="hidden space-y-4 py-2">
@@ -633,31 +615,29 @@
                             <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-xl mb-2">
                                 <i class="fab fa-google"></i>
                             </div>
-                            <h3 class="text-lg font-bold text-secondary">Finalize Account</h3>
-                            <p class="text-sm text-muted">Please accept our terms to continue.</p>
+                            <h3 class="text-lg font-bold text-secondary" data-i18n="auth.finalize_account"></h3>
+                            <p class="text-sm text-muted" data-i18n="auth.accept_terms"></p>
                         </div>
 
                         <div class="space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-200 text-left">
                             <div class="flex items-start">
                                 <input type="checkbox" id="google-check-terms" class="mt-1 mr-2 accent-adaptive">
                                 <label for="google-check-terms" class="text-xs text-secondary leading-tight">
-                                    I agree to the <a href="https://fodmaplogmap-web.onrender.com/privacy.html" target="_blank" class="underline text-primary">Privacy Policy</a> and Terms of Service.
+                                    <span data-i18n="auth.accept_terms"></span>
                                 </label>
                             </div>
                             <div class="flex items-start">
                                 <input type="checkbox" id="google-check-health" class="mt-1 mr-2 accent-adaptive">
                                 <label for="google-check-health" class="text-xs text-secondary leading-tight">
-                                    I explicitly consent to the processing of my health data (symptoms, diagnoses) for the purpose of this app.
+                                    <span data-i18n="auth.health_consent"></span>
                                 </label>
                             </div>
                         </div>
 
                         <div class="space-y-2 mt-4">
-                            <button id="google-consent-confirm-btn" class="w-full bg-adaptive font-semibold py-2.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors shadow opacity-50 cursor-not-allowed" disabled>
-                                Create Account
+                            <button id="google-consent-confirm-btn" class="w-full bg-adaptive font-semibold py-2.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors shadow opacity-50 cursor-not-allowed" disabled data-i18n="auth.submit_signup">
                             </button>
-                            <button id="google-consent-cancel-btn" class="w-full text-sm text-error hover:underline">
-                                Cancel
+                            <button id="google-consent-cancel-btn" class="w-full text-sm text-error hover:underline" data-i18n="modals.btn_cancel">
                             </button>
                         </div>
                     </div>
@@ -668,7 +648,7 @@
         <div id="food-edit-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[80] hidden">
             <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
                 <div class="p-4 border-b border-slate-200 flex justify-between items-center">
-                    <h3 id="food-modal-title" class="text-lg font-semibold text-secondary">View Food</h3>
+                    <h3 id="food-modal-title" class="text-lg font-semibold text-secondary" data-i18n="modals.food_view_title"></h3>
                     <button id="food-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
                 </div>
 
@@ -676,46 +656,46 @@
                     <div id="food-modal-view-content">
                         </div>
                     <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                        <button id="food-modal-delete-btn" class="bg-error text-white font-semibold py-1.5 px-4 rounded-full hover:bg-error-dark transition-colors text-sm">Delete</button>
-                        <button id="food-modal-edit-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Edit</button>
+                        <button id="food-modal-delete-btn" class="bg-error text-white font-semibold py-1.5 px-4 rounded-full hover:bg-error-dark transition-colors text-sm"><span data-i18n="modals.btn_delete"></span></button>
+                        <button id="food-modal-edit-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm"><span data-i18n="modals.btn_edit"></span></button>
                     </div>
                 </div>
 
                 <form id="food-modal-edit" class="hidden">
                     <div class="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
                         <div>
-                            <label for="food-modal-name" class="block mb-1 text-sm font-medium text-secondary">Food Name*</label>
+                            <label for="food-modal-name" class="block mb-1 text-sm font-medium text-secondary"><span data-i18n="modals.label_food_name"></span></label>
                             <input type="text" id="food-modal-name" class="w-full p-2.5 border border-slate-300 rounded-xl" required>
                         </div>
                         
                         <div>
-                            <label for="food-modal-group" class="block mb-1 text-sm font-medium text-secondary">Food Group</label>
+                            <label for="food-modal-group" class="block mb-1 text-sm font-medium text-secondary"><span data-i18n="modals.label_group"></span></label>
                             <select id="food-modal-group" class="w-full p-2.5 border border-slate-300 rounded-xl bg-white">
                                 </select>
                         </div>
                         
                         <div>
-                            <label class="block mb-1 text-sm font-medium text-secondary">Status*</label>
+                            <label class="block mb-1 text-sm font-medium text-secondary"><span data-i18n="modals.label_status"></span></label>
                             <div class="flex gap-2">
-                                <button type="button" id="food-modal-btn-tolerated" class="flex-1 p-2.5 rounded-xl border-2 font-semibold text-sm">✅ Tolerated</button>
-                                <button type="button" id="food-modal-btn-trigger" class="flex-1 p-2.5 rounded-xl border-2 font-semibold text-sm">⚠️ Trigger</button>
+                                <button type="button" id="food-modal-btn-tolerated" class="flex-1 p-2.5 rounded-xl border-2 font-semibold text-sm"><span data-i18n="modals.btn_tolerated"></span></button>
+                                <button type="button" id="food-modal-btn-trigger" class="flex-1 p-2.5 rounded-xl border-2 font-semibold text-sm"><span data-i18n="modals.btn_trigger"></span></button>
                                 <input type="hidden" id="food-modal-status" value="">
                             </div>
                         </div>
 
                         <div id="food-modal-dose-logic-container" class="hidden space-y-2 p-3 bg-slate-50 rounded-lg">
-                            <label class="block text-sm font-medium text-secondary">Dose Logic (Optional)</label>
+                            <label class="block text-sm font-medium text-secondary"><span data-i18n="modals.label_dose_logic"></span></label>
                             
                             <button type="button" id="food-modal-dose-trigger-tolerated" class="p13n-dose-trigger-btn tolerated hidden">
-                                + Tolerated up to...
+                                <span data-i18n="modals.logic_upto"></span>
                             </button>
                             <button type="button" id="food-modal-dose-trigger-trigger" class="p13n-dose-trigger-btn trigger hidden">
-                                + Trigger starting at...
+                                <span data-i18n="modals.logic_starting"></span>
                             </button>
                             
                             <div id="food-modal-dose-wrapper">
-                                <input type="text" id="food-modal-dose" class="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="e.g., 1/2 cup">
-                                <button type="button" id="food-modal-dose-clear-btn" title="Clear dose">
+                                <input type="text" id="food-modal-dose" class="w-full p-2.5 border border-slate-300 rounded-xl" data-i18n="[placeholder]food.dose_placeholder">
+                                <button type="button" id="food-modal-dose-clear-btn" data-i18n="[title]food.clear_dose">
                                     <i class="fas fa-times"></i>
                                 </button>
                             </div>
@@ -724,14 +704,14 @@
                         </div>
 
                         <div>
-                            <label for="food-modal-notes" class="block mb-1 text-sm font-medium text-secondary">Notes (Optional)</label>
+                            <label for="food-modal-notes" class="block mb-1 text-sm font-medium text-secondary" data-i18n="food.notes_label"></label>
                             <textarea id="food-modal-notes" rows="2" class="w-full p-2.5 border border-slate-300 rounded-xl"></textarea>
                         </div>
                     </div>
 
                     <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl">
-                        <button type="button" id="food-modal-cancel-btn" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button>
-                        <button type="submit" id="food-modal-save-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Save</button>
+                        <button type="button" id="food-modal-cancel-btn" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm"><span data-i18n="modals.btn_cancel"></span></button>
+                        <button type="submit" id="food-modal-save-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm"><span data-i18n="modals.btn_save"></span></button>
                     </div>
                 </form>
             </div>
@@ -739,36 +719,36 @@
         <div id="pretreatment-settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[80] hidden">
             <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
                 <div class="p-4 border-b border-slate-200 flex justify-between items-center">
-                    <h3 id="pretreatment-modal-title" class="text-lg font-semibold text-secondary">Pre-Treatment Phase Settings</h3>
+                    <h3 id="pretreatment-modal-title" class="text-lg font-semibold text-secondary" data-i18n="phases.pre_treatment.settings_title"></h3>
                     <button id="pretreatment-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
                 </div>
 
                 <form id="pretreatment-modal-form">
                     <div class="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
                         <div>
-                            <label for="pretreatment-modal-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Phase Start Date</label>
+                            <label for="pretreatment-modal-start-date" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="profile.start_date"></label>
                             <input type="date" id="pretreatment-modal-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
                         </div>
                         <div>
-                            <label class="block mb-1.5 text-sm font-medium text-secondary">Phase Duration</label>
+                            <label class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="profile.duration"></label>
                             <div class="flex gap-2">
-                                <input type="number" id="pretreatment-modal-duration-num" placeholder="e.g., 4" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
+                                <input type="number" id="pretreatment-modal-duration-num" data-i18n="[placeholder]profile.duration" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
                                 <select id="pretreatment-modal-duration-unit" class="w-1/2 p-2.5 border border-slate-300 rounded-xl bg-white">
-                                    <option value="days">Days</option>
-                                    <option value="weeks" selected>Weeks</option>
-                                    <option value="months">Months</option>
+                                    <option value="days" data-i18n="units.days">Days</option>
+                                    <option value="weeks" selected data-i18n="units.weeks">Weeks</option>
+                                    <option value="months" data-i18n="units.months">Months</option>
                                 </select>
                             </div>
                         </div>
                         <div>
-                            <label for="pretreatment-modal-rules" class="block mb-1.5 text-sm font-medium text-secondary">Pre-Treatment Diet Rules</label>
-                            <textarea id="pretreatment-modal-rules" rows="4" class="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="List your rules, one per line..."></textarea>
+                            <label for="pretreatment-modal-rules" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="profile.rules_label"></label>
+                            <textarea id="pretreatment-modal-rules" rows="4" class="w-full p-2.5 border border-slate-300 rounded-xl" data-i18n="[placeholder]profile.rules_label"></textarea>
                         </div>
                     </div>
 
                     <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl">
-                        <button type="button" id="pretreatment-modal-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button>
-                        <button type="submit" id="pretreatment-modal-save-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Save</button>
+                        <button type="button" id="pretreatment-modal-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm"><span data-i18n="modals.btn_cancel"></span></button>
+                        <button type="submit" id="pretreatment-modal-save-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm"><span data-i18n="modals.btn_save"></span></button>
                     </div>
                 </form>
             </div>
@@ -776,32 +756,32 @@
         <div id="restriction-settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[80] hidden">
             <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
                 <div class="p-4 border-b border-slate-200 flex justify-between items-center">
-                    <h3 id="restriction-modal-title" class="text-lg font-semibold text-secondary">Restriction Phase Settings</h3>
+                    <h3 id="restriction-modal-title" class="text-lg font-semibold text-secondary" data-i18n="phases.restriction.settings_title"></h3>
                     <button id="restriction-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
                 </div>
 
                 <form id="restriction-modal-form">
                     <div class="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
                         <div>
-                            <label for="restriction-modal-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Phase Start Date</label>
+                            <label for="restriction-modal-start-date" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="profile.start_date"></label>
                             <input type="date" id="restriction-modal-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
                         </div>
                         <div>
-                            <label class="block mb-1.5 text-sm font-medium text-secondary">Phase Duration</label>
+                            <label class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="profile.duration"></label>
                             <div class="flex gap-2">
-                                <input type="number" id="restriction-modal-duration-num" placeholder="e.g., 4" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
+                                <input type="number" id="restriction-modal-duration-num" data-i18n="[placeholder]profile.duration" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
                                 <select id="restriction-modal-duration-unit" class="w-1/2 p-2.5 border border-slate-300 rounded-xl bg-white">
-                                    <option value="days">Days</option>
-                                    <option value="weeks" selected>Weeks</option>
-                                    <option value="months">Months</option>
+                                    <option value="days" data-i18n="units.days">Days</option>
+                                    <option value="weeks" selected data-i18n="units.weeks">Weeks</option>
+                                    <option value="months" data-i18n="units.months">Months</option>
                                 </select>
                             </div>
                         </div>
                     </div>
 
                     <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl">
-                        <button type="button" id="restriction-modal-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button>
-                        <button type="submit" id="restriction-modal-save-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Save</button>
+                        <button type="button" id="restriction-modal-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm"><span data-i18n="modals.btn_cancel"></span></button>
+                        <button type="submit" id="restriction-modal-save-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm"><span data-i18n="modals.btn_save"></span></button>
                     </div>
                 </form>
             </div>
@@ -813,58 +793,62 @@
                     <button id="info-modal-close" class="text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
                 </div>
                 <div id="info-modal-content" class="p-4 max-h-[70vh] overflow-y-auto text-sm"> 
-                    <h2>🔬 What are FODMAPs?</h2>
-                    <p><strong>F</strong>ermentable <strong>O</strong>ligosaccharides, <strong>D</strong>isaccharides, <strong>M</strong>onosaccharides, <strong>A</strong>nd <strong>P</strong>olyols.</p>
-                    <p>Short-chain carbs poorly absorbed in the small intestine. They draw water and ferment in the large intestine, causing gas, bloating, etc.</p>
+                    <h2 data-i18n="info_modal.what_title"></h2>
+                    <p data-i18n="info_modal.what_def"></p>
+                    <p data-i18n="info_modal.what_desc"></p>
                     
-                    <h2 class="mt-4">🗺️ The 4 Phases</h2> 
-                    <h3>Phase 1: Pre-Treatment</h3>
-                    <p>🛡️ Follow specific diet rules to calm symptoms before treatment.</p>
-                    <h3>Phase 2: Restriction</h3>
-                    <p>🚫 Remove high-FODMAP foods to calm symptoms.</p>
-                    <h3>Phase 3: Reintroduction</h3>
-                    <p>🧪 Systematically reintroduce groups to identify triggers (use the Reintro Log!).</p>
-                    <h3>Phase 4: Personalization</h3>
-                    <p>🧘 Build a long-term diet including tolerated foods.</p>
+                    <h2 class="mt-4" data-i18n="info_modal.phases_title"></h2> 
+                    
+                    <h3 data-i18n="info_modal.phase_1_title"></h3>
+                    <p data-i18n="info_modal.phase_1_desc"></p>
+                    
+                    <h3 data-i18n="info_modal.phase_2_title"></h3>
+                    <p data-i18n="info_modal.phase_2_desc"></p>
+                    
+                    <h3 data-i18n="info_modal.phase_3_title"></h3>
+                    <p data-i18n="info_modal.phase_3_desc"></p>
+                    
+                    <h3 data-i18n="info_modal.phase_4_title"></h3>
+                    <p data-i18n="info_modal.phase_4_desc"></p>
 
-                    <h2 class="mt-4">👥 Meet the Groups</h2> 
+                    <h2 class="mt-4" data-i18n="info_modal.groups_title"></h2> 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-1 mt-2"> 
                         <div class="fodmap-group-card border-l-yellow-400">
-                            <h3 class="text-yellow-700 !mt-0">🍎 Fructose</h3>
-                            <p>Honey, Apples, Mango, Agave, HFCS</p>
+                            <h3 class="text-yellow-700 !mt-0">🍎 <span data-i18n="fodmap_groups.fructose"></span></h3>
+                            <p data-i18n="fodmap_groups.fructose_examples"></p>
                         </div>
                         <div class="fodmap-group-card border-l-blue-400">
-                            <h3 class="text-blue-700 !mt-0">🥛 Lactose</h3>
-                            <p>Milk, Yogurt, Soft Cheeses, Ice Cream</p>
+                            <h3 class="text-blue-700 !mt-0">🥛 <span data-i18n="fodmap_groups.lactose"></span></h3>
+                            <p data-i18n="fodmap_groups.lactose_examples"></p>
                         </div>
                         <div class="fodmap-group-card border-l-orange-400">
-                        <h3 class="text-orange-700 !mt-0">🍞 Fructans - Grains</h3>
-                        <p>Wheat, Rye, Barley</p>
+                            <h3 class="text-orange-700 !mt-0">🍞 <span data-i18n="fodmap_groups.fructans_grain"></span></h3>
+                            <p data-i18n="fodmap_groups.fructans_grain_examples"></p>
                         </div>
                         <div class="fodmap-group-card border-l-purple-400">
-                            <h3 class="text-purple-700 !mt-0">🧅 Fructans - Veg & Fruit</h3>
-                            <p>Onion, Garlic, Leek, Inulin</p>
+                            <h3 class="text-purple-700 !mt-0">🧅 <span data-i18n="fodmap_groups.fructans_veg"></span></h3>
+                            <p data-i18n="fodmap_groups.fructans_veg_examples"></p>
                         </div>
                         <div class="fodmap-group-card border-l-teal-400">
-                            <h3 class="text-teal-700 !mt-0">🫘 GOS</h3>
-                            <p>Beans, Lentils, Chickpeas, Cashews</p>
+                            <h3 class="text-teal-700 !mt-0">🫘 <span data-i18n="fodmap_groups.gos"></span></h3>
+                            <p data-i18n="fodmap_groups.gos_examples"></p>
                         </div>
                         <div class="fodmap-group-card border-l-green-400">
-                            <h3 class="text-green-700 !mt-0">🥑 Sorbitol</h3>
-                            <p>Avocado, Blackberries, Peaches, Gum</p>
+                            <h3 class="text-green-700 !mt-0">🥑 <span data-i18n="fodmap_groups.sorbitol"></span></h3>
+                            <p data-i18n="fodmap_groups.sorbitol_examples"></p>
                         </div>
                         <div class="fodmap-group-card border-l-indigo-400">
-                            <h3 class="text-indigo-700 !mt-0">🍄 Mannitol</h3>
-                            <p>Mushrooms, Cauliflower, Sweet Potato</p>
+                            <h3 class="text-indigo-700 !mt-0">🍄 <span data-i18n="fodmap_groups.mannitol"></span></h3>
+                            <p data-i18n="fodmap_groups.mannitol_examples"></p>
                         </div>
                     </div>
                     <div class="info-note mt-4 p-3 rounded-lg text-center"> 
-                        <h3 class="!mt-0 text-secondary">👩‍⚕️ Quick Note!</h3>
-                        <p>Work with a dietitian! This app supports, not replaces, professional advice.</p>
+                        <h3 class="!mt-0 text-secondary" data-i18n="info_modal.note_title"></h3>
+                        <p data-i18n="info_modal.note_msg"></p>
                     </div>
                 </div>
                  <div class="p-3 bg-slate-50 border-t border-slate-200 text-right rounded-b-xl"> 
-                    <button id="info-modal-close-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Got it!</button> 
+                    <button id="info-modal-close-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm"><span data-i18n="modals.btn_close"></span></button> 
                 </div>
             </div>
         </div>
@@ -872,74 +856,73 @@
         <div id="side-menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden"_></div>
         <div id="side-menu-modal" class="fixed top-0 left-0 h-full w-64 bg-white shadow-2xl z-40 hidden p-4"> 
             <div class="flex justify-between items-center mb-4"> 
-                <h2 class="text-xl font-bold text-primary">Menu</h2> 
+                <h2 class="text-xl font-bold text-primary"><span data-i18n="menu.title"></span></h2> 
                 <button id="side-menu-close" class="text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
             </div>
             <nav>
                 <ul class="space-y-1">
                     <li>
                         <button id="open-info-modal-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm"> 
-                            <i class="fas fa-book-open w-5 mr-2 text-primary"></i>Understand FODMAPS
+                            <i class="fas fa-book-open w-5 mr-2 text-primary"></i><span data-i18n="menu.understand_fodmaps"></span>
                         </button>
                     </li>
 
                     <li id="menu-login-li" class="pt-2 border-t border-slate-200">
                         <button id="menu-login-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
-                            <i class="fas fa-sign-in-alt w-5 mr-2 text-primary"></i>Login / Sign Up
+                            <i class="fas fa-sign-in-alt w-5 mr-2 text-primary"></i><span data-i18n="menu.login_signup"></span>
                         </button>
                     </li>
                     <li id="menu-premium-li" class="hidden pt-2 border-t border-slate-200">
                         <button id="menu-premium-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
-                            <i class="fas fa-star w-5 mr-2 text-amber-500"></i>Go Premium
+                            <i class="fas fa-star w-5 mr-2 text-amber-500"></i><span data-i18n="menu.go_premium"></span>
                         </button>
                     </li>
                     
                     <li class="pt-2 border-t border-slate-200">
                         <h3 class="px-3 py-1 text-sm font-semibold text-secondary flex items-center">
-                            <i class="fas fa-list-ol w-5 mr-2 text-primary"></i>Phase Selector
+                            <i class="fas fa-list-ol w-5 mr-2 text-primary"></i><span data-i18n="menu.phase_selector"></span>
                         </h3>
                         <div id="side-menu-phases" class="flex flex-col space-y-1 mt-1">
-                            <!-- We re-use .log-view-toggle-btn but in a vertical layout -->
-                            <button class="log-view-toggle-btn text-left justify-start" data-phase="pre-treatment">Pre-treatment</button>
-                            <button class="log-view-toggle-btn text-left justify-start" data-phase="restriction">Restriction</button>
-                            <button class="log-view-toggle-btn text-left justify-start" data-phase="reintroduction">Reintroduction</button>
-                            <button class="log-view-toggle-btn text-left justify-start" data-phase="personalization">Personalization</button>
+                            <button class="log-view-toggle-btn text-left justify-start" data-phase="pre-treatment"><span data-i18n="phases.pre_treatment.name"></span></button>
+                            <button class="log-view-toggle-btn text-left justify-start" data-phase="restriction"><span data-i18n="phases.restriction.name"></span></button>
+                            <button class="log-view-toggle-btn text-left justify-start" data-phase="reintroduction"><span data-i18n="phases.reintroduction.name"></span></button>
+                            <button class="log-view-toggle-btn text-left justify-start" data-phase="personalization"><span data-i18n="phases.personalization.name"></span></button>
                         </div>
                     </li>
                     <li class="pt-2 border-t border-slate-200">
                         <div class="flex flex-col space-y-1">
                             <div id="install-app-li" style="display: none;">
                                 <button id="install-app-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
-                                    <i class="fas fa-download w-5 mr-2 text-primary"></i>Install App
+                                    <i class="fas fa-download w-5 mr-2 text-primary"></i><span data-i18n="menu.install_app"></span>
                                 </button>
                             </div>
                             
                             <button id="open-onboarding-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
-                                <i class="fas fa-magic w-5 mr-2 text-primary"></i>Welcome Setup
+                                <i class="fas fa-magic w-5 mr-2 text-primary"></i><span data-i18n="menu.welcome_setup"></span>
                             </button>
 
                             <a href="https://fodmaplogmap-web.onrender.com/support.html" target="_blank" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm"> 
-                                <i class="fas fa-life-ring w-5 mr-2 text-primary"></i>User Guide & FAQ
+                                <i class="fas fa-life-ring w-5 mr-2 text-primary"></i><span data-i18n="menu.user_guide"></span>
                             </a>
                         </div>
                     </li>
 
                     <li class="pt-2 border-t border-slate-200">
                         <a href="https://fodmaplogmap-web.onrender.com/contact.html" target="_blank" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm flex items-center">
-                            <i class="fas fa-envelope w-5 mr-2 text-primary"></i>Contact
+                            <i class="fas fa-envelope w-5 mr-2 text-primary"></i><span data-i18n="menu.contact"></span>
                         </a>
                     </li>
 
                     <li id="menu-logout-li" class="hidden pt-1">
                         <button id="menu-logout-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm">
-                            <i class="fas fa-sign-out-alt w-5 mr-2 text-subtle"></i>Log Out
+                            <i class="fas fa-sign-out-alt w-5 mr-2 text-subtle"></i><span data-i18n="menu.logout"></span>
                         </button>
                     </li>
 
                     <li id="menu-account-li" class="hidden pt-2 border-t border-slate-200">
                         <button id="menu-account-btn" class="w-full text-left py-2.5 px-3 rounded-full hover:bg-slate-100 text-secondary font-medium text-sm flex items-center">
                             <i id="menu-account-icon" class="fas fa-cog w-5 mr-2 text-subtle flex-shrink-0"></i>
-                            <span id="menu-account-email" class="truncate text-xs font-bold">Not logged in</span>
+                            <span id="menu-account-email" class="truncate text-xs font-bold" data-i18n="menu.not_logged_in"></span>
                             <span id="menu-pro-badge" class="hidden ml-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">PRO</span>
                         </button>
                     </li>
@@ -1004,7 +987,7 @@
     <div id="log-entry-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[80] hidden">
         <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
             <div class="p-4 border-b border-slate-200 flex justify-between items-center">
-                <h3 id="log-modal-title" class="text-lg font-semibold text-secondary">Add Log Entry</h3>
+                <h3 id="log-modal-title" class="text-lg font-semibold text-secondary" data-i18n="log.modal_add_title"></h3>
                 <button id="log-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
             </div>
 
@@ -1018,7 +1001,7 @@
                         <input type="date" id="log-date" class="w-full p-2.5 border border-slate-300 rounded-xl" required>
                         <div class="custom-select-container" id="custom-fodmap-select-container">
                             <button type="button" class="custom-select-trigger placeholder" id="custom-fodmap-select-trigger">
-                                <span id="custom-fodmap-select-text">Select FODMAP Group...</span>
+                                <span id="custom-fodmap-select-text" data-i18n="log.label_fodmap_group"></span>
                                 <i class="fas fa-chevron-down trigger-icon"></i>
                             </button>
                             <ul class="custom-select-options" id="custom-fodmap-select-options">
@@ -1027,36 +1010,36 @@
                         </div>
                     </div>
                     
-                    <button type="button" id="plan-challenge-btn" class="w-full bg-ai-reintro font-semibold py-2 px-4 rounded-full hover:bg-ai-reintro-dark transition-colors duration-300 shadow flex items-center justify-center gap-2">
-                       ✨ Plan My Challenge
+                    <button type="button" id="plan-challenge-btn" class="w-full bg-ai-reintro font-semibold py-2 px-4 rounded-full hover:bg-ai-reintro-dark transition-colors duration-300 shadow flex items-center justify-center gap-2" data-i18n="log.plan_challenge">
                     </button>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="relative">
-                            <input type="text" id="log-food" placeholder="Food Name" class="w-full p-2.5 border border-slate-300 rounded-xl" autocomplete="off">
-                            <button type="button" id="log-food-confirm-btn" class="log-food-confirm-btn" title="Confirm Food Name">
+                            <input type="text" id="log-food" data-i18n="[placeholder]log.label_food" class="w-full p-2.5 border border-slate-300 rounded-xl" autocomplete="off">
+                            <button type="button" id="log-food-confirm-btn" class="log-food-confirm-btn" data-i18n="[title]log.confirm_food">
                                 <i class="fas fa-check"></i>
                             </button>
                             <ul id="log-food-autocomplete" class="autocomplete-suggestions">
                                 </ul>
                         </div>
-                        <input type="text" id="log-dose" placeholder="Dose" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                        <input type="text" id="log-dose" data-i18n="[placeholder]log.label_dose" class="w-full p-2.5 border border-slate-300 rounded-xl">
                     </div>
                     
                     <div>
-                        <label class="block mb-1.5 text-sm font-medium text-secondary">Symptoms</label>
+                        <label class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="log.label_symptoms"></label>
                         <div id="symptom-tags-container" class="flex flex-wrap gap-2">
                             </div>
                     </div>
 
                     <div>
                         <label id="custom-symptom-trigger" class="block mb-1.5 text-sm font-medium text-secondary cursor-pointer hover:text-primary">
-                            Add Custom Symptom <i class="fas fa-plus-circle text-xs ml-1 opacity-70"></i>
+                            <span data-i18n="log.add_custom_symptom"></span>
+                            <i class="fas fa-plus-circle text-xs ml-1 opacity-70"></i>
                         </label>
                         <div id="custom-symptom-body" class="hidden space-y-2">
                             <div class="flex gap-2">
-                                <input type="text" id="custom-symptom-input" placeholder="e.g., Nausea" class="w-full p-2.5 border border-slate-300 rounded-xl">
-                                <button type="button" id="add-custom-symptom-btn" class="bg-adaptive font-semibold py-2 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow">Add</button>
+                                <input type="text" id="custom-symptom-input" data-i18n="[placeholder]log.custom_symptom_placeholder" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                                <button type="button" id="add-custom-symptom-btn" class="bg-adaptive font-semibold py-2 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow" data-i18n="modals.btn_add"></button>
                             </div>
                         </div>
                         <div id="custom-symptom-tags-container" class="flex flex-wrap mt-2">
@@ -1064,18 +1047,18 @@
                     </div> 
 
                     <div id="severity-section" class="hidden pt-1">
-                        <label class="block mb-1 text-sm font-medium text-secondary">Severity</label>
+                        <label class="block mb-1 text-sm font-medium text-secondary" data-i18n="log.label_severity"></label>
                         <div id="log-severity" class="severity-btn-group">
                             </div>
                         <input type="hidden" id="log-severity-value" value="1">
                     </div>
 
-                    <textarea id="log-notes" rows="2" placeholder="Additional Notes (optional)" class="w-full p-2.5 border border-slate-300 rounded-xl"></textarea>
+                    <textarea id="log-notes" rows="2" data-i18n="[placeholder]log.label_notes" class="w-full p-2.5 border border-slate-300 rounded-xl"></textarea>
                 </div>
 
                 <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl">
-                    <button type="button" id="log-form-cancel-edit" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button>
-                    <button type="submit" id="log-form-submit-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Add Entry</button>
+                    <button type="button" id="log-form-cancel-edit" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm"><span data-i18n="modals.btn_cancel"></span></button>
+                    <button type="submit" id="log-form-submit-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm"><span data-i18n="modals.btn_save"></span></button>
                 </div>
             </form>
         </div>
@@ -1089,96 +1072,93 @@
             <div class="flex-1 overflow-y-auto px-6 pb-6">
                 <div id="onboarding-slide-welcome" class="onboarding-slide flex flex-col justify-between h-full">
                     <div class="text-center space-y-6">
-                        <img src="images/fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" class="h-10 mx-auto">
+                        <img src="images/fmlm_logo_h.png" alt="FODMAP LOGMAP Logo" class="h-10 mx-auto" data-i18n="[alt]app_name">
                         
-                        <img src="images/onboarding1.png" alt="Welcome to FODMAP LOGMAP" class="w-full max-w-xs mx-auto rounded-2xl">
+                        <img src="images/onboarding1.png" alt="Welcome to FODMAP LOGMAP" class="w-full max-w-xs mx-auto rounded-2xl" data-i18n="[alt]onboarding.welcome_image">
                     </div>
                     
                     <div class="space-y-3">
-                        <button id="onboarding-action-setup" class="w-full bg-adaptive font-semibold py-3 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow text-base">
-                            Start Setup
+                        <button id="onboarding-action-setup" class="w-full bg-adaptive font-semibold py-3 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow text-base" data-i18n="onboarding.start_setup">
                         </button>
-                        <button id="onboarding-action-know-more" class="w-full bg-slate-200 text-secondary font-semibold py-3 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">
-                            What does this app do?
+                        <button id="onboarding-action-know-more" class="w-full bg-slate-200 text-secondary font-semibold py-3 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm" data-i18n="onboarding.know_more">
                         </button>
                     </div>
                 </div>
                 
                 <div id="onboarding-slide-know-more" class="onboarding-slide hidden space-y-4">
-                    <h2 class="text-2xl font-semibold text-secondary text-center mb-6">Your All-in-One Companion</h2>
-                    <p class="text-secondary text-base pb-2">This app is designed to help you at every stage of your journey with three key tools:</p>
+                    <h2 class="text-2xl font-semibold text-secondary text-center mb-6" data-i18n="onboarding.welcome_title"></h2>
+                    <p class="text-secondary text-base pb-2" data-i18n="onboarding.welcome_desc"></p>
                     <ul class="space-y-5">
                         <li class="flex items-start gap-3">
                             <i class="fas fa-book-medical text-2xl text-primary w-8 text-center"></i>
                             <div>
-                                <h3 class="font-semibold text-secondary">1. A Smart, Adaptive Log</h3>
-                                <p class="text-muted text-sm">Track meals, symptoms, and reintroduction challenges. The app's Home screen and log form adapt to your current phase.</p>
+                                <h3 class="font-semibold text-secondary" data-i18n="onboarding.feature_1_title"></h3>
+                                <p class="text-muted text-sm" data-i18n="onboarding.feature_1_desc"></p>
                             </div>
                         </li>
                         <li class="flex items-start gap-3">
                             <i class="fas fa-brain text-2xl text-primary w-8 text-center"></i>
                             <div>
-                                <h3 class="font-semibold text-secondary">2. A Powerful AI Assistant</h3>
-                                <p class="text-muted text-sm">Instantly check if a food is safe, analyze ingredient lists from a photo, and get personalized advice based on your profile.</p>
+                                <h3 class="font-semibold text-secondary" data-i18n="onboarding.feature_2_title"></h3>
+                                <p class="text-muted text-sm" data-i18n="onboarding.feature_2_desc"></p>
                             </div>
                         </li>
                         <li class="flex items-start gap-3">
                             <i class="fas fa-clipboard-check text-2xl text-primary w-8 text-center"></i>
                             <div>
-                                <h3 class="font-semibold text-secondary">3. A Personalization Hub</h3>
-                                <p class="text-muted text-sm">As you log your triggers and safe foods, the app "auto-scans" your history to build your final, long-term personalized diet.</p>
+                                <h3 class="font-semibold text-secondary" data-i18n="onboarding.feature_3_title"></h3>
+                                <p class="text-muted text-sm" data-i18n="onboarding.feature_3_desc"></p>
                             </div>
                         </li>
                     </ul>
                 </div>
                 
                 <div id="onboarding-slide-profile" class="onboarding-slide hidden space-y-4">
-                    <h2 class="text-2xl font-semibold text-secondary text-center mb-2">Let's Get to Know You</h2>
-                    <p class="text-muted text-sm text-center mb-4">This info helps the AI Assistant give you <strong>safer, more accurate</strong> advice. It's saved only in your browser.</p>
+                    <h2 class="text-2xl font-semibold text-secondary text-center mb-2" data-i18n="onboarding.profile_title"></h2>
+                    <p class="text-muted text-sm text-center mb-4" data-i18n="onboarding.profile_desc"></p>
                     
-                    <p class="text-muted text-xs text-center mb-4">
-                        Your data is private. Read our <a href="https://fodmaplogmap-web.onrender.com/privacy.html" target="_blank" class="text-primary underline">Privacy Policy</a>.
+                    <p class="text-muted text-xs text-center mb-4" data-i18n="onboarding.profile_privacy">
                     </p>
                     <div>
-                        <h3 class="font-semibold text-secondary mb-1.5">Health Conditions</h3>
+                        <h3 class="font-semibold text-secondary mb-1.5" data-i18n="profile.health_conditions"></h3>
                         <div id="onboarding-profile-diagnoses" class="flex flex-wrap gap-2"></div>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-secondary mb-1.5 mt-4">Intolerances & Allergies</h3> 
+                        <h3 class="font-semibold text-secondary mb-1.5 mt-4" data-i18n="profile.intolerances"></h3> 
                         <div id="onboarding-profile-intolerances" class="flex flex-wrap gap-2"></div>
-                        <input type="text" id="onboarding-profile-allergies-other" placeholder="List other allergies (comma separated)" class="mt-2 w-full p-2 border border-slate-300 rounded-xl mt-4"> 
+                        <input type="text" id="onboarding-profile-allergies-other" data-i18n="[placeholder]profile.other_allergies" class="mt-2 w-full p-2 border border-slate-300 rounded-xl mt-4"> 
                     </div>
                     <div>
-                        <h3 class="font-semibold text-secondary mb-1.5 mt-4">Dietary Preferences</h3> 
+                        <h3 class="font-semibold text-secondary mb-1.5 mt-4" data-i18n="profile.dietary_prefs"></h3> 
                         <div id="onboarding-profile-preferences" class="flex flex-wrap gap-2"></div>
                     </div>
                 </div>
 
                 <div id="onboarding-slide-phase-select" class="onboarding-slide hidden space-y-4">
-                    <h2 class="text-2xl font-semibold text-secondary text-center mb-2">Where are you in your journey?</h2>
-                    <p class="text-muted text-sm text-center mb-4">Select your current phase to set up your Home screen. You can change this any time from the side menu.</p>
+                    <h2 class="text-2xl font-semibold text-secondary text-center mb-2" data-i18n="onboarding.phase_title"></h2>
+                    <p class="text-muted text-sm text-center mb-4" data-i18n="onboarding.phase_desc"></p>
 
                     <div id="onboarding-phase-btn-container" class="space-y-3">
                         <input type="hidden" id="onboarding-phase-select-value" value="">
 
                         <button type="button" class="onboarding-phase-btn" data-phase="pre-treatment">
-                            <h4 class="text-base font-semibold text-secondary">Pre-Treatment</h4>
-                            <p class="text-sm text-muted">Get your system ready for the diet.</p>
+                            <h4 class="text-base font-semibold text-secondary" data-i18n="phases.pre_treatment.name"></h4>
+                            <p class="text-sm text-muted" data-i18n="phases.pre_treatment.desc"></p>
                         </button>
                         
                         <button type="button" class="onboarding-phase-btn" data-phase="restriction">
-                            <h4 class="text-base font-semibold text-secondary">Restriction</h4>
-                            <p class="text-sm text-muted">A strict, temporary low-FODMAP diet.</p>
+                            <h4 class="text-base font-semibold text-secondary" data-i18n="phases.restriction.name"></h4>
+                            <p class="text-sm text-muted" data-i18n="phases.restriction.desc"></p>
                         </button>
 
                         <button type="button" class="onboarding-phase-btn" data-phase="reintroduction">
-                            <h4 class="text-base font-semibold text-secondary">Reintroduction</h4>
-                            <p class="text-sm text-muted">Test FODMAP groups one by one to find triggers.</p>
+                            <h4 class="text-base font-semibold text-secondary" data-i18n="phases.reintroduction.name"></h4>
+                            <p class="text-sm text-muted" data-i18n="phases.reintroduction.desc"></p>
                         </button>
 
                         <button type="button" class="onboarding-phase-btn" data-phase="personalization">
-                            <h4 class="text-base font-semibold text-secondary">Personalization</h4>
-                            <p class="text-sm text-muted">Build your final, long-term diet.</p>
+                            <h4 class="text-base font-semibold text-secondary" data-i18n="phases.personalization.name"></h4>
+                            <p class="text-sm text-muted" data-i18n="phases.personalization.desc"></p>
                         </button>
                     </div>
                 </div>
@@ -1187,77 +1167,76 @@
                     
 
                     <div id="onboarding-setup-pre-treatment" class="onboarding-phase-content hidden space-y-3">
-                        <h3 class="font-semibold text-secondary">Pre-Treatment Setup</h3>
-                        <p class="text-sm text-muted">Let's set up your countdown and pre-treatment diet rules.</p>
+                        <h3 class="font-semibold text-secondary" data-i18n="onboarding.setup_pretreat_title"></h3>
+                        <p class="text-sm text-muted" data-i18n="onboarding.setup_pretreat_desc"></p>
                         <div>
-                            <label for="onboarding-pretreatment-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Phase Start Date</label>
+                            <label for="onboarding-pretreatment-start-date" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="profile.start_date"></label>
                             <input type="date" id="onboarding-pretreatment-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
                         </div>
                         <div>
-                            <label class="block mb-1.5 text-sm font-medium text-secondary">Phase Duration</label>
+                            <label class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="profile.duration"></label>
                             <div class="flex gap-2">
                                 <input type="number" id="onboarding-pretreatment-duration-num" value="4" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
                                 <select id="onboarding-pretreatment-duration-unit" class="w-1/2 p-2.5 border border-slate-300 rounded-xl bg-white">
-                                    <option value="days">Days</option>
-                                    <option value="weeks" selected>Weeks</option>
-                                    <option value="months">Months</option>
+                                    <option value="days" data-i18n="units.days">Days</option>
+                                    <option value="weeks" selected data-i18n="units.weeks">Weeks</option>
+                                    <option value="months" data-i18n="units.months">Months</option>
                                 </select>
                             </div>
                         </div>
                         <div>
-                            <label for="onboarding-pretreatment-rules" class="block mb-1.5 text-sm font-medium text-secondary">Diet Rules (one per line)</label>
-                            <textarea id="onboarding-pretreatment-rules" rows="6" class="w-full p-2.5 border border-slate-300 rounded-xl" placeholder="e.g., Avoid: Lactose"></textarea>
+                            <label for="onboarding-pretreatment-rules" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="profile.rules_label"></label>
+                            <textarea id="onboarding-pretreatment-rules" rows="6" class="w-full p-2.5 border border-slate-300 rounded-xl" data-i18n="[placeholder]profile.rules_placeholder"></textarea>
                         </div>
                     </div>
 
                     <div id="onboarding-setup-restriction" class="onboarding-phase-content hidden space-y-3">
-                        <h3 class="font-semibold text-secondary">Restriction Setup</h3>
-                        <p class="text-sm text-muted">Let's set up your countdown and (optional) medication tracker.</p>
+                        <h3 class="font-semibold text-secondary" data-i18n="onboarding.setup_restrict_title"></h3>
+                        <p class="text-sm text-muted" data-i18n="onboarding.setup_restrict_desc"></p>
                         <div>
-                            <label for="onboarding-restriction-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Phase Start Date</label>
+                            <label for="onboarding-restriction-start-date" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="profile.start_date"></label>
                             <input type="date" id="onboarding-restriction-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
                         </div>
                         <div>
-                            <label class="block mb-1.5 text-sm font-medium text-secondary">Phase Duration</label>
+                            <label class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="profile.duration"></label>
                             <div class="flex gap-2">
                                 <input type="number" id="onboarding-restriction-duration-num" value="4" class="w-1/2 p-2.5 border border-slate-300 rounded-xl">
                                 <select id="onboarding-restriction-duration-unit" class="w-1/2 p-2.5 border border-slate-300 rounded-xl bg-white">
-                                    <option value="days">Days</option>
-                                    <option value="weeks" selected>Weeks</option>
-                                    <option value="months">Months</option>
+                                    <option value="days" data-i18n="units.days">Days</option>
+                                    <option value="weeks" selected data-i18n="units.weeks">Weeks</option>
+                                    <option value="months" data-i18n="units.months">Months</option>
                                 </select>
                             </div>
                         </div>
                         <hr class="my-2">
-                        <h4 class="font-semibold text-secondary">Optional: Medication Tracker</h4>
+                        <h4 class="font-semibold text-secondary" data-i18n="onboarding.med_tracker_opt"></h4>
                         <div>
-                            <label for="onboarding-medication-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Medication Start Date</label>
+                            <label for="onboarding-medication-start-date" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="onboarding.med_start_date"></label>
                             <input type="date" id="onboarding-medication-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
                         </div>
                         <div>
-                            <label for="onboarding-medication-duration" class="block mb-1.5 text-sm font-medium text-secondary">Duration (in days)</label>
-                            <input type="number" id="onboarding-medication-duration" placeholder="e.g., 12" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                            <label for="onboarding-medication-duration" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="onboarding.med_duration"></label>
+                            <input type="number" id="onboarding-medication-duration" data-i18n="[placeholder]onboarding.med_duration" class="w-full p-2.5 border border-slate-300 rounded-xl">
                         </div>
                         <div id="onboarding-medication-settings-list" class="space-y-2">
-                             <p class="text-xs text-subtle text-center">No medications added.</p>
+                             <p class="text-xs text-subtle text-center" data-i18n="medication.no_medications"></p>
                         </div>
-                        <button type="button" id="onboarding-medication-add-btn" class="w-full mt-1 p-2 text-sm font-semibold text-primary border-2 border-dashed border-slate-300 rounded-lg hover:bg-slate-50">
-                            <i class="fas fa-plus mr-1"></i> Add Medication
+                        <button type="button" id="onboarding-medication-add-btn" class="w-full mt-1 p-2 text-sm font-semibold text-primary border-2 border-dashed border-slate-300 rounded-lg hover:bg-slate-50" data-i18n="onboarding.add_medication">
                         </button>
                     </div>
 
                     <div id="onboarding-setup-reintroduction" class="onboarding-phase-content hidden onboarding-slide-spaced">
                         
-                        <img src="images/onboarding2.png" alt="Ready for Reintroduction" class="w-full max-w-xs rounded-2xl">
+                        <img src="images/onboarding2.png" alt="Ready for Reintroduction" class="w-full max-w-xs rounded-2xl" data-i18n="[alt]onboarding.reintro_image">
 
-                        <p class="text-muted">No extra setup needed! Your goal is to log your challenges. When adding an entry, use the <strong>✨ Plan My Challenge</strong> button to get AI-powered ideas for your test foods.</p>
+                        <p class="text-muted" data-i18n="onboarding.no_extra_setup"></p>
                     </div>
                     
                     <div id="onboarding-setup-personalization" class="onboarding-phase-content hidden onboarding-slide-spaced">
                         
-                        <img src="images/onboarding3.png" alt="Welcome to Your Final Diet" class="w-full max-w-xs rounded-2xl">
+                        <img src="images/onboarding3.png" alt="Welcome to Your Final Diet" class="w-full max-w-xs rounded-2xl" data-i18n="[alt]onboarding.personalization_image">
 
-                        <p class="text-muted">You're all set! A great place to start is the <strong>✨ Auto-Scan Log</strong> button on your Home screen. It will read your log history to help build your personal safe food list.</p>
+                        <p class="text-muted" data-i18n="onboarding.all_set"></p>
                     </div>
                 </div>
             </div>
@@ -1265,16 +1244,16 @@
             <div id="onboarding-footer" class="p-4 bg-slate-50 border-t border-slate-200 rounded-b-2xl">
                 <div class="flex justify-between items-center">
                     <div>
-                        <button id="onboarding-btn-skip" class="text-slate-500 font-semibold py-2 px-3 rounded-full hover:bg-slate-200 transition-colors text-sm">Skip</button>
+                        <button id="onboarding-btn-skip" class="text-slate-500 font-semibold py-2 px-3 rounded-full hover:bg-slate-200 transition-colors text-sm"><span data-i18n="modals.btn_skip"></span></button>
                     </div>
                     
                     <div id="onboarding-dots" class="flex gap-1.5">
                         </div>
                     
                     <div class="flex gap-2">
-                        <button id="onboarding-btn-back" class="hidden bg-slate-200 text-secondary font-semibold py-2 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Back</button>
-                        <button id="onboarding-btn-next" class="hidden bg-adaptive font-semibold py-2 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Next</button>
-                        <button id="onboarding-btn-finish" class="hidden bg-adaptive font-semibold py-2 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Finish</button>
+                        <button id="onboarding-btn-back" class="hidden bg-slate-200 text-secondary font-semibold py-2 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm"><span data-i18n="modals.btn_back"></span></button>
+                        <button id="onboarding-btn-next" class="hidden bg-adaptive font-semibold py-2 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm"><span data-i18n="modals.btn_next"></span></button>
+                        <button id="onboarding-btn-finish" class="hidden bg-adaptive font-semibold py-2 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm"><span data-i18n="modals.btn_finish"></span></button>
                     </div>
                 </div>
             </div>
@@ -1283,38 +1262,37 @@
         <div id="medication-settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[80] hidden">
             <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
                 <div class="p-4 border-b border-slate-200 flex justify-between items-center">
-                    <h3 id="medication-modal-title" class="text-lg font-semibold text-secondary">Medication Settings</h3>
+                    <h3 id="medication-modal-title" class="text-lg font-semibold text-secondary" data-i18n="medication.settings_title"></h3>
                     <button id="medication-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
                 </div>
 
                 <form id="medication-modal-form">
                     <div class="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
                         <div>
-                            <label for="medication-start-date" class="block mb-1.5 text-sm font-medium text-secondary">Start Date</label>
+                            <label for="medication-start-date" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="medication.start_date"></label>
                             <input type="date" id="medication-start-date" class="w-full p-2.5 border border-slate-300 rounded-xl">
                         </div>
                         <div>
-                            <label for="medication-duration" class="block mb-1.5 text-sm font-medium text-secondary">Duration (in days)</label>
-                            <input type="number" id="medication-duration" placeholder="e.g., 12" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                            <label for="medication-duration" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="medication.duration"></label>
+                            <input type="number" id="medication-duration" data-i18n="[placeholder]medication.duration" class="w-full p-2.5 border border-slate-300 rounded-xl">
                         </div>
 
                         <hr>
 
                         <div>
-                            <h4 class="text-sm font-medium text-secondary mb-2">Medication Schedule</h4>
+                            <h4 class="text-sm font-medium text-secondary mb-2" data-i18n="medication.schedule_title"></h4>
                             <div id="medication-settings-list" class="space-y-2">
-                                <p class="text-xs text-subtle text-center">No medications added.</p>
+                                <p class="text-xs text-subtle text-center" data-i18n="medication.no_medications"></p>
                             </div>
-                            <button type="button" id="medication-add-btn" class="w-full mt-2 p-2 text-sm font-semibold text-primary border-2 border-dashed border-slate-300 rounded-lg hover:bg-slate-50">
-                                <i class="fas fa-plus mr-1"></i> Add Medication
+                            <button type="button" id="medication-add-btn" class="w-full mt-2 p-2 text-sm font-semibold text-primary border-2 border-dashed border-slate-300 rounded-lg hover:bg-slate-50" data-i18n="medication.add_medication">
                             </button>
                         </div>
 
                     </div>
 
                     <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl">
-                        <button type="button" id="medication-modal-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button>
-                        <button type="submit" id="medication-modal-save-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Save Settings</button>
+                        <button type="button" id="medication-modal-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm"><span data-i18n="modals.btn_cancel"></span></button>
+                        <button type="submit" id="medication-modal-save-btn" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm"><span data-i18n="modals.btn_save"></span></button>
                     </div>
                 </form>
             </div>
@@ -1322,20 +1300,18 @@
         <div id="premium-success-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[100] hidden">
             <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden text-center transform transition-all scale-100">
                 <div class="p-6 space-y-4">
-                    <h2 class="text-2xl font-bold text-slate-800">Premium Unlocked! 🎉</h2>
-                    <p class="text-secondary text-sm">
-                        Thank you for your support! Your account has been successfully upgraded.
+                    <h2 class="text-2xl font-bold text-slate-800" data-i18n="premium.success_title"></h2>
+                    <p class="text-secondary text-sm" data-i18n="premium.success_msg">
                     </p>
                     <div class="bg-slate-50 rounded-xl p-3 text-left border border-slate-100">
-                        <h4 class="text-xs font-bold text-[#2d61a0] uppercase tracking-wider mb-2">Lifetime Access to:</h4>
+                        <h4 class="text-xs font-bold text-[#2d61a0] uppercase tracking-wider mb-2" data-i18n="premium.access_list_title"></h4>
                         <ul class="text-sm text-secondary space-y-2">
-                            <li class="flex items-center"><i class="fas fa-check-circle text-[#8bb744] mr-2"></i> Unlimited AI Food Analysis</li>
-                            <li class="flex items-center"><i class="fas fa-check-circle text-[#8bb744] mr-2"></i> Unlimited Cloud Sync</li>
-                            <li class="flex items-center"><i class="fas fa-check-circle text-[#8bb744] mr-2"></i> Future Pro Features</li>
+                            <li class="flex items-center"><i class="fas fa-check-circle text-[#8bb744] mr-2"></i><span data-i18n="premium.access_item_1"></span></li>
+                            <li class="flex items-center"><i class="fas fa-check-circle text-[#8bb744] mr-2"></i><span data-i18n="premium.access_item_2"></span></li>
+                            <li class="flex items-center"><i class="fas fa-check-circle text-[#8bb744] mr-2"></i><span data-i18n="premium.access_item_3"></span></li>
                         </ul>
                     </div>
-                    <button id="premium-success-close" class="w-full bg-gradient-to-r from-[#8bb744] to-[#2d61a0] text-white font-bold py-3 px-4 rounded-full shadow-lg hover:opacity-90 transition-all transform hover:scale-105">
-                        Let's Go!
+                    <button id="premium-success-close" class="w-full bg-gradient-to-r from-[#8bb744] to-[#2d61a0] text-white font-bold py-3 px-4 rounded-full shadow-lg hover:opacity-90 transition-all transform hover:scale-105" data-i18n="premium.lets_go">
                     </button>
                 </div>
             </div>
@@ -1347,8 +1323,8 @@
                     <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-sm shadow-inner">
                         <i class="fas fa-crown text-3xl text-white"></i>
                     </div>
-                    <h2 class="text-2xl font-bold">Go Premium</h2>
-                    <p class="text-white/90 text-sm font-medium">Unlock the full power of AI</p>
+                    <h2 class="text-2xl font-bold" data-i18n="premium.modal_title"></h2>
+                    <p class="text-white/90 text-sm font-medium" data-i18n="premium.modal_subtitle"></p>
                 </div>
 
                 <div class="p-6 space-y-4">
@@ -1358,8 +1334,8 @@
                                 <i class="fas fa-check text-[#8bb744] text-xs"></i>
                             </div>
                             <div class="ml-3">
-                                <h4 class="text-sm font-bold text-slate-800">Unlimited AI Analysis</h4>
-                                <p class="text-xs text-slate-500">Scan unlimited foods and ingredients instantly.</p>
+                                <h4 class="text-sm font-bold text-slate-800" data-i18n="premium.feature_1_title"></h4>
+                                <p class="text-xs text-slate-500" data-i18n="premium.feature_1_desc"></p>
                             </div>
                         </div>
                         
@@ -1368,8 +1344,8 @@
                                 <i class="fas fa-cloud text-[#8bb744] text-xs"></i>
                             </div>
                             <div class="ml-3">
-                                <h4 class="text-sm font-bold text-slate-800">Cloud Sync & Backup</h4>
-                                <p class="text-xs text-slate-500">Securely sync your logs across all your devices.</p>
+                                <h4 class="text-sm font-bold text-slate-800" data-i18n="premium.feature_2_title"></h4>
+                                <p class="text-xs text-slate-500" data-i18n="premium.feature_2_desc"></p>
                             </div>
                         </div>
 
@@ -1378,8 +1354,8 @@
                                 <i class="fas fa-magic text-[#8bb744] text-xs"></i>
                             </div>
                             <div class="ml-3">
-                                <h4 class="text-sm font-bold text-slate-800">Advanced AI Insights</h4>
-                                <p class="text-xs text-slate-500">Generate meal plans and summarize logs.</p>
+                                <h4 class="text-sm font-bold text-slate-800" data-i18n="premium.feature_3_title"></h4>
+                                <p class="text-xs text-slate-500" data-i18n="premium.feature_3_desc"></p>
                             </div>
                         </div>
                         
@@ -1388,8 +1364,8 @@
                                 <i class="fas fa-heart text-[#8bb744] text-xs"></i>
                             </div>
                             <div class="ml-3">
-                                <h4 class="text-sm font-bold text-slate-800">Support Development</h4>
-                                <p class="text-xs text-slate-500">Help keep the app ad-free and growing.</p>
+                                <h4 class="text-sm font-bold text-slate-800" data-i18n="premium.feature_4_title"></h4>
+                                <p class="text-xs text-slate-500" data-i18n="premium.feature_4_desc"></p>
                             </div>
                         </div>
                     </div>
@@ -1397,19 +1373,17 @@
                     <div class="text-center pt-2 border-t border-slate-100 mt-2">
                         
                         <div class="mb-3">
-                            <span class="inline-block bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full mb-1">LAUNCH SALE</span>
+                            <span class="inline-block bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full mb-1" data-i18n="premium.sale_badge"></span>
                             <div class="flex items-center justify-center gap-2">
                                 <span class="text-slate-400 line-through text-sm">$14.99</span>
                                 <span class="text-3xl font-bold text-slate-800">$7<sup class="text-lg">.99</sup></span>
                             </div>
-                            <p class="text-xs text-slate-400 mb-3 font-medium uppercase tracking-wide">One-time payment • No subscriptions</p>
+                            <p class="text-xs text-slate-400 mb-3 font-medium uppercase tracking-wide" data-i18n="premium.one_time_payment"></p>
                         </div>
 
-                        <button id="premium-info-cta" class="w-full bg-gradient-to-r from-[#8bb744] to-[#2d61a0] text-white font-bold py-3 px-4 rounded-full shadow-lg hover:shadow-xl hover:opacity-95 transition-all transform hover:scale-[1.02]">
-                            Get Lifetime Access
+                        <button id="premium-info-cta" class="w-full bg-gradient-to-r from-[#8bb744] to-[#2d61a0] text-white font-bold py-3 px-4 rounded-full shadow-lg hover:shadow-xl hover:opacity-95 transition-all transform hover:scale-[1.02]" data-i18n="premium.cta_btn">
                         </button>
-                        <button id="premium-info-cancel" class="mt-3 text-slate-400 text-sm font-medium hover:text-slate-600">
-                            Maybe Later
+                        <button id="premium-info-cancel" class="mt-3 text-slate-400 text-sm font-medium hover:text-slate-600" data-i18n="premium.maybe_later">
                         </button>
                     </div>
                 </div>
