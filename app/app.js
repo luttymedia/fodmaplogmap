@@ -90,6 +90,12 @@ function showToast(message = "Saved!", status = 'success') {
 
 document.addEventListener('DOMContentLoaded', () => {
 
+    // --- NEW: Premium Info Modal Elements (Moved to top) ---
+    const premiumInfoModal = document.getElementById('premium-info-modal');
+    const premiumInfoClose = document.getElementById('premium-info-close');
+    const premiumInfoCta = document.getElementById('premium-info-cta');
+    const premiumInfoCancel = document.getElementById('premium-info-cancel');
+
     let deferredPrompt; // This will store the event for later use
     let unsubscribeFromFirestore = null; // Holds our real-time listener
     const installAppLi = document.getElementById('install-app-li');
@@ -2391,14 +2397,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Attach listeners to "Go Premium" buttons
     if (menuPremiumLi) {
-        // We attach to the button inside the LI
         const btn = menuPremiumLi.querySelector('button');
-        if (btn) btn.addEventListener('click', initiateCheckout);
+        if (btn) {
+            // Remove old listeners just in case
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            
+            newBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openPremiumInfoModal();
+            });
+        }
     }
 
     const aiPremiumBtn = document.getElementById('ai-premium-btn');
     if (aiPremiumBtn) {
-        aiPremiumBtn.addEventListener('click', initiateCheckout);
+        // Clone to clear old listeners
+        const newAiBtn = aiPremiumBtn.cloneNode(true);
+        aiPremiumBtn.parentNode.replaceChild(newAiBtn, aiPremiumBtn);
+
+        newAiBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openPremiumInfoModal();
+        });
     }
 
     // --- Data Management Listeners ---
@@ -3929,6 +3952,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
+    }
+
+    function openPremiumInfoModal() {
+        if (premiumInfoModal) premiumInfoModal.classList.remove('hidden');
+    }
+
+    function closePremiumInfoModal() {
+        if (premiumInfoModal) premiumInfoModal.classList.add('hidden');
+    }
+
+    // Attach listeners to the new modal buttons
+    if (premiumInfoClose) premiumInfoClose.addEventListener('click', closePremiumInfoModal);
+    if (premiumInfoCancel) premiumInfoCancel.addEventListener('click', closePremiumInfoModal);
+    
+    if (premiumInfoCta) {
+        premiumInfoCta.addEventListener('click', () => {
+            // Close the info modal
+            closePremiumInfoModal();
+            // Trigger the actual checkout flow
+            initiateCheckout();
+        });
     }
 
     // --- NEW: Action Modal Elements ---

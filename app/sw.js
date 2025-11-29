@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fodmap-logmap-v0.12.5'; // Bumped version
+const CACHE_NAME = 'fodmap-logmap-v0.12.8'; // Bumped version
 const CACHE_WHITELIST = [CACHE_NAME];
 
 // 1. CRITICAL FILES (Strict - App Shell)
@@ -80,12 +80,15 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // 1. Ignore chrome-extension, about:, data: requests
+  if (!event.request.url.startsWith('http')) return;
+
   const url = new URL(event.request.url);
 
-  // Ignore Firestore logs/Auth
+  // 2. Ignore Firestore/Auth/Google APIs (allow fonts)
   if (url.hostname.includes('googleapis.com') && !url.hostname.includes('fonts')) return;
 
-  // 1. Navigation (HTML)
+  // 3. Navigation (HTML)
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -95,29 +98,34 @@ self.addEventListener('fetch', (event) => {
             return res;
           });
         })
-        .catch(() => caches.match('./index.html')) // Use relative path to match cache key
+        .catch(() => caches.match('./index.html'))
     );
     return;
   }
 
-  // 2. Assets
+  // 4. Assets
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true }).then(cachedRes => {
-      // Return cached version if available
       if (cachedRes) return cachedRes;
 
-      // For non-cached requests, try network but don't fail for images
       return fetch(event.request).then(networkRes => {
-        // Cache successful requests for future use
+        // Cache successful requests
         if (networkRes.ok) {
           const responseClone = networkRes.clone();
           caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseClone);
+             // STRICT SAFETY CHECK: Only cache http/https
+             if (event.request.url.startsWith('http')) {
+                 try {
+                    cache.put(event.request, responseClone);
+                 } catch (err) {
+                    console.warn('SW: Could not cache', event.request.url, err);
+                 }
+             }
           });
         }
         return networkRes;
       }).catch(() => {
-        // For image requests, provide a generic offline response instead of 404
+        // Offline Fallback for Images
         if (event.request.destination === 'image') {
           return new Response(
             '<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#f3f4f6"/><text x="50%" y="50%" font-family="Arial" font-size="12" text-anchor="middle" dy=".3em" fill="#9ca3af">Offline</text></svg>',
