@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fodmap-logmap-v0.13.0'; // Bumped version
+const CACHE_NAME = 'fodmap-logmap-v0.13.2'; // Bumped version
 const CACHE_WHITELIST = [CACHE_NAME];
 
 // 1. CRITICAL FILES (Strict - App Shell)

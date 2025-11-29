@@ -1,6 +1,4 @@
 {
-  "app_name": "FODMAP LOGMAP",
-  "app_version": "v0.13.0 (Beta)",
   "units": {
     "days": "Days",
     "weeks": "Weeks",
@@ -307,8 +305,18 @@
     "label_dose_logic": "Dose Logic (Optional)",
     "btn_tolerated": "✅ Tolerated",
     "btn_trigger": "⚠️ Trigger",
+    "status_tolerated": "Tolerated",
+    "status_trigger": "Trigger",
     "logic_upto": "+ Tolerated up to...",
     "logic_starting": "+  Trigger starting at...",
+    "logic_upto_view": "Up to",
+    "logic_starting_view": "Starting at",
+    "view_label_food": "Food",
+    "view_label_group": "Group",
+    "view_label_status": "Status",
+    "view_label_dose": "Dose",
+    "view_label_notes": "Notes",
+    "default_group_option": "Assign a group (Optional)",
     "actions": {
       "autoscan_title": "Auto-Scan Log",
       "autoscan_msg": "How do you want to scan? \"Merge\" adds new foods and updates existing ones from your log. \"Erase\" deletes your list and starts over with only what's in your log.",
@@ -487,7 +495,8 @@
     "duration": "Duration (in days)",
     "schedule_title": "Medication Schedule",
     "no_medications": "No medications added.",
-    "add_medication": "Add Medication"
+    "add_medication": "Add Medication",
+    "medication_name_placeholder": "Medication Name"
   },
   "food": {
     "toast_deleted": "Food deleted.",
@@ -504,8 +513,10 @@
     "ellipsis": "...",
     "thinking": "Thinking, hold tight"
   },
-  "checkout": {
-    "preparing": "Preparing secure checkout..."
+ "checkout": {
+    "preparing": "Preparing secure checkout...",
+    "guest_title": "Create Account Required",
+    "guest_msg": "To upgrade to a Lifetime Premium account securely, please create a free account or log in first."
   },
   "network": {
     "connection_failed": "Connection failed. Please try again."

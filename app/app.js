@@ -2501,11 +2501,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!auth.currentUser) {
             // If guest, prompt to sign up first to attach the purchase
             showActionModal({
-                title: 'Create Account Required',
-                message: "To upgrade to a Lifetime Premium account securely, please create a free account or log in first.",
-                confirmText: 'Log In / Sign Up',
+                title: i18next.t('checkout.guest_title'),
+                message: i18next.t('checkout.guest_msg'),
+                confirmText: i18next.t('menu.login_signup'),
                 onConfirm: () => openAuthModal('signin'),
-                cancelText: 'Cancel'
+                cancelText: i18next.t('modals.btn_cancel')
             });
             return;
         }
@@ -4069,9 +4069,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (shouldShow) {
             showActionModal({
-                title: 'Enjoying the App?',
-                message: "If you've found this app helpful, please take a moment to rate it. Your feedback is what keeps it growing!",
-                confirmText: 'Rate Now',
+                title: i18next.t('modals.actions.rate_title'),
+                message: i18next.t('modals.actions.rate_msg'),
+                confirmText: i18next.t('modals.actions.rate_confirm'),
                 onConfirm: () => {
                     // Later, this will open the Play Store link
                     appState.userProfile.ratePopupStatus = 'rated';
@@ -4079,13 +4079,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     saveToCloud('userProfile', appState.userProfile);
                     // window.open('YOUR_PLAY_STORE_LINK_HERE', '_blank');
                 },
-                altText: 'No, Thanks',
+                altText: i18next.t('modals.actions.rate_alt'),
                 onAltConfirm: () => {
                     appState.userProfile.ratePopupStatus = 'declined';
                     localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
                     saveToCloud('userProfile', appState.userProfile);
                 },
-                cancelText: 'Remind Me Later',
+                cancelText: i18next.t('modals.actions.rate_cancel'),
                 onCancel: () => {
                     appState.userProfile.ratePopupStatus = 'remind_later';
                     localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
@@ -4421,7 +4421,7 @@ document.addEventListener('DOMContentLoaded', () => {
         appState.currentMedicationIdCounter = 0; // Reset counter
 
         if (medications.length === 0) {
-            medModalSettingsList.innerHTML = `<p class="text-xs text-subtle text-center">No medications added.</p>`;
+            medModalSettingsList.innerHTML = `<p class="text-xs text-subtle text-center">i18next.t('medication.no_medications')</p>`;
             return;
         }
 
@@ -4805,7 +4805,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 4. Render Log History (simple version)
         const logKeys = Object.keys(tracker.log).sort().reverse(); // Newest first
         if (logKeys.length === 0) {
-            medicationLogHistory.innerHTML = `<p class="text-center italic">No history yet.</p>`;
+            medicationLogHistory.innerHTML = `<p class="text-center italic">i18next.t('home.no_history')</p>`;
         } else {
             medicationLogHistory.innerHTML = logKeys.slice(0, 10).map(dateKey => { // Show last 10 days
                 const takenCount = tracker.log[dateKey].length;
@@ -4845,7 +4845,7 @@ document.addEventListener('DOMContentLoaded', () => {
             item.dataset.id = newId;
             item.innerHTML = `
                 <input type="time" class="med-input-time time-input" value="09:00">
-                <input type="text" class="med-input-name name-input" placeholder="Medication Name">
+                <input type="text" class="med-input-name name-input" placeholder="${i18next.t('medication.medication_name_placeholder')}">
                 <button type="button" class="medication-remove-btn">&times;</button>
             `;
 
@@ -4925,8 +4925,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 1. Populate the Group Selector (we only need to do this once)
         if (foodModalGroup.options.length === 0) {
-            // --- NEW: Add a blank "No Group" option ---
-            const defaultOption = new Option("Assign a group (Optional)", "");
+            // FIX: Translate the label immediately
+            const defaultOption = new Option(i18next.t('modals.default_group_option'), "");
             foodModalGroup.add(defaultOption);
             
             FODMAP_GROUP_DATA.forEach(group => {
@@ -5007,7 +5007,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- 1. Food Name ---
             let foodHTML = `
                 <div class="food-modal-view-item">
-                    <span class="label"><b>Food:</b></span>
+                    <span class="label"><b>${i18next.t('modals.view_label_food')}:</b></span>
                     <span class="value">${foodData.name}</span>
                 </div>`;
 
@@ -5018,32 +5018,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 const style = FODMAP_STYLES[foodData.group] || { icon: '❓' };
                 groupHTML = `
                 <div class="food-modal-view-item">
-                    <span class="label"><b>Group:</b></span>
+                    <span class="label"><b>${i18next.t('modals.view_label_group')}:</b></span>
                     <span class="value">${style.icon} ${groupInfo.name}</span>
                 </div>`;
             }
             
             // --- 3. Status (Exception: This one IS bold) ---
             let statusHTML = '';
+            // FIX: Use dedicated clean keys so we don't rely on stripping emojis
             if (foodData.status === 'tolerated') {
-                statusHTML = `<strong class="text-accent">Tolerated</strong>`;
+                statusHTML = `<strong class="text-accent">${i18next.t('modals.status_tolerated')}</strong>`;
             } else {
-                statusHTML = `<strong class="text-error">Trigger</strong>`;
+                statusHTML = `<strong class="text-error">${i18next.t('modals.status_trigger')}</strong>`;
             }
             let statusBlockHTML = `
                 <div class="food-modal-view-item">
-                    <span class="label"><b>Status:</b></span>
+                    <span class="label"><b>${i18next.t('modals.view_label_status')}:</b></span>
                     ${statusHTML}
                 </div>`;
             
-            // --- 4. Dose (Optional, Request #3, #4) ---
+            // --- 4. Dose (Optional) ---
             let doseHTML = '';
             if (foodData.doseLogic) {
-                // Use "Up to" / "Starting at" (lowercase)
-                const logicText = foodData.doseLogic === 'up to' ? 'Up to' : 'Starting at';
+                // FIX: Use the short "_view" keys for the read-only modal
+                const logicText = foodData.doseLogic === 'up to' ? i18next.t('modals.logic_upto_view') : i18next.t('modals.logic_starting_view');
+                
                 doseHTML = `
                 <div class="food-modal-view-item">
-                    <span class="label"><b>Dose:</b></span>
+                    <span class="label"><b>${i18next.t('modals.view_label_dose')}:</b></span>
                     <span class="value">${logicText} ${foodData.dose}</span>
                 </div>`;
             }
@@ -5051,15 +5053,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- 5. Notes (Optional) ---
             let notesHTML = '';
             if (foodData.notes) {
-                // Apply the .notes-item class to the parent div
                 notesHTML = `
                 <div class="food-modal-view-item notes-item">
-                    <span class="label"><b>Notes</b></span>
+                    <span class="label"><b>${i18next.t('modals.view_label_notes')}</b></span>
                     <span class="value">${foodData.notes}</span>
                 </div>`;
             }
 
-            // --- 6. Combine all blocks ---
+            // --- 6. Combine all blocks (remains unchanged) ---
             foodModalViewContent.innerHTML = `
                 <div class="space-y-2">
                     ${foodHTML}
@@ -5283,9 +5284,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!foodData) return; // Food not found
 
         showActionModal({
-            title: 'Delete Food',
-            message: `Are you sure you want to delete "${foodData.name}"? This cannot be undone.`,
-            confirmText: 'Delete',
+            title: i18next.t('modals.actions.delete_food_title'),
+            message: i18next.t('modals.actions.delete_food_msg', { name: foodData.name }),
+            confirmText: i18next.t('modals.btn_delete'),
             onConfirm: () => {
                 const foodIdToDelete = currentEditingFoodId;
                 
@@ -5410,13 +5411,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (similarFoods.length > 0) {
             // Found a fuzzy match, ask the user
             showActionModal({
-                title: 'Wait, Similar Food Found',
-                message: `You are adding "${newName}", which is similar to "${similarFoods[0].name}" in your list. Are they different foods?`,
-                confirmText: 'Add as New Food',
+                title: i18next.t('modals.actions.duplicate_title'),
+                message: i18next.t('modals.actions.duplicate_msg', { newName: newName, existingName: similarFoods[0].name }),
+                confirmText: i18next.t('modals.actions.duplicate_confirm'),
                 onConfirm: () => {
                     saveFoodData(); // User confirmed, proceed with save
                 },
-                cancelText: 'Cancel'
+                cancelText: i18next.t('modals.btn_cancel')
                 // onCancel does nothing, just closes the modal
             });
         } else {
@@ -5854,9 +5855,9 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function handleExportData() {
         showActionModal({
-            title: 'Export Data Backup',
-            message: "This will create a backup file containing all your logs and profile settings.\n\nThis file can be used with the 'Import' button to restore your data or move it to a new device. It will be saved to your device's default 'Downloads' folder.",
-            confirmText: 'Export Now',
+            title: i18next.t('modals.actions.export_title'),
+            message: i18next.t('modals.actions.export_msg'),
+            confirmText: i18next.t('modals.actions.export_btn'),
             onConfirm: async () => {
                 try {
                     let backupData = {
@@ -6007,10 +6008,10 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function handleResetApp() {
         showActionModal({
-            title: 'Reset App Data',
-            message: 'Are you sure? This will delete all log entries and profile settings. This action cannot be undone.',
-            altText: 'Delete All', // Use altText for the red button
-            onAltConfirm: () => { // Use onAltConfirm for the logic
+            title: i18next.t('modals.actions.reset_title'),
+            message: i18next.t('modals.actions.reset_msg'),
+            altText: i18next.t('modals.btn_alt'), // Use altText for the red button
+            onAltConfirm: () => { 
                 try {
                     localStorage.removeItem('fodmapLogEntries');
                     localStorage.removeItem('fodmapUserProfile');
