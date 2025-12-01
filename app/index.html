@@ -293,9 +293,14 @@
                     </div>
 
                     <div id="ai-recent-searches-container" class="mt-4 mb-2 hidden">
-                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2" data-i18n="ai.recent_searches_title"></h3>
+                        <div class="flex justify-between items-end mb-2">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wide" data-i18n="ai.recent_searches_title"></h3>
+                            <button id="ai-recent-sort-btn" class="text-xs text-primary hover:text-primary-dark transition-colors" title="Toggle Sort">
+                                <i class="fas fa-clock mr-1"></i> <span class="sort-label" data-i18n="log.sort_newest"></span>
+                            </button>
+                        </div>
                         <div id="ai-recent-searches-list" class="flex flex-wrap gap-2">
-                            </div>
+                        </div>
                     </div>
 
                 <!-- Credit Testing buttons -->
@@ -504,22 +509,26 @@
         </div>
 
         <div id="gemini-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[85] hidden"> 
-            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full">
-                <div class="p-4 border-b border-slate-200 flex justify-between items-center"> 
-                    <h3 id="gemini-modal-title" class="text-lg font-semibold text-secondary" data-i18n="ai.title"></h3> 
+            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] flex flex-col"> 
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center flex-shrink-0"> 
+                    <div>
+                        <h3 id="gemini-modal-title" class="text-lg font-semibold text-secondary" data-i18n="ai.title"></h3> 
+                        <p id="gemini-modal-date" class="text-xs text-subtle mt-0.5 hidden"></p>
+                    </div>
                     <button id="gemini-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
                 </div>
-                <div class="p-4 max-h-[60vh] overflow-y-auto"> 
-                    <div id="gemini-modal-loader" class="flex justify-center items-center py-8">
-                        <div class="modal-loader-text" data-i18n="loading.thinking">
-                            <span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
-                        </div>
-                    </div> 
-                    <div id="gemini-modal-content" class="text-secondary leading-relaxed hidden text-sm"></div> 
-                    <div id="gemini-modal-error" class="text-error bg-red-50 p-3 rounded-lg hidden text-sm"></div> 
+                
+                <div class="p-4 overflow-y-auto flex-1">
+                    <div id="gemini-modal-loader" class="hidden flex flex-col items-center justify-center py-8 space-y-3">
+                        <i class="fas fa-spinner fa-spin text-3xl text-primary"></i>
+                        <p class="text-sm text-subtle animate-pulse" data-i18n="loading.thinking"></p>
+                    </div>
+                    <div id="gemini-modal-content" class="text-secondary text-sm leading-relaxed hidden"></div>
+                    <p id="gemini-modal-error" class="text-error text-center hidden"></p>
                 </div>
-                 <div class="p-3 bg-slate-50 border-t border-slate-200 text-center text-xs text-slate-500 rounded-b-xl"> 
-                    <span data-i18n="ai.disclaimer"></span>
+
+                <div class="p-3 border-t border-slate-200 text-center bg-slate-50 rounded-b-2xl flex-shrink-0">
+                    <p class="text-[10px] text-slate-400 italic" data-i18n="ai.disclaimer"></p>
                 </div>
             </div>
         </div>
@@ -961,7 +970,7 @@
                     </ul>
             </nav>
             <div class="mt-4 pt-4 border-t border-slate-200 text-center">
-                <span class="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-1 rounded">v0.13.4 (Beta)</span>
+                <span class="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-1 rounded">v0.13.5 (Beta)</span>
             </div>
         </div>
     </div>

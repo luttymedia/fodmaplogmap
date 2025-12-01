@@ -178,6 +178,7 @@
     "disclaimer": "Disclaimer: AI-generated responses are for informational purposes. Always consult with your doctor or a registered dietitian before making dietary changes.",
     "limit_reached_title": "Limit Reached",
     "limit_reached_msg": "Upgrade to Premium to unlock unlimited AI analysis.",
+    "not_now": "Not Now",
     "analysis_failed": "Analysis Failed",
     "check_connection": "Please check your connection or try again.",
     "input_required": "Please enter food or upload an image.",
@@ -199,6 +200,7 @@
     "history_badge": "Loaded from device",
     "plan_title_format": "{{group}} Plan",
     "recent_searches_title": "Recent Searches (This Device)",
+    "sort_az": "A-Z",
     "context": {
       "profile": "User profile:",
       "diagnoses": "Diagnoses:",

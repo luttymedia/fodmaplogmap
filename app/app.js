@@ -489,7 +489,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Onboarding State ---
         onboardingHistory: [], // To track slide navigation for 'Back' button
         currentOnboardingSlide: 0,
-        onboardingSetupPath: 'setup' // 'setup' or 'knowMore'
+        onboardingSetupPath: 'setup', // 'setup' or 'knowMore'
+        aiSearchSort: 'newest'
     };
 
     // --- NEW: Deep merge/ensure personalizationFoods exists ---
@@ -541,10 +542,26 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderRecentSearches() {
         const container = document.getElementById('ai-recent-searches-container');
         const list = document.getElementById('ai-recent-searches-list');
+        const sortBtn = document.getElementById('ai-recent-sort-btn');
+
         if (!container || !list) return;
 
-        // Filter for searches and images
-        const recents = appState.aiHistory.filter(h => h.type === 'search' || h.type === 'image').slice(0, 8);
+        // 1. Filter history
+        let recents = appState.aiHistory.filter(h => h.type === 'search' || h.type === 'image');
+
+        // 2. Apply Sorting based on App State
+        if (appState.aiSearchSort === 'alpha') {
+            // Sort A-Z
+            recents.sort((a, b) => a.title.localeCompare(b.title));
+            if(sortBtn) sortBtn.innerHTML = `<i class="fas fa-sort-alpha-down mr-1"></i> ${i18next.t('ai.sort_az')}`;
+        } else {
+            // Sort Newest (Default)
+            recents.sort((a, b) => b.id - a.id);
+            if(sortBtn) sortBtn.innerHTML = `<i class="fas fa-clock mr-1"></i> ${i18next.t('log.sort_newest')}`;
+        }
+
+        // 3. Slice to max items
+        recents = recents.slice(0, 10); 
 
         if (recents.length === 0) {
             container.classList.add('hidden');
@@ -559,13 +576,24 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>`;
         }).join('');
         
-        // Add click listeners
+        // 4. Attach Click Listeners for Chips
         list.querySelectorAll('.history-chip').forEach(btn => {
             btn.addEventListener('click', () => {
                 const item = appState.aiHistory.find(h => h.id == btn.dataset.id);
-                if (item) displayAIResult(item.title, item.content, true); // true = from history
+                if (item) displayAIResult(item.title, item.content, true, item.id); 
             });
         });
+        
+        // 5. Attach Click Listener for Sort Button (Clone to prevent duplicates)
+        if(sortBtn) {
+            const newSortBtn = sortBtn.cloneNode(true);
+            sortBtn.parentNode.replaceChild(newSortBtn, sortBtn);
+            newSortBtn.addEventListener('click', () => {
+                // Toggle Sort Mode
+                appState.aiSearchSort = (appState.aiSearchSort === 'newest') ? 'alpha' : 'newest';
+                renderRecentSearches();
+            });
+        }
     }
 
     // Render Lists for Home Page Tools
@@ -573,7 +601,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById(containerId);
         if (!container) return;
 
-        const items = appState.aiHistory.filter(h => h.type === type).slice(0, 5); // Last 5
+        const items = appState.aiHistory.filter(h => h.type === type).slice(0, 5); 
         
         if (items.length === 0) {
             container.innerHTML = `<p class="text-xs text-subtle italic text-center py-2">${i18next.t('ai.history_empty_device')}</p>`;
@@ -584,7 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const date = new Date(item.timestamp).toLocaleDateString(i18next.language, {month:'short', day:'numeric', year: 'numeric'});
             return `
                 <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg text-xs">
-                    <div class="cursor-pointer flex-1 history-item-trigger" data-id="${item.id}">
+                    <div class="cursor-pointer flex-1 history-item-trigger" data-id="${item.id}" data-date="${date}">
                         <span class="font-semibold text-secondary">${item.title} <span class="font-normal text-subtle ml-1">(${date})</span></span>
                     </div>
                     <button class="text-slate-400 hover:text-error px-2 history-delete-btn" data-id="${item.id}">
@@ -599,7 +627,8 @@ document.addEventListener('DOMContentLoaded', () => {
             el.addEventListener('click', () => {
                 const item = appState.aiHistory.find(h => h.id == el.dataset.id);
                 if (item) {
-                    openGemini(item.title);
+                    // --- MODIFIED: Pass date to openGemini ---
+                    openGemini(item.title, el.dataset.date);
                     geminiLoader.classList.add('hidden');
                     geminiContent.innerHTML = item.content;
                     geminiContent.classList.remove('hidden');
@@ -1126,15 +1155,29 @@ document.addEventListener('DOMContentLoaded', () => {
         hideAutocomplete(); // NEW: Hide autocomplete
     }
 
-    function displayAIResult(title, aiContentHTML, isFromHistory = false) {
+    function displayAIResult(title, aiContentHTML, isFromHistory = false, historyId = null) {
         const profileHTML = getProfileForDisplay();
         const disclaimer = i18next.t('ai.disclaimer');
-        const historyBadge = isFromHistory ? `<span class="bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-full mb-2 inline-block"><i class="fas fa-history mr-1"></i>${i18next.t('ai.history_badge')}</span>` : '';
+        
+        // --- NEW: History Badge + Delete Button Combo ---
+        let topBar = '';
+        if (isFromHistory) {
+            topBar = `
+            <div class="flex justify-between items-start mb-2">
+                <span class="bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-full inline-block">
+                    <i class="fas fa-history mr-1"></i>${i18next.t('ai.history_badge')}
+                </span>
+                ${historyId ? `
+                <button class="text-subtle hover:text-error text-xs p-1 px-2 border border-slate-200 rounded-md transition-colors" id="ai-result-delete-btn">
+                    <i class="fas fa-trash-alt mr-1"></i> ${i18next.t('modals.btn_delete')}
+                </button>` : ''}
+            </div>`;
+        }
 
         let html = `
             <div class="space-y-3">
                 <div>
-                    ${historyBadge}
+                    ${topBar}
                     <p><strong>${i18next.t('ai.context.food_label')}</strong> ${title}</p>
                     ${profileHTML ? `<p>${profileHTML}</p>` : ''}
                 </div>
@@ -1154,7 +1197,22 @@ document.addEventListener('DOMContentLoaded', () => {
         appState.stagedImageData = null;
         document.getElementById('staged-image-container').classList.add('hidden');
         
-        if (!isFromHistory) checkAndShowRatePopup();
+        if (!isFromHistory) {
+            checkAndShowRatePopup();
+        } else if (historyId) {
+            // --- NEW: Attach Delete Listener ---
+            const delBtn = document.getElementById('ai-result-delete-btn');
+            if (delBtn) {
+                delBtn.addEventListener('click', () => {
+                    deleteFromHistory(historyId);
+                    // Hide the result container immediately
+                    aiResultsContainer.classList.add('hidden');
+                    // Refresh the recent list
+                    renderRecentSearches();
+                    showToast(i18next.t('log.toast_deleted'), "success");
+                });
+            }
+        }
     }
 
     const handleAIQuery = (prompt, title, imageData = null, mimeType = null, type = 'search') => {
@@ -5555,7 +5613,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const openGemini = (title) => { geminiTitle.textContent = title; geminiMdl.classList.remove('hidden'); geminiLoader.classList.remove('hidden'); geminiContent.classList.add('hidden'); geminiError.classList.add('hidden'); }; const closeGemini = () => geminiMdl.classList.add('hidden'); geminiClose.addEventListener('click', closeGemini);
+    const openGemini = (title, date = null) => { 
+        // 1. Fetch elements fresh to avoid null errors
+        const geminiMdl = document.getElementById('gemini-modal');
+        const geminiTitle = document.getElementById('gemini-modal-title');
+        const geminiContent = document.getElementById('gemini-modal-content');
+        const geminiLoader = document.getElementById('gemini-modal-loader');
+        const geminiError = document.getElementById('gemini-modal-error');
+        const dateEl = document.getElementById('gemini-modal-date');
+
+        if (!geminiMdl) {
+            console.error("Gemini Modal elements missing from DOM");
+            return;
+        }
+
+        if (geminiTitle) geminiTitle.textContent = title; 
+        
+        // 2. Handle Date Subtitle (Safe check)
+        if (dateEl) {
+            if (date) {
+                dateEl.textContent = date;
+                dateEl.classList.remove('hidden');
+            } else {
+                dateEl.classList.add('hidden');
+            }
+        }
+
+        // 3. Show Modal
+        geminiMdl.classList.remove('hidden'); 
+        geminiLoader.classList.remove('hidden'); 
+        if (geminiContent) geminiContent.classList.add('hidden'); 
+        if (geminiError) geminiError.classList.add('hidden'); 
+    }; 
+    const closeGemini = () => geminiMdl.classList.add('hidden'); geminiClose.addEventListener('click', closeGemini);
     const callGeminiAPI = async (prompt, imgData = null, mimeType = null) => { // <--- ACCEPT MIME TYPE
         if (!functions) {
             showToast(i18next.t('ai.offline_error'), "error");
@@ -5608,7 +5698,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // CHANGED: Use translation key, removed date string to avoid duplication
             const title = i18next.t('ai.summary_default_title'); 
-            openGemini('✨ ' + title); 
+            openGemini('✨ ' + title, null); 
             
             const logTxt = appState.logEntries.map(e => `Date:${e.date},Grp:${e.group},Food:${e.food},Dose:${e.dose},Sym:${e.symptom==='Other'?e.otherSymptom:e.symptom},Sev:${e.severity}/5`).join('; '); 
             
@@ -5691,7 +5781,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Helper function to run the AI generation
             const runGeneration = async () => {
-                openGemini('✨ ' + title);
+                openGemini('✨ ' + title, null);
                 
                 // Load prompt from JSON
                 const prompt = i18next.t('ai.prompt_plan', {
