@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fodmap-logmap-v0.13.6'; // Bumped version
+const CACHE_NAME = 'fodlog-v0.14.0'; // Bumped version
 const CACHE_WHITELIST = [CACHE_NAME];
 
 // 1. CRITICAL FILES (Strict - App Shell)
@@ -9,7 +9,7 @@ const CRITICAL_FILES = [
   'manifest.json',
   'app.js',
   'style.css',
-  'images/fmlm_logo_h.png' // Moved here so the app fails to install if logo is missing
+  'images/fodlog_logo_h.png' // Updated logo filename
 ];
 
 // 2. LOCAL ASSETS (Best Effort - Images)

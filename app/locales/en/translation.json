@@ -1,5 +1,5 @@
 {
-  "app_name": "FODMAP LOGMAP",
+  "app_name": "FodLog",
   "units": {
     "days": "Days",
     "weeks": "Weeks",
@@ -33,7 +33,7 @@
     "password_label": "Password",
     "name_label": "Name",
     "forgot_password": "Forgot password?",
-    "terms_agree": "I agree to the <a href='https://fodmaplogmap-web.onrender.com/privacy.html' target='_blank' class='text-primary underline'>Privacy Policy</a> and Terms of Service.",
+    "terms_agree": "I agree to the <a href='https://fodlog-web.onrender.com/privacy.html' target='_blank' class='text-primary underline'>Privacy Policy</a> and Terms of Service.",
     "health_consent": "I explicitly consent to the processing of my health data (symptoms, diagnoses) for the purpose of this app.",
     "submit_login": "Log In",
     "submit_signup": "Sign Up",
@@ -471,9 +471,9 @@
     "no_extra_setup": "No extra setup needed! Your goal is to log your challenges. When adding an entry, use the <strong>✨ Plan My Challenge</strong> button to get AI-powered ideas for your test foods.",
     "all_set": "You're all set! A great place to start is the <strong>✨ Auto-Scan Log</strong> button on your Home screen. It will read your log history to help build your personal safe food list.",
     "welcome_desc": "This app is designed to help you at every stage of your journey with three key tools:",
-    "profile_privacy": "Your data is private. Read our <a href=\"https://fodmaplogmap-web.onrender.com/privacy.html\" target=\"_blank\" class=\"text-primary underline\">Privacy Policy</a>.",
+    "profile_privacy": "Your data is private. Read our <a href=\"https://fodlog-web.onrender.com/privacy.html\" target=\"_blank\" class=\"text-primary underline\">Privacy Policy</a>.",
     "profile_complete": "Welcome! Your profile is all set.",
-    "welcome_image": "Welcome to FODMAP LOGMAP",
+    "welcome_image": "Welcome to FodLog",
     "reintro_image": "Ready for Reintroduction",
     "personalization_image": "Welcome to Your Final Diet",
     "rules_placeholder": "e.g., Avoid: Lactose"

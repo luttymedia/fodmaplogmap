@@ -12,12 +12,12 @@ if (isFirebaseAvailable) {
     try {
         // Your web app's Firebase configuration
         const firebaseConfig = {
-          apiKey: "AIzaSyDqeMo-i8s1JlpeUk5aDRynPM8VVg7jHlg",
-          authDomain: "fodmaplogmap-app.firebaseapp.com",
-          projectId: "fodmaplogmap-app",
-          storageBucket: "fodmaplogmap-app.firebasestorage.app",
-          messagingSenderId: "616587045877",
-          appId: "1:616587045877:web:93e53301bba7b3350f4ebc"
+          apiKey: "AIzaSyBfrEu8O1jvFUqnpFAItdoqI7_HQmE6q8o",
+          authDomain: "fodlog-15a48.firebaseapp.com",
+          projectId: "fodlog-15a48",
+          storageBucket: "fodlog-15a48.firebasestorage.app",
+          messagingSenderId: "57729467888",
+          appId: "1:57729467888:web:4f56999716da115a02c935"
         };
 
         // Initialize Firebase
@@ -6185,7 +6185,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     a.href = url;
 
                     const date = new Date().toISOString().split('T')[0];
-                    a.download = `fodmap-logmap-backup-${date}.json`;
+                    // Updated filename
+                    a.download = `fodlog-backup-${date}.json`;
 
                     document.body.appendChild(a);
                     a.click();

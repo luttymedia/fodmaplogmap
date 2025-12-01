@@ -110,7 +110,7 @@ exports.createCheckoutSession = onCall(
 
     const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
     const uid = request.auth.uid;
-    const returnUrl = request.data.returnUrl || "https://fodmaplogmap-web.onrender.com";
+    const returnUrl = request.data.returnUrl || "https://fodlog-web.onrender.com";
 
     try {
       // 2. Create Session
@@ -122,7 +122,7 @@ exports.createCheckoutSession = onCall(
             price_data: {
               currency: "usd",
               product_data: {
-                name: "FODMAP LOGMAP - Lifetime Premium",
+                name: "FodLog - Lifetime Premium",
                 description: "Unlimited AI Assistant & Cloud Sync",
               },
               unit_amount: 799, // $7.99
