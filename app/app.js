@@ -6129,6 +6129,9 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Packages and downloads the user's data as a JSON file.
      */
+    /**
+     * Packages and downloads the user's data as a JSON file.
+     */
     function handleExportData() {
         showActionModal({
             title: i18next.t('modals.actions.export_title'),
@@ -6138,7 +6141,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     let backupData = {
                         logEntries: [],
-                        userProfile: {}
+                        userProfile: {},
+                        aiHistory: [] 
                     };
                     
                     const user = auth.currentUser;
@@ -6168,6 +6172,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         backupData.logEntries = appState.logEntries;
                         backupData.userProfile = appState.userProfile;
                     }
+
+                    // --- NEW: Always export AI History (it lives locally for now) ---
+                    backupData.aiHistory = appState.aiHistory || [];
 
                     // 5. Create and download the file
                     const dataStr = JSON.stringify(backupData, null, 2);
@@ -6222,14 +6229,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 // The 'diet' list is now in userProfile.personalizationFoods
                 const profile = importedData.userProfile || defaultProfile;
                 const dietFoods = profile.personalizationFoods || [];
+                
+                // --- NEW: Handle AI History ---
+                const history = importedData.aiHistory || [];
 
                 localStorage.setItem('fodmapLogEntries', JSON.stringify(logs));
                 localStorage.setItem('fodmapUserProfile', JSON.stringify(profile));
+                // --- NEW: Save History to Local Storage ---
+                localStorage.setItem('fodmapAiHistory', JSON.stringify(history));
                 
                 appState.logEntries = logs;
                 appState.userProfile = profile;
+                appState.aiHistory = history; // Update state
                 
                 // 2. If user is logged in, batch-write to cloud
+                // Note: We are NOT syncing AI history to cloud here, 
+                // as your app currently keeps it local-only.
                 const user = auth.currentUser;
                 if (user) {
                     const batch = db.batch();
