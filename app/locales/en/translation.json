@@ -1,4 +1,5 @@
 {
+  "app_name": "FODMAP LOGMAP",
   "units": {
     "days": "Days",
     "weeks": "Weeks",
@@ -72,7 +73,10 @@
       "invalid_credentials": "Invalid email or password.",
       "user_not_found": "User not found.",
       "requires_recent_login": "Please log in again to confirm deletion.",
-      "too_many_requests": "Please wait a while before trying again."
+      "too_many_requests": "Please wait a while before trying again.",
+      "name_required": "Please enter your name.",
+      "email_required": "Please enter your email address above.",
+      "offline_mode": "Firebase SDK not loaded. App running in restricted offline mode."
     }
   },
   "home": {
@@ -100,7 +104,16 @@
     "set_start_date": "Set your <strong>Phase Start Date</strong> in your Profile to begin the countdown.",
     "set_duration_error": "Please set a duration greater than 0 in your Profile.",
     "no_history": "No history yet.",
-    "med_log_entry": "Took {{taken}} of {{total}} doses."
+    "med_log_entry": "Took {{taken}} of {{total}} doses.",
+    "tools": {
+      "summary_title": "Summary",
+      "plan_title": "Plan Challenge",
+      "plan_desc": "Generate a 3-day reintroduction schedule."
+    }
+  },
+  "chart": {
+    "no_symptoms_title": "No recent symptoms!",
+    "no_symptoms_desc": "No symptoms logged in the past 14 days."
   },
   "phases": {
     "pre_treatment": {
@@ -137,6 +150,7 @@
       "desc": "Build your final, long-term diet.",
       "subtitle": "Tap a food to view or edit.",
       "search_placeholder": "Search foods...",
+      "food_count": "{{count}} food(s)",
       "btn_add": "Add",
       "btn_autoscan": "Auto-Scan Log",
       "tolerated": "Tolerated Foods",
@@ -181,7 +195,18 @@
     "prompt_image": "FODMAP expert. Analyze image ingredients. {{profile}}\n{{userText}}\nList ingredients.\nFor high-FODMAP items, *briefly explain why*.\n**Overall Summary:** (Safe or Not Safe).\n\nFormat: **bold** headings, *italics*, newlines, emojis.\nNo tables, '###', '---', or '|'. No disclaimer.",
     "prompt_search": "FODMAP expert: Analyze '{{food}}'. {{profile}}\nUse this exact template:\n**FODMAP Level:** [Brief level & why. Use *italics* or emojis. No bold sentences.]\n**Safe Portion:** [Brief portion size. Use *italics* or emojis.]\n**Substitutes:** [List 3-4. Use *italics* or emojis.]\n\nNo tables, '###', '---', or '|'. No disclaimer.",
     "prompt_summary": "FODMAP helper. No medical advice. Analyze log.\nProfile: {{profile}}. Log: {{log}}\n\nUse this exact template:\n**Overall Observation:** [1-2 sentence gentle observation on patterns.]\n**Potential Triggers:** [Bulleted list of foods/groups with consistent severity 3-5. If none, say \"No clear triggers noted yet.\"]\n**Seemingly Well-Tolerated:** [Bulleted list of foods/groups with consistent \"None\" or severity 1-2. If none, say \"Keep logging to find your safe foods.\"]\n\nFormat: **bold** headings, *italics*, newlines, bullets (- or *).\nNo '###', '|', tables, or disclaimer.",
-    "prompt_plan": "FODMAP helper. No medical advice. Profile: {{profile}}.\nCreate a 3-day reintroduction challenge plan for '{{group}}'.\n\nUse this exact template:\n**Foods:** [List 2 specific foods for the challenge.]\n*Why these foods?:* [Briefly explain why they are good test foods (e.g., \"purely this FODMAP\").]\n*Other options:* [Suggest 1-2 alternative foods for variety.]\n\n**Challenge Plan:**\n- **Day 1:** [1/2 Portion]\n- **Day 2:** [1 Portion]\n- **Day 3:** [1,5 Portion]\n\n**After Day 3:** Wait 2-3 \"washout\" days and log any delayed symptoms before starting your next challenge.\n\nFormat: **bold** headings, *italics*, newlines, bullets (- or *).\nNo '###', '|', tables, or disclaimer."
+    "prompt_plan": "FODMAP helper. No medical advice. Profile: {{profile}}.\nCreate a 3-day reintroduction challenge plan for '{{group}}'.\n\nUse this exact template:\n**Foods:** [List 2 specific foods for the challenge.]\n*Why these foods?:* [Briefly explain why they are good test foods (e.g., \"purely this FODMAP\").]\n*Other options:* [Suggest 1-2 alternative foods for variety.]\n\n**Challenge Plan:**\n- **Day 1:** [1/2 Portion]\n- **Day 2:** [1 Portion]\n- **Day 3:** [1,5 Portion]\n\n**After Day 3:** Wait 2-3 \"washout\" days and log any delayed symptoms before starting your next challenge.\n\nFormat: **bold** headings, *italics*, newlines, bullets (- or *).\nNo '###', '|', tables, or disclaimer.",
+    "history_badge": "Loaded from device",
+    "plan_title_format": "{{group}} Plan",
+    "recent_searches_title": "Recent Searches (This Device)",
+    "context": {
+      "profile": "User profile:",
+      "diagnoses": "Diagnoses:",
+      "intolerances": "Intolerances/Allergies:",
+      "preferences": "Preferences:",
+      "none_specified": "User profile not specified.",
+      "food_label": "Food:"
+    }
   },
   "log": {
     "title": "🧾 Daily Log",
@@ -289,7 +314,8 @@
     "error_send_email": "Error sending email.",
     "save_name_error": "Error saving name.",
     "no_user_error": "Error: No user found.",
-    "not_logged_in": "Not logged in"
+    "not_logged_in": "Not logged in",
+    "verify_cooldown": "Sent! Wait {{count}}s"
   },
   "modals": {
     "btn_cancel": "Cancel",
@@ -309,6 +335,12 @@
     "food_view_title": "View Food",
     "food_edit_title": "Edit Food",
     "food_add_title": "Add New Food",
+    "plan": {
+      "title": "Plan Challenge",
+      "desc": "Select a FODMAP group to generate a 3-day reintroduction plan.",
+      "label_group": "Select Group",
+      "btn_generate": "Generate Plan"
+    },
     "label_food_name": "Food Name*",
     "label_group": "Food Group",
     "label_status": "Status*",
@@ -359,6 +391,9 @@
       "local_data_msg": "You have {{logs}} and {{diet}} saved on this device. Would you like to merge them with your cloud account?",
       "local_data_merge": "Merge",
       "local_data_discard": "Discard",
+      "guest_data_log_count": "{{count}} log entries",
+      "guest_data_diet_count": "{{count}} diet foods",
+      "guest_data_and": " and ",
       "rate_title": "Enjoying the App?",
       "rate_msg": "If you've found this app helpful, please take a moment to rate it. Your feedback is what keeps it growing!",
       "rate_confirm": "Rate Now",
@@ -406,7 +441,8 @@
     "diarrhea": "Diarrhea",
     "constipation": "Constipation",
     "fatigue": "Fatigue",
-    "headache": "Headache"
+    "headache": "Headache",
+    "none": "None"
   },
   "onboarding": {
     "welcome_title": "Your All-in-One Companion",
@@ -559,5 +595,13 @@
     "set_limit_error": "Error setting limit",
     "downgraded": "⬇️ Downgraded to Free",
     "downgrade_error": "Error downgrading"
+  },
+  "autoscan": {
+    "note_tolerated": "All logged portions tolerated.",
+    "note_severe": "Severe trigger (Severity: {{severity}}/5) at {{dose}}.",
+    "note_mild": "Mild symptoms (Severity: {{severity}}/5) at this dose."
+  },
+  "food_errors": {
+    "duplicate": "Error: \"{{name}}\" is already in your list."
   }
 }

@@ -1000,20 +1000,20 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const buildProfileContext = () => {
-        let context = "User profile:"; let hasInfo = false;
-        if (appState.userProfile.diagnoses.length > 0) { context += ` Diagnoses: ${appState.userProfile.diagnoses.join(', ')}.`; hasInfo = true; }
+        let context = i18next.t('ai.context.profile'); let hasInfo = false;
+        if (appState.userProfile.diagnoses.length > 0) { context += ` ${i18next.t('ai.context.diagnoses')} ${appState.userProfile.diagnoses.join(', ')}.`; hasInfo = true; }
         const allIntolerances = [...appState.userProfile.intolerances, appState.userProfile.allergiesOther].filter(Boolean);
-        if (allIntolerances.length > 0) { context += ` Intolerances/Allergies: ${allIntolerances.join(', ')}.`; hasInfo = true; }
-        if (appState.userProfile.preferences.length > 0) { context += ` Preferences: ${appState.userProfile.preferences.join(', ')}.`; hasInfo = true; }
-        return hasInfo ? context : "User profile not specified.";
+        if (allIntolerances.length > 0) { context += ` ${i18next.t('ai.context.intolerances')} ${allIntolerances.join(', ')}.`; hasInfo = true; }
+        if (appState.userProfile.preferences.length > 0) { context += ` ${i18next.t('ai.context.preferences')} ${appState.userProfile.preferences.join(', ')}.`; hasInfo = true; }
+        return hasInfo ? context : i18next.t('ai.context.none_specified');
     };
 
     const getProfileForDisplay = () => {
         let displayLines = [];
-        if (appState.userProfile.diagnoses.length > 0) { displayLines.push(`<strong>Diagnoses:</strong> ${appState.userProfile.diagnoses.join(', ')}`); }
+        if (appState.userProfile.diagnoses.length > 0) { displayLines.push(`<strong>${i18next.t('ai.context.diagnoses')}</strong> ${appState.userProfile.diagnoses.join(', ')}`); }
         const allIntolerances = [...appState.userProfile.intolerances, appState.userProfile.allergiesOther].filter(Boolean);
-        if (allIntolerances.length > 0) { displayLines.push(`<strong>Intolerances/Allergies:</strong> ${allIntolerances.join(', ')}`); }
-        if (appState.userProfile.preferences.length > 0) { displayLines.push(`<strong>Preferences:</strong> ${appState.userProfile.preferences.join(', ')}`); }
+        if (allIntolerances.length > 0) { displayLines.push(`<strong>${i18next.t('ai.context.intolerances')}</strong> ${allIntolerances.join(', ')}`); }
+        if (appState.userProfile.preferences.length > 0) { displayLines.push(`<strong>${i18next.t('ai.context.preferences')}</strong> ${appState.userProfile.preferences.join(', ')}`); }
         
         if (displayLines.length === 0) return null;
         return displayLines.join('<br>');
@@ -1129,13 +1129,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function displayAIResult(title, aiContentHTML, isFromHistory = false) {
         const profileHTML = getProfileForDisplay();
         const disclaimer = i18next.t('ai.disclaimer');
-        const historyBadge = isFromHistory ? `<span class="bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-full mb-2 inline-block"><i class="fas fa-history mr-1"></i>Loaded from device</span>` : '';
+        const historyBadge = isFromHistory ? `<span class="bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-full mb-2 inline-block"><i class="fas fa-history mr-1"></i>${i18next.t('ai.history_badge')}</span>` : '';
 
         let html = `
             <div class="space-y-3">
                 <div>
                     ${historyBadge}
-                    <p><strong>Food:</strong> ${title}</p>
+                    <p><strong>${i18next.t('ai.context.food_label')}</strong> ${title}</p>
                     ${profileHTML ? `<p>${profileHTML}</p>` : ''}
                 </div>
                 <hr class="border-slate-200">
@@ -1450,7 +1450,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const start = new Date(settings.startDate + 'T00:00:00'); // Assume local timezone
         
         // --- Format Start Date ---
-        const formattedStartDate = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const formattedStartDate = start.toLocaleDateString(i18next.language, { month: 'short', day: 'numeric', year: 'numeric' });
         
         // Calculate days elapsed (ensuring it's at least 0)
         const timeDiff = today.getTime() - start.getTime();
@@ -1459,19 +1459,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const daysRemaining = Math.max(0, totalDays - daysElapsed);
         const percentComplete = Math.max(0, Math.min(100, (daysElapsed / totalDays) * 100));
 
-        // --- Calculate duration display ---
-        let durationDisplay = `${settings.durationNum} ${settings.durationUnit}`;
+        // --- Calculate duration display (Logic for translation keys) ---
         let currentUnitNum = 0;
 
         if (settings.durationUnit === 'weeks') {
             currentUnitNum = Math.min(settings.durationNum, Math.floor((daysElapsed - 1) / 7) + 1);
-            durationDisplay = `Week ${currentUnitNum} of ${settings.durationNum}`;
         } else if (settings.durationUnit === 'days') {
             currentUnitNum = Math.min(settings.durationNum, daysElapsed);
-            durationDisplay = `Day ${currentUnitNum} of ${settings.durationNum}`;
         } else if (settings.durationUnit === 'months') {
             currentUnitNum = Math.min(settings.durationNum, Math.floor((daysElapsed - 1) / 30) + 1); // Approx
-            durationDisplay = `Month ${currentUnitNum} of ${settings.durationNum}`;
         }
 
         // --- Render the components ---
@@ -1589,19 +1585,19 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             if (allTolerated) {
-                newFoodObject.notes = "All logged portions tolerated.";
+                newFoodObject.notes = i18next.t('autoscan.note_tolerated');
             } else if (severeTriggerEntries.length > 0) {
                 const latestSevereTrigger = severeTriggerEntries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
                 newFoodObject.status = 'trigger';
                 newFoodObject.doseLogic = null; 
                 newFoodObject.dose = '';
-                newFoodObject.notes = `Severe trigger (Severity: ${latestSevereTrigger.severity}/5) at ${latestSevereTrigger.dose}.`;
+                newFoodObject.notes = i18next.t('autoscan.note_severe', { severity: latestSevereTrigger.severity, dose: latestSevereTrigger.dose });
             } else if (triggerEntries.length > 0) {
                 const latestMildTrigger = triggerEntries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
                 newFoodObject.status = 'trigger'; 
                 newFoodObject.doseLogic = 'starting at'; 
                 newFoodObject.dose = latestMildTrigger.dose;
-                newFoodObject.notes = `Mild symptoms (Severity: ${latestMildTrigger.severity}/5) at this dose.`;
+                newFoodObject.notes = i18next.t('autoscan.note_mild', { severity: latestMildTrigger.severity });
             }
             
             newFoodsArray.push(newFoodObject);
@@ -1788,7 +1784,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 header.innerHTML = `
                     <h3 class="flex items-center gap-2">${style.icon} ${groupData.name}</h3>
                     <div class="flex items-center gap-1.5 status-text text-muted">
-                        ${foodsInGroup.length} food(s)
+                        ${i18next.t('phases.personalization.food_count', { count: foodsInGroup.length })}
                     </div>
                 `;
                 
@@ -2052,7 +2048,7 @@ document.addEventListener('DOMContentLoaded', () => {
         symptomTagsContainer.innerHTML = ''; // Clear container
 
         // Add a "None" tag first
-        symptomTagsContainer.innerHTML += `<div class=inline-block><input type=checkbox id="symptom-None" value="None" name="symptoms" class="profile-checkbox hidden"><label for="symptom-None" class="cursor-pointer border rounded-full px-2.5 py-1.5 text-xs font-medium text-muted duration-200">None</label></div>`;
+        symptomTagsContainer.innerHTML += `<div class=inline-block><input type=checkbox id="symptom-None" value="None" name="symptoms" class="profile-checkbox hidden"><label for="symptom-None" class="cursor-pointer border rounded-full px-2.5 py-1.5 text-xs font-medium text-muted duration-200">${i18next.t('symptoms.none')}</label></div>`;
 
         // Add predefined symptom tags
         SYMPTOM_OPTIONS.forEach(symptom => {
@@ -2181,7 +2177,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     entryDiv.innerHTML = `
                         <div class="entry-header flex justify-between items-start">
                             <p class="font-semibold text-secondary text-sm">${entry.food}, ${entry.dose}</p>
-                            <span class="text-xs text-subtle flex-shrink-0 ml-2">${new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                            <span class="text-xs text-subtle flex-shrink-0 ml-2">${new Date(entry.date).toLocaleDateString(i18next.language, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                         </div>
                         <div class="flex justify-between items-end">
                             <div class="entry-details">
@@ -2207,7 +2203,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         if (groupsWithEntries === 0) {
-            accordionContainer.innerHTML = `<p class="text-subtle text-center py-6 bg-white rounded-lg shadow-sm col-span-full text-sm">No log entries yet. Add one above!</p>`;
+            accordionContainer.innerHTML = `<p class="text-subtle text-center py-6 bg-white rounded-lg shadow-sm col-span-full text-sm">${i18next.t('log.empty_state_group')}</p>`;
         }
     };
 
@@ -2658,7 +2654,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Redirect to Stripe Hosted Page
                 window.location.assign(data.url);
             } else {
-                throw new Error("No payment URL returned.");
+                throw new Error(i18next.t('network.connection_failed')); // Re-using an existing error key
             }
         } catch (error) {
             console.error("Checkout failed:", error);
@@ -3065,7 +3061,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
 
         if (!name) {
-            showAuthError('Please enter your name.');
+            showAuthError(i18next.t('auth.errors.name_required'));
             return;
         }
 
@@ -3099,16 +3095,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 // --- END NEW ---
             })
             .catch((error) => {
-                let message = 'An unknown error occurred.';
+                let message = i18next.t('auth.errors.generic');
                 switch (error.code) {
                     case 'auth/email-already-in-use':
-                        message = 'This email is already in use. Try logging in.';
+                        message = i18next.t('auth.errors.email_in_use');
                         break;
                     case 'auth/weak-password':
-                        message = 'Password should be at least 6 characters.';
+                        message = i18next.t('auth.errors.weak_password');
                         break;
                     case 'auth/invalid-email':
-                        message = 'Please enter a valid email address.';
+                        message = i18next.t('auth.errors.invalid_email');
                         break;
                     default:
                         message = error.message;
@@ -3126,10 +3122,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 closeAuthModal();
             })
             .catch((error) => {
-                let message = 'An unknown error occurred.';
+                let message = i18next.t('auth.errors.generic');
                 // This is the new, generic error code for v9+
                 if (error.code === 'auth/invalid-login-credentials' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                    message = 'Invalid email or password.';
+                    message = i18next.t('auth.errors.invalid_credentials');
                 } else {
                     message = error.message;
                 }
@@ -3333,7 +3329,7 @@ document.addEventListener('DOMContentLoaded', () => {
         authForgotPasswordLink.addEventListener('click', () => {
             const email = authEmailInput.value.trim();
             if (!email) {
-                showAuthError("Please enter your email address above.");
+                showAuthError(i18next.t('auth.errors.email_required'));
                 authEmailInput.focus();
                 return;
             }
@@ -3664,14 +3660,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // We must ask them what to do.
             // --- MODIFIED: Only show if it's NOT their own cache ---
             if ((hasLocalLogs || hasLocalDiet) && !isUserDataCache) {
-                let logText = hasLocalLogs ? `${localLogs.length} log entries` : '';
-                let dietText = hasLocalDiet ? `${localDietFoods.length} diet foods` : '';
-                let message = `You have ${logText}${hasLocalLogs && hasLocalDiet ? ' and ' : ''}${dietText} saved on this device. Would you like to merge them with your cloud account?`;
+                let logText = hasLocalLogs ? i18next.t('modals.actions.guest_data_log_count', { count: localLogs.length }) : '';
+                let dietText = hasLocalDiet ? i18next.t('modals.actions.guest_data_diet_count', { count: localDietFoods.length }) : '';
+                let separator = (hasLocalLogs && hasLocalDiet) ? i18next.t('modals.actions.guest_data_and') : '';
+                
+                let message = i18next.t('modals.guest_merge.msg_start') + ' ' + logText + separator + dietText + ' ' + i18next.t('modals.guest_merge.msg_end');
 
                 showActionModal({
-                    title: 'Local Data Found',
+                    title: i18next.t('modals.guest_merge.title'),
                     message: message,
-                    confirmText: 'Merge',
+                    confirmText: i18next.t('modals.guest_merge.btn_merge'),
                     onConfirm: async () => {
                         try {
                             const batch = db.batch();
@@ -3703,7 +3701,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             attachListener(userDocRef);
                         }
                     },
-                    altText: 'Discard',
+                    altText: i18next.t('modals.guest_merge.btn_discard'),
                     onAltConfirm: () => {
                         showToast(i18next.t('cloud.discarding_data'), 'warning');
                         
@@ -3719,7 +3717,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Attach listener, which will load cloud data
                         attachListener(userDocRef);
                     },
-                    cancelText: 'Log Out',
+                    cancelText: i18next.t('modals.guest_merge.btn_logout'),
                     onCancel: () => {
                         auth.signOut(); // Safest option is to log out
                     }
@@ -3943,9 +3941,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             showActionModal({
-                title: 'Reset Password',
-                message: `This will send a password reset link to ${user.email}. Please check your inbox and spam folder.`,
-                confirmText: 'Send Link',
+                title: i18next.t('auth.reset_password_title'),
+                message: i18next.t('auth.reset_password_msg', { email: user.email }),
+                confirmText: i18next.t('auth.send_link'),
                 onConfirm: () => {
                     auth.sendPasswordResetEmail(user.email)
                         .then(() => {
@@ -3967,9 +3965,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!user) return;
 
             showActionModal({
-                title: 'Delete Account',
-                message: `This is permanent and cannot be undone. All your cloud data (logs, diet list, and settings) will be deleted. Are you sure?`,
-                altText: 'Delete Forever', // Red button
+                title: i18next.t('account.delete_title'),
+                message: i18next.t('account.delete_msg'),
+                altText: i18next.t('account.delete_confirm'), // Red button
                 onAltConfirm: async () => {
                     const userDocRef = db.collection('users').doc(user.uid);
                     const logsColRef = userDocRef.collection('logs');
@@ -4061,7 +4059,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Cooldown UI
                 let count = 60;
-                btnElement.textContent = `Sent! Wait ${count}s`;
+                btnElement.textContent = i18next.t('account.verify_cooldown', { count: count });
                 
                 const interval = setInterval(() => {
                     count--;
@@ -4070,7 +4068,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         btnElement.textContent = originalText;
                         btnElement.disabled = false;
                     } else {
-                        btnElement.textContent = `Sent! Wait ${count}s`;
+                        btnElement.textContent = i18next.t('account.verify_cooldown', { count: count });
                     }
                 }, 1000);
             })
@@ -4152,7 +4150,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateVerificationUI(user);
                 updateAICounterUI();
                 
-                if (menuAccountEmail) menuAccountEmail.textContent = user.email || 'Account Settings';
+                if (menuAccountEmail) menuAccountEmail.textContent = user.email || i18next.t('account.title');
                 if (accountNameInput) accountNameInput.value = user.displayName || '';
                 if (accountEmailInput) accountEmailInput.value = user.email || '';
                 
@@ -4336,7 +4334,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {string} [config.altText] - Text for the alternate (red) button.
      * @param {function} [config.onAltConfirm] - Callback for the alternate button.
      */
-    function showActionModal({ title, message, type = 'confirm', confirmText = 'OK', onConfirm, cancelText = 'Cancel', onCancel, altText, onAltConfirm }) {
+    function showActionModal({ title, message, type = 'confirm', confirmText = i18next.t('modals.btn_confirm'), onConfirm, cancelText = i18next.t('modals.btn_cancel'), onCancel, altText, onAltConfirm }) {
         actionModalTitle.textContent = title;
         actionModalMessage.textContent = message;
 
@@ -4552,7 +4550,7 @@ document.addEventListener('DOMContentLoaded', () => {
         appState.currentMedicationIdCounter = 0; // Reset counter
 
         if (medications.length === 0) {
-            medModalSettingsList.innerHTML = `<p class="text-xs text-subtle text-center">i18next.t('medication.no_medications')</p>`;
+            medModalSettingsList.innerHTML = `<p class="text-xs text-subtle text-center">${i18next.t('medication.no_medications')}</p>`;
             return;
         }
 
@@ -4562,7 +4560,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return `
                 <div class="medication-settings-item" data-id="${uniqueId}">
                     <input type="time" class="med-input-time time-input" value="${med.time}">
-                    <input type="text" class="med-input-name name-input" value="${med.name}" placeholder="Medication Name">
+                    <input type="text" class="med-input-name name-input" value="${med.name}" placeholder="${i18next.t('medication.medication_name_placeholder')}">
                     <button type="button" class="medication-remove-btn">&times;</button>
                 </div>
             `;
@@ -4690,19 +4688,19 @@ document.addEventListener('DOMContentLoaded', () => {
         obMedDuration.value = medSettings.duration || 12;
         // Build med list (similar to renderMedicationSettingsList)
         if (medSettings.medications.length > 0) {
-            obMedList.innerHTML = medSettings.medications.map(med => {
-                const uniqueId = `ob_med_${obMedCounter++}`;
-                return `
-                <div class="medication-settings-item" data-id="${uniqueId}">
-                    <input type="time" class="med-input-time time-input" value="${med.time}">
-                    <input type="text" class="med-input-name name-input" value="${med.name}" placeholder="Medication Name">
-                    <button type="button" class="medication-remove-btn">&times;</button>
-                </div>
-            `;
-            }).join('');
-        } else {
-             obMedList.innerHTML = `<p class="text-xs text-subtle text-center">No medications added.</p>`;
-        }
+                obMedList.innerHTML = medSettings.medications.map(med => {
+                    const uniqueId = `ob_med_${obMedCounter++}`;
+                    return `
+                    <div class="medication-settings-item" data-id="${uniqueId}">
+                        <input type="time" class="med-input-time time-input" value="${med.time}">
+                        <input type="text" class="med-input-name name-input" value="${med.name}" placeholder="${i18next.t('medication.medication_name_placeholder')}">
+                        <button type="button" class="medication-remove-btn">&times;</button>
+                    </div>
+                `;
+                }).join('');
+            } else {
+                 obMedList.innerHTML = `<p class="text-xs text-subtle text-center">${i18next.t('medication.no_medications')}</p>`;
+            }
     }
     
     /**
@@ -4936,13 +4934,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // 4. Render Log History (simple version)
         const logKeys = Object.keys(tracker.log).sort().reverse(); // Newest first
         if (logKeys.length === 0) {
-            medicationLogHistory.innerHTML = `<p class="text-center italic">i18next.t('home.no_history')</p>`;
+            medicationLogHistory.innerHTML = `<p class="text-center italic">${i18next.t('home.no_history')}</p>`;
         } else {
             medicationLogHistory.innerHTML = logKeys.slice(0, 10).map(dateKey => { // Show last 10 days
                 const takenCount = tracker.log[dateKey].length;
                 const totalCount = tracker.medications.length;
-                const dateString = new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                return `<p><strong>${dateString}:</strong> Took ${takenCount} of ${totalCount} doses.</p>`;
+                const dateString = new Date(dateKey + 'T00:00:00').toLocaleDateString(i18next.language, { month: 'short', day: 'numeric' });
+                return `<p><strong>${dateString}:</strong> ${i18next.t('home.med_log_entry', { taken: takenCount, total: totalCount })}</p>`;
             }).join('');
         }
     } else {
@@ -5036,7 +5034,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 medicationLogHistory.innerHTML = logKeys.slice(0, 10).map(dateKey => {
                     const takenCount = appState.userProfile.medicationTracker.log[dateKey].length;
                     const totalCount = appState.userProfile.medicationTracker.medications.length;
-                    const dateString = new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    const dateString = new Date(dateKey + 'T00:00:00').toLocaleDateString(i18next.language, { month: 'short', day: 'numeric' });
                     return `<p><strong>${dateString}:</strong> Took ${takenCount} of ${totalCount} doses.</p>`;
                 }).join('');
             }
@@ -5312,7 +5310,7 @@ document.addEventListener('DOMContentLoaded', () => {
             item.dataset.id = newId;
             item.innerHTML = `
                 <input type="time" class="med-input-time time-input" value="09:00">
-                <input type="text" class="med-input-name name-input" placeholder="Medication Name">
+                <input type="text" class="med-input-name name-input" placeholder="${i18next.t('medication.medication_name_placeholder')}">
                 <button type="button" class="medication-remove-btn">&times;</button>
             `;
             if (obMedList.querySelector('p')) {
@@ -5326,7 +5324,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target.classList.contains('medication-remove-btn')) {
                 e.target.closest('.medication-settings-item').remove();
                 if (obMedList.children.length === 0) {
-                    obMedList.innerHTML = `<p class="text-xs text-subtle text-center">No medications added.</p>`;
+                    obMedList.innerHTML = `<p class="text-xs text-subtle text-center">${i18next.t('medication.no_medications')}</p>`;
                 }
             }
         });
@@ -5520,7 +5518,7 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         if (exactMatch) {
-            showToast(`Error: "${exactMatch.name}" is already in your list.`, "warning");
+            showToast(i18next.t('food_errors.duplicate', { name: exactMatch.name }), "warning");
             return; // Stop the save
         }
 
@@ -5580,13 +5578,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // 1. Check for Limit Reached (Code or Message)
             if (err.code === 'resource-exhausted' || (err.message && err.message.includes('limit'))) {
                 showActionModal({
-                    title: 'Free Limit Reached',
-                    message: "You've reached the limit of 5 free AI requests.\n\nUpgrade to Premium for unlimited access to the AI Assistant tools!",
-                    confirmText: 'Go Premium',
+                    title: i18next.t('ai.limit_reached_title'),
+                    message: i18next.t('ai.limit_reached_msg'),
+                    confirmText: i18next.t('ai.go_premium'),
                     onConfirm: () => {
                        openPremiumInfoModal(); // Opens the sales modal
                     },
-                    cancelText: 'Not Now'
+                    cancelText: i18next.t('ai.not_now')
                 });
                 return null;
             }
@@ -5686,7 +5684,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const groupVal = planModalSelect.value;
             closePlanModal();
             
-            const title = `${groupVal} Plan`;
+            const title = i18next.t('ai.plan_title_format', { group: groupVal });
             
             // 1. Check if a plan for this group already exists in history
             const existingPlan = appState.aiHistory.find(h => h.type === 'plan' && h.title === title);
@@ -5741,9 +5739,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    // Initialize History on Load
-    renderAiHistory();
 
     // Listen for the beforeinstallprompt event
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -5879,8 +5874,8 @@ document.addEventListener('DOMContentLoaded', () => {
             container.innerHTML = `
                 <div class="flex flex-col items-center justify-center py-4 text-center opacity-70">
                     <i class="fas fa-smile-beam text-3xl text-accent mb-2"></i>
-                    <p class="text-sm font-semibold text-secondary">No recent symptoms!</p>
-                    <p class="text-[10px] text-subtle">No symptoms logged in the past 14 days.</p>
+                    <p class="text-sm font-semibold text-secondary">${i18next.t('chart.no_symptoms_title')}</p>
+                    <p class="text-[10px] text-subtle">${i18next.t('chart.no_symptoms_desc')}</p>
                 </div>
             `;
             return; 
@@ -5904,7 +5899,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         while (currentDate <= lastSymptomDate) {
             dateKeys.push(currentDate.toLocaleDateString('en-CA'));
-            chartLabels.push(currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            chartLabels.push(currentDate.toLocaleDateString(i18next.language, { month: 'short', day: 'numeric' }));
             currentDate.setDate(currentDate.getDate() + 1);
         }
 
@@ -5953,7 +5948,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (hasSymptomData) {
                 datasets.push({
-                    label: group.name.replace("Polyols - ", ""), // Shorten label
+                    label: group.name, // Use the full translated name
                     data: data,
                     borderColor: color,
                     backgroundColor: color.replace('1)', '0.1)'),
