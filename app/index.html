@@ -91,11 +91,37 @@
                     <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center">
                         <i class="fas fa-magic-sparkles text-warning mr-2"></i><span data-i18n="home.insights_card"></span>
                     </h2>
-                    <div class="space-y-3"> 
-                        <button id="summarize-journey-btn" class="w-full bg-ai-reintro font-semibold py-2.5 px-4 rounded-full hover:bg-ai-reintro-dark transition-colors duration-300 shadow flex items-center justify-center gap-2"> 
-                            <span data-i18n="home.summarize_btn"></span>
-                        </button>
-                         <p class="text-xs text-slate-400 text-center" data-i18n="home.summarize_desc"></p>
+                    
+                    <div class="accordion-group border border-slate-200 rounded-xl mb-3 overflow-hidden">
+                        <div class="accordion-header bg-slate-50 p-3 cursor-pointer flex justify-between items-center" id="tool-summary-header">
+                            <h3 class="font-semibold text-secondary text-sm"><i class="fas fa-scroll mr-2 text-primary"></i>Summary</h3>
+                            <i class="fas fa-chevron-down accordion-icon text-xs text-muted"></i>
+                        </div>
+                        <div class="accordion-body hidden transition-all duration-300 ease-in-out" id="tool-summary-body">
+                            <div class="p-3 space-y-3">
+                                <button id="summarize-journey-btn" class="w-full bg-ai-reintro font-semibold py-2.5 px-4 rounded-full hover:bg-ai-reintro-dark transition-colors duration-300 shadow flex items-center justify-center gap-2 text-sm"> 
+                                    <span data-i18n="home.summarize_btn"></span>
+                                </button>
+                                <p class="text-xs text-slate-400 text-center" data-i18n="home.summarize_desc"></p>
+                                <div id="history-list-summary" class="mt-2 space-y-2 border-t border-slate-100 pt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-group border border-slate-200 rounded-xl overflow-hidden">
+                        <div class="accordion-header bg-slate-50 p-3 cursor-pointer flex justify-between items-center" id="tool-plan-header">
+                            <h3 class="font-semibold text-secondary text-sm"><i class="fas fa-calendar-check mr-2 text-primary"></i>Plan Challenge</h3>
+                            <i class="fas fa-chevron-down accordion-icon text-xs text-muted"></i>
+                        </div>
+                        <div class="accordion-body hidden transition-all duration-300 ease-in-out" id="tool-plan-body">
+                            <div class="p-3 space-y-3">
+                                <button id="open-plan-modal-btn" class="w-full bg-ai-reintro font-semibold py-2.5 px-4 rounded-full hover:bg-ai-reintro-dark transition-colors duration-300 shadow flex items-center justify-center gap-2 text-sm"> 
+                                    <i class="fas fa-calendar-plus"></i><span data-i18n="log.plan_challenge"></span>
+                                </button>
+                                <p class="text-xs text-slate-400 text-center">Generate a 3-day reintroduction schedule.</p>
+                                <div id="history-list-plan" class="mt-2 space-y-2 border-t border-slate-100 pt-2"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -264,6 +290,12 @@
                         <button class="ai-chat-bar-btn ai-send-btn" id="ai-send-btn">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </button>
+                    </div>
+
+                    <div id="ai-recent-searches-container" class="mt-4 mb-2 hidden">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Recent Searches (This Device)</h3>
+                        <div id="ai-recent-searches-list" class="flex flex-wrap gap-2">
+                            </div>
                     </div>
 
                 <!-- Credit Testing buttons -->
@@ -929,7 +961,7 @@
                     </ul>
             </nav>
             <div class="mt-4 pt-4 border-t border-slate-200 text-center">
-                <span class="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-1 rounded">v0.13.2 (Beta)</span>
+                <span class="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-1 rounded">v0.13.3 (Beta)</span>
             </div>
         </div>
     </div>
@@ -1009,9 +1041,6 @@
                             <input type="hidden" id="log-fodmap-group" name="log-fodmap-group" value="">
                         </div>
                     </div>
-                    
-                    <button type="button" id="plan-challenge-btn" class="w-full bg-ai-reintro font-semibold py-2 px-4 rounded-full hover:bg-ai-reintro-dark transition-colors duration-300 shadow flex items-center justify-center gap-2" data-i18n="log.plan_challenge">
-                    </button>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="relative">
@@ -1386,6 +1415,27 @@
                         <button id="premium-info-cancel" class="mt-3 text-slate-400 text-sm font-medium hover:text-slate-600" data-i18n="premium.maybe_later">
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="plan-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[90] hidden">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-secondary">Plan Challenge</h3>
+                    <button id="plan-modal-close" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+                </div>
+                <div class="p-4 space-y-4">
+                    <p class="text-sm text-secondary">Select a FODMAP group to test. The AI will create a 3-day schedule for you.</p>
+                    <div>
+                        <label class="block mb-1.5 text-sm font-medium text-secondary">FODMAP Group</label>
+                        <select id="plan-modal-group-select" class="w-full p-2.5 border border-slate-300 rounded-xl bg-white">
+                            </select>
+                    </div>
+                </div>
+                <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 rounded-b-xl">
+                    <button id="plan-modal-btn-cancel" class="bg-slate-200 text-secondary font-semibold py-1.5 px-4 rounded-full hover:bg-slate-300 transition-colors text-sm">Cancel</button>
+                    <button id="plan-modal-btn-confirm" class="bg-adaptive font-semibold py-1.5 px-4 rounded-full hover:bg-adaptive-dark transition-colors text-sm">Generate Plan</button>
                 </div>
             </div>
         </div>

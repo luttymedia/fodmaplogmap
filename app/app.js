@@ -113,6 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('i18n initialized. Language:', i18next.language);
             updateContent();
             updateDynamicData();
+            renderAiHistory();
 
             // --- Populate forms only after translation data is ready ---
             setupLogForm(); 
@@ -458,6 +459,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const savedProfile = localStorage.getItem('fodmapUserProfile') ? JSON.parse(localStorage.getItem('fodmapUserProfile')) : {};
 
+    // NEW: Load AI History
+    const savedAiHistory = localStorage.getItem('fodmapAiHistory') ? JSON.parse(localStorage.getItem('fodmapAiHistory')) : [];
+
     const appState = {
         logEntries: JSON.parse(localStorage.getItem('fodmapLogEntries')) || [],
         isSyncing: false,
@@ -472,6 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         currentPageIndex: 0,
         currentlyEditingId: null,
+        aiHistory: savedAiHistory,
         stagedImageData: null,
         stagedImageMimeType: null,
         currentLogView: 'date', // 'group' or 'date'
@@ -495,6 +500,120 @@ document.addEventListener('DOMContentLoaded', () => {
         ...(defaultProfile.uiSettings || {}), // Get defaults (isProgressExpanded: true)
         ...(savedProfile.uiSettings || {}) // Override with saved settings
     };
+
+    // --- NEW: AI History Helpers ---
+
+    function saveAiHistory() {
+        localStorage.setItem('fodmapAiHistory', JSON.stringify(appState.aiHistory));
+        renderAiHistory();
+    }
+
+    function addToHistory(type, title, content, metadata = {}) {
+        const newItem = {
+            id: Date.now(),
+            timestamp: new Date().toISOString(),
+            type: type, // 'search', 'image', 'plan', 'summary'
+            title: title,
+            content: content,
+            metadata: metadata
+        };
+        // Add to front
+        appState.aiHistory.unshift(newItem);
+        // Limit total history to 50 items to keep localStorage light
+        if (appState.aiHistory.length > 50) {
+            appState.aiHistory.pop();
+        }
+        saveAiHistory();
+    }
+
+    function deleteFromHistory(id) {
+        appState.aiHistory = appState.aiHistory.filter(item => item.id !== id);
+        saveAiHistory();
+    }
+
+    function renderAiHistory() {
+        renderRecentSearches();
+        renderHomeToolHistory('summary', 'history-list-summary');
+        renderHomeToolHistory('plan', 'history-list-plan');
+    }
+
+    // Render "Recent Searches" on AI Tab
+    function renderRecentSearches() {
+        const container = document.getElementById('ai-recent-searches-container');
+        const list = document.getElementById('ai-recent-searches-list');
+        if (!container || !list) return;
+
+        // Filter for searches and images
+        const recents = appState.aiHistory.filter(h => h.type === 'search' || h.type === 'image').slice(0, 8);
+
+        if (recents.length === 0) {
+            container.classList.add('hidden');
+            return;
+        }
+
+        container.classList.remove('hidden');
+        list.innerHTML = recents.map(item => {
+            const icon = item.type === 'image' ? '<i class="fas fa-camera mr-1"></i>' : '';
+            return `<button class="history-chip bg-white border border-slate-200 text-xs text-secondary px-3 py-1.5 rounded-full hover:bg-slate-50 transition-colors shadow-sm" data-id="${item.id}">
+                ${icon}${item.title}
+            </button>`;
+        }).join('');
+        
+        // Add click listeners
+        list.querySelectorAll('.history-chip').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const item = appState.aiHistory.find(h => h.id == btn.dataset.id);
+                if (item) displayAIResult(item.title, item.content, true); // true = from history
+            });
+        });
+    }
+
+    // Render Lists for Home Page Tools
+    function renderHomeToolHistory(type, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const items = appState.aiHistory.filter(h => h.type === type).slice(0, 5); // Last 5
+        
+        if (items.length === 0) {
+            container.innerHTML = `<p class="text-xs text-subtle italic text-center py-2">${i18next.t('ai.history_empty_device')}</p>`;
+            return;
+        }
+
+        container.innerHTML = items.map(item => {
+            const date = new Date(item.timestamp).toLocaleDateString(i18next.language, {month:'short', day:'numeric', year: 'numeric'});
+            return `
+                <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg text-xs">
+                    <div class="cursor-pointer flex-1 history-item-trigger" data-id="${item.id}">
+                        <span class="font-semibold text-secondary">${item.title} <span class="font-normal text-subtle ml-1">(${date})</span></span>
+                    </div>
+                    <button class="text-slate-400 hover:text-error px-2 history-delete-btn" data-id="${item.id}">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        // Listeners
+        container.querySelectorAll('.history-item-trigger').forEach(el => {
+            el.addEventListener('click', () => {
+                const item = appState.aiHistory.find(h => h.id == el.dataset.id);
+                if (item) {
+                    openGemini(item.title);
+                    geminiLoader.classList.add('hidden');
+                    geminiContent.innerHTML = item.content;
+                    geminiContent.classList.remove('hidden');
+                }
+            });
+        });
+        
+        container.querySelectorAll('.history-delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteFromHistory(parseInt(btn.dataset.id));
+            });
+        });
+    }
 
     /**
      * Gets a unique, sorted list of all food names from the log and profile.
@@ -716,7 +835,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateLogFormForPhase(phase) {
         const infoBox = document.getElementById('log-form-info-box');
         const fodmapSelect = document.getElementById('custom-fodmap-select-container');
-        const planBtn = document.getElementById('plan-challenge-btn');
         const options = document.querySelectorAll('#custom-fodmap-select-options .custom-select-option');
 
         if (!infoBox) return; // Safety check if elements aren't ready
@@ -724,7 +842,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Reset all elements
         infoBox.classList.add('hidden');
         fodmapSelect.classList.add('hidden');
-        planBtn.classList.add('hidden');
         options.forEach(opt => opt.style.display = 'block'); // Show all options by default
 
         // 2. Apply rules based on phase
@@ -740,7 +857,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 infoBox.innerHTML = i18next.t('log.info_reintro');
                 infoBox.classList.remove('hidden');
                 fodmapSelect.classList.remove('hidden');
-                planBtn.classList.remove('hidden');
                 
                 // Hide "Safe Meal" and "Other" from dropdown
                 options.forEach(opt => {
@@ -1010,56 +1126,68 @@ document.addEventListener('DOMContentLoaded', () => {
         hideAutocomplete(); // NEW: Hide autocomplete
     }
 
-    const handleAIQuery = (prompt, title, imageData = null, mimeType = null) => {
-         // Prepend language instruction to prompt
+    function displayAIResult(title, aiContentHTML, isFromHistory = false) {
+        const profileHTML = getProfileForDisplay();
+        const disclaimer = i18next.t('ai.disclaimer');
+        const historyBadge = isFromHistory ? `<span class="bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-full mb-2 inline-block"><i class="fas fa-history mr-1"></i>Loaded from device</span>` : '';
+
+        let html = `
+            <div class="space-y-3">
+                <div>
+                    ${historyBadge}
+                    <p><strong>Food:</strong> ${title}</p>
+                    ${profileHTML ? `<p>${profileHTML}</p>` : ''}
+                </div>
+                <hr class="border-slate-200">
+                <div>${aiContentHTML}</div>
+                <hr class="border-slate-200">
+                <p class="text-xs text-subtle italic">${disclaimer}</p>
+            </div>
+        `;
+        
+        aiResultsContent.innerHTML = html; 
+        aiResultsContainer.classList.remove('hidden');
+        aiResultsLoader.classList.add('hidden');
+        
+        // Clear inputs after search
+        aiFoodSearchInput.value = '';
+        appState.stagedImageData = null;
+        document.getElementById('staged-image-container').classList.add('hidden');
+        
+        if (!isFromHistory) checkAndShowRatePopup();
+    }
+
+    const handleAIQuery = (prompt, title, imageData = null, mimeType = null, type = 'search') => {
          const currentLang = i18next.language;
          prompt = `(Respond in ${currentLang} language) ` + prompt;
-         aiResultsLoader.classList.remove('hidden'); aiResultsContainer.classList.add('hidden'); aiResultsContent.innerHTML = '';
+         
+         aiResultsLoader.classList.remove('hidden'); 
+         aiResultsContainer.classList.add('hidden'); 
+         aiResultsContent.innerHTML = '';
+         
          callGeminiAPI(prompt, imageData, mimeType)
             .then(response => {
                 if (response) { 
-                    const profileHTML = getProfileForDisplay();
-                    const disclaimer = i18next.t('ai.disclaimer');
-
-                    // 1. Process the AI response
+                    // 1. Process response
                     let aiContent = response
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')   // Bold
-                        .replace(/\*(.*?)\*/g, '<em>$1</em>')     // Italics
-                        .replace(/\n/g, '<br>'); // Newlines
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                        .replace(/\n/g, '<br>');
 
-                    // 2. Build the full response with header and footer
-                    let html = `
-                        <div class="space-y-3">
-                            <div>
-                                <p><strong>Food:</strong> ${title}</p>
-                                ${profileHTML ? `<p>${profileHTML}</p>` : ''}
-                            </div>
-                            
-                            <hr class="border-slate-200">
-                            
-                            <div>${aiContent}</div>
+                    // 2. SAVE TO HISTORY (New)
+                    // If image, we save the text but NOT the base64 image data
+                    addToHistory(type, title, aiContent);
 
-                            <hr class="border-slate-200">
-                            
-                            <p class="text-xs text-subtle italic">${disclaimer}</p>
-                        </div>
-                    `;
-                    
-                    aiResultsContent.innerHTML = html; 
-                    aiResultsContainer.classList.remove('hidden'); 
-
-                    // --- NEW: Check for rating (Count is handled by Backend now) ---
-                    checkAndShowRatePopup();
-                    // --- END NEW ---
+                    // 3. Display
+                    displayAIResult(title, aiContent, false);
                 }                    
                 else { 
-                    // --- NEW: Handle specific failure states ---
+                    // Error States (Limit reached or API fail) - Unchanged from your existing code
                     const profile = appState.userProfile;
                     const limit = 5;
                     const used = profile.aiUsageCount || 0;
 
                     if (!profile.isPremium && used >= limit) {
-                        // Case 1: Limit Reached (Show "Locked" Teaser)
                         aiResultsContent.innerHTML = `
                             <div class="flex flex-col items-center justify-center py-6 text-center">
                                 <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-3">
@@ -1070,7 +1198,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         `;
                     } else {
-                        // Case 2: Actual Technical Error
                         aiResultsContent.innerHTML = `
                             <div class="text-center py-4">
                                 <p class="text-error font-semibold flex items-center justify-center gap-2">
@@ -1081,54 +1208,58 @@ document.addEventListener('DOMContentLoaded', () => {
                         `;
                     }
                     aiResultsContainer.classList.remove('hidden'); 
+                    aiResultsLoader.classList.add('hidden');
                 }
-            }).finally(() => {
+            }).catch(() => {
                 aiResultsLoader.classList.add('hidden');
-                // Clear inputs after search
-                aiFoodSearchInput.value = '';
-                appState.stagedImageData = null;
-                stagedImageContainer.classList.add('hidden');
             });
     };
 
     aiSendBtn.addEventListener('click', () => {
         const foodName = aiFoodSearchInput.value.trim();
         
-        // Check if we have an image or text
         if (!appState.stagedImageData && !foodName) {
             showToast(i18next.t('ai.input_required'), "warning");
             return;
         }
 
-        let prompt;
-        let title;
-
+        // 1. IMAGE SEARCH (Always API)
         if (appState.stagedImageData) {
-            // We are searching with an image
-            title = `Image${foodName ? ` (${foodName})` : ''}`; // Use text as a caption if it exists
-            prompt = `FODMAP expert. Analyze image ingredients. ${buildProfileContext()}
-            ${foodName ? `User text: "${foodName}".` : ''}
-            List ingredients.
-            For high-FODMAP items, *briefly explain why*.
-            **Overall Summary:** (Safe or Not Safe).
-
-            Format: **bold** headings, *italics*, newlines, emojis.
-            No tables, '###', '---', or '|'. No disclaimer.`;
+            const title = `Image Scan${foodName ? ` (${foodName})` : ''}`;
             
-            handleAIQuery(prompt, title, appState.stagedImageData, appState.stagedImageMimeType);
-
-        } else if (foodName) {
-            // We are searching with text only
-            title = foodName;
-            prompt = `FODMAP expert: Analyze '${foodName}'. ${buildProfileContext()}
-            Use this exact template:
-            **FODMAP Level:** [Brief level & why. Use *italics* or emojis. No bold sentences.]
-            **Safe Portion:** [Brief portion size. Use *italics* or emojis.]
-            **Substitutes:** [List 3-4. Use *italics* or emojis.]
-
-            No tables, '###', '---', or '|'. No disclaimer.`;
+            // Prepare the optional text part
+            const userText = foodName ? `User text: "${foodName}".` : '';
             
-            handleAIQuery(prompt, title, null, null);
+            // Load prompt from JSON
+            const prompt = i18next.t('ai.prompt_image', {
+                profile: buildProfileContext(),
+                userText: userText
+            });
+            
+            handleAIQuery(prompt, title, appState.stagedImageData, appState.stagedImageMimeType, 'image');
+            return;
+        } 
+        
+        // 2. TEXT SEARCH
+        if (foodName) {
+            // Check local history
+            const cached = appState.aiHistory.find(h => h.type === 'search' && h.title.toLowerCase() === foodName.toLowerCase());
+            
+            if (cached) {
+                displayAIResult(cached.title, cached.content, true);
+                return;
+            }
+
+            // API Call
+            const title = foodName;
+            
+            // Load prompt from JSON
+            const prompt = i18next.t('ai.prompt_search', {
+                food: foodName,
+                profile: buildProfileContext()
+            });
+            
+            handleAIQuery(prompt, title, null, null, 'search');
         }
     });
 
@@ -5472,87 +5603,147 @@ document.addEventListener('DOMContentLoaded', () => {
             return null;
         }
     };
-    document.getElementById('summarize-journey-btn').addEventListener('click', async () => {
-        if (appState.logEntries.length === 0) { showToast(i18next.t('log.no_log_entries'), "warning"); return; } 
-        openGemini('✨ Summary'); 
-        const logTxt = appState.logEntries.map(e => `Date:${e.date},Grp:${e.group},Food:${e.food},Dose:${e.dose},Sym:${e.symptom==='Other'?e.otherSymptom:e.symptom},Sev:${e.severity}/5`).join('; '); 
-        
-        // 1. UPDATED PROMPT:
-        const prompt = `FODMAP helper. No medical advice. Analyze log.
-        Profile: ${buildProfileContext()}. Log: ${logTxt}
+    const summarizeBtn = document.getElementById('summarize-journey-btn');
+    if (summarizeBtn) {
+        summarizeBtn.addEventListener('click', async () => {
+            if (appState.logEntries.length === 0) { showToast(i18next.t('log.no_log_entries'), "warning"); return; } 
+            
+            // CHANGED: Use translation key, removed date string to avoid duplication
+            const title = i18next.t('ai.summary_default_title'); 
+            openGemini('✨ ' + title); 
+            
+            const logTxt = appState.logEntries.map(e => `Date:${e.date},Grp:${e.group},Food:${e.food},Dose:${e.dose},Sym:${e.symptom==='Other'?e.otherSymptom:e.symptom},Sev:${e.severity}/5`).join('; '); 
+            
+            // Load prompt from JSON
+            const prompt = i18next.t('ai.prompt_summary', {
+                profile: buildProfileContext(),
+                log: logTxt
+            });
 
-        Use this exact template:
-        **Overall Observation:** [1-2 sentence gentle observation on patterns.]
-        **Potential Triggers:** [Bulleted list of foods/groups with consistent severity 3-5. If none, say "No clear triggers noted yet."]
-        **Seemingly Well-Tolerated:** [Bulleted list of foods/groups with consistent "None" or severity 1-2. If none, say "Keep logging to find your safe foods."]
+            const summary = await callGeminiAPI(prompt); 
+            geminiLoader.classList.add('hidden'); 
+            
+            if (summary) { 
+                let html = summary.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>').replace(/(\n|^)[\-\*] (.*?)(?=\n|$)/g, '<br>• $2').replace(/\n/g, '<br>');
+                
+                // SAVE TO HISTORY
+                addToHistory('summary', title, html);
 
-        Format: **bold** headings, *italics*, newlines, bullets (- or *).
-        No '###', '|', tables, or disclaimer.`
-
-                        const summary = await callGeminiAPI(prompt); 
-                        geminiLoader.classList.add('hidden'); 
-                        if (summary === null) { geminiMdl.classList.add('hidden'); return; } 
-                        
-                        // 2. FIXED PARSER:
-                        if (summary) { 
-                            // Add the same parser we use for the AI assistant
-                            let html = summary
-                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')   // Bold
-                                .replace(/\*(.*?)\*/g, '<em>$1</em>')     // Italics
-                                .replace(/(\n|^)[\-\*] (.*?)(?=\n|$)/g, '<br>• $2') // Bullets
-                                .replace(/\n/g, '<br>'); // Newlines
-                            geminiContent.innerHTML = html; // Use .innerHTML, not .textContent
-                            geminiContent.classList.remove('hidden'); 
-                        } else { 
-                            geminiError.textContent = i18next.t('ai.summary_failed'); 
-                            geminiError.classList.remove('hidden'); 
-                        }
-                    });
-    document.getElementById('plan-challenge-btn').addEventListener('click', async () => {
-        const sel = document.getElementById('log-fodmap-group'); 
-        const val = sel.value; // This gets the clean value, e.g., "Fructose"
-        if (!val) { showToast(i18next.t('log.select_group_warning'), "warning"); return; } 
-        
-        // 1. Use `val` for the modal title, not the full text
-        openGemini(`✨ ${val} Plan`); 
-
-        // 2. Use `val` in the prompt for a cleaner request
-        const prompt = `FODMAP helper. No medical advice. Profile: ${buildProfileContext()}.
-        Create a 3-day reintroduction challenge plan for '${val}'.
-
-        Use this exact template:
-        **Foods:** [List 2 specific foods for the challenge.]
-        *Why these foods?:* [Briefly explain why they are good test foods (e.g., "purely this FODMAP").]
-        *Other options:* [Suggest 1-2 alternative foods for variety.]
-
-        **Challenge Plan:**
-        - **Day 1:** [1/2 Portion]
-        - **Day 2:** [1 Portion]
-        - **Day 3:** [1,5 Portion]
-
-        **After Day 3:** Wait 2-3 "washout" days and log any delayed symptoms before starting your next challenge.
-
-        Format: **bold** headings, *italics*, newlines, bullets (- or *).
-        No '###', '|', tables, or disclaimer.`;
-
-        const plan = await callGeminiAPI(prompt); 
-        geminiLoader.classList.add('hidden'); 
-        if (plan === null) { geminiMdl.classList.add('hidden'); return; } 
-        
-        // 3. Use the full parser to render HTML
-        if (plan) { 
-            let html = plan
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')   // Bold
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')     // Italics
-                .replace(/(\n|^)[\-\*] (.*?)(?=\n|$)/g, '<br>• $2') // Bullets
-                .replace(/\n/g, '<br>'); // This line is now correct
-            geminiContent.innerHTML = html; // Use .innerHTML
-            geminiContent.classList.remove('hidden'); 
-        } else { 
-            geminiError.textContent = i18next.t('ai.plan_failed'); 
-            geminiError.classList.remove('hidden'); 
+                geminiContent.innerHTML = html; 
+                geminiContent.classList.remove('hidden'); 
+            } else { 
+                geminiError.textContent = i18next.t('ai.summary_failed'); 
+                geminiError.classList.remove('hidden'); 
+            }
+        });
+    }
+    
+    // --- Plan Challenge Tool ---
+    
+    // 1. Accordion Toggles for Home Tools
+    ['summary', 'plan'].forEach(tool => {
+        const header = document.getElementById(`tool-${tool}-header`);
+        const body = document.getElementById(`tool-${tool}-body`);
+        if(header && body) {
+            header.addEventListener('click', () => {
+                body.classList.toggle('hidden');
+                header.querySelector('.accordion-icon').classList.toggle('fa-chevron-up');
+                header.querySelector('.accordion-icon').classList.toggle('fa-chevron-down');
+            });
         }
     });
+
+    // 2. Plan Modal Elements
+    const planModal = document.getElementById('plan-modal');
+    const planModalClose = document.getElementById('plan-modal-close');
+    const planModalCancel = document.getElementById('plan-modal-btn-cancel');
+    const planModalConfirm = document.getElementById('plan-modal-btn-confirm');
+    const planModalSelect = document.getElementById('plan-modal-group-select');
+    const openPlanBtn = document.getElementById('open-plan-modal-btn');
+
+    if (openPlanBtn && planModal) {
+        // Open Modal
+        openPlanBtn.addEventListener('click', () => {
+            // Populate Select
+            planModalSelect.innerHTML = '';
+            FODMAP_GROUP_DATA.forEach(g => {
+                if (g.value !== 'Restriction' && g.value !== 'Safe Meal' && g.value !== 'Other') {
+                    const opt = document.createElement('option');
+                    opt.value = g.value;
+                    opt.textContent = `${FODMAP_STYLES[g.value]?.icon || ''} ${g.name}`;
+                    planModalSelect.appendChild(opt);
+                }
+            });
+            planModal.classList.remove('hidden');
+        });
+
+        const closePlanModal = () => planModal.classList.add('hidden');
+        planModalClose.addEventListener('click', closePlanModal);
+        planModalCancel.addEventListener('click', closePlanModal);
+
+        // Generate Plan Button Listener
+        planModalConfirm.addEventListener('click', async () => {
+            const groupVal = planModalSelect.value;
+            closePlanModal();
+            
+            const title = `${groupVal} Plan`;
+            
+            // 1. Check if a plan for this group already exists in history
+            const existingPlan = appState.aiHistory.find(h => h.type === 'plan' && h.title === title);
+
+            // Helper function to run the AI generation
+            const runGeneration = async () => {
+                openGemini('✨ ' + title);
+                
+                // Load prompt from JSON
+                const prompt = i18next.t('ai.prompt_plan', {
+                    profile: buildProfileContext(),
+                    group: groupVal
+                });
+
+                const plan = await callGeminiAPI(prompt); 
+                geminiLoader.classList.add('hidden'); 
+                
+                if (plan) { 
+                    let html = plan.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>').replace(/(\n|^)[\-\*] (.*?)(?=\n|$)/g, '<br>• $2').replace(/\n/g, '<br>');
+                    // Save to history (creates duplicate if one existed, which is desired behavior for "New")
+                    addToHistory('plan', title, html);
+                    geminiContent.innerHTML = html; 
+                    geminiContent.classList.remove('hidden'); 
+                } else { 
+                    geminiError.textContent = i18next.t('ai.plan_failed'); 
+                    geminiError.classList.remove('hidden'); 
+                }
+            };
+
+            // 2. Logic Flow
+            if (existingPlan) {
+                // Plan exists: Ask user what to do
+                showActionModal({
+                    title: i18next.t('ai.plan_exists_title'), // Ensure this key exists in JSON
+                    message: i18next.t('ai.plan_exists_msg', { group: groupVal }), // Ensure this key exists in JSON
+                    confirmText: i18next.t('ai.plan_generate_new'), 
+                    onConfirm: () => {
+                        runGeneration(); // Generate new one
+                    },
+                    altText: i18next.t('ai.plan_view_existing'), 
+                    onAltConfirm: () => {
+                        // View existing one
+                        openGemini(existingPlan.title);
+                        geminiLoader.classList.add('hidden');
+                        geminiContent.innerHTML = existingPlan.content;
+                        geminiContent.classList.remove('hidden');
+                    }
+                });
+            } else {
+                // No plan exists: Generate immediately
+                runGeneration();
+            }
+        });
+    }
+
+    // Initialize History on Load
+    renderAiHistory();
 
     // Listen for the beforeinstallprompt event
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -5686,10 +5877,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // 3. If no symptoms in the window, show a friendly message
         if (symptomEntries.length === 0) {
             container.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-full py-8 text-center opacity-70">
-                    <i class="fas fa-smile-beam text-4xl text-accent mb-2"></i>
+                <div class="flex flex-col items-center justify-center py-4 text-center opacity-70">
+                    <i class="fas fa-smile-beam text-3xl text-accent mb-2"></i>
                     <p class="text-sm font-semibold text-secondary">No recent symptoms!</p>
-                    <p class="text-xs text-subtle">No symptoms logged in the past 14 days.</p>
+                    <p class="text-[10px] text-subtle">No symptoms logged in the past 14 days.</p>
                 </div>
             `;
             return; 

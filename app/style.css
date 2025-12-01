@@ -383,6 +383,9 @@ main section > div { margin-bottom: 1rem; }
 .accordion-group.expanded .accordion-icon {
     transform: rotate(180deg);
 }
+.fa-chevron-up {
+    transform: rotate(180deg); 
+}
 .accordion-body {
     max-height: 0;
     overflow: hidden;
