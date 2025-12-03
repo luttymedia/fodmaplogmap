@@ -76,7 +76,11 @@
       "too_many_requests": "Please wait a while before trying again.",
       "name_required": "Please enter your name.",
       "email_required": "Please enter your email address above.",
-      "offline_mode": "Firebase SDK not loaded. App running in restricted offline mode."
+      "offline_mode": "Firebase SDK not loaded. App running in restricted offline mode.",
+      "service_unavailable": "AI Service unavailable",
+      "endpoint_not_found": "AI Service endpoint not found",
+      "temp_unavailable": "AI Service temporarily unavailable",
+      "general_prefix": "AI Error: {{msg}}"
     }
   },
   "home": {
@@ -301,7 +305,7 @@
     "btn_reset_pw": "Send Password Reset Email",
     "btn_delete": "Delete My Account",
     "delete_confirm_title": "Delete Account",
-    "delete_confirm_msg": "This is permanent and cannot be undone. All your cloud data (logs, diet list, and settings) will be deleted. Are you sure?",
+    "delete_confirm_msg": "This is permanent and cannot be undone. All your cloud data (logs, diet list, AI history and settings) will be deleted. Are you sure?",
     "btn_delete_forever": "Delete Forever",
     "name_updated": "Name updated!",
     "pw_reset_sent": "Password reset email sent!",

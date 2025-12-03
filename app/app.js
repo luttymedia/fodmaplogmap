@@ -1855,10 +1855,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 1. Group all foods
         foods.forEach(food => {
-            if (!groups[food.group]) {
-                groups[food.group] = [];
+            // Force empty groups to 'Other' so they appear in the list
+            const groupKey = food.group || 'Other'; 
+            
+            if (!groups[groupKey]) {
+                groups[groupKey] = [];
             }
-            groups[food.group].push(food);
+            groups[groupKey].push(food);
         });
 
         // 2. Render each group accordion
@@ -4062,40 +4065,46 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!user) return;
 
             showActionModal({
-                title: i18next.t('account.delete_title'),
-                message: i18next.t('account.delete_msg'),
-                altText: i18next.t('account.delete_confirm'), // Red button
+                title: i18next.t('account.delete_confirm_title'),
+                message: i18next.t('account.delete_confirm_msg'),
+                altText: i18next.t('account.btn_delete_forever'),
                 onAltConfirm: async () => {
+                    // --- CRITICAL FIX START ---
+                    // 1. Detach listeners so the app doesn't auto-reload when we delete the doc
+                    if (unsubscribeFromFirestore) {
+                        unsubscribeFromFirestore();
+                        unsubscribeFromFirestore = null;
+                    }
+                    // --- CRITICAL FIX END ---
+
                     const userDocRef = db.collection('users').doc(user.uid);
                     const logsColRef = userDocRef.collection('logs');
                     const dietColRef = userDocRef.collection('diet');
 
                     try {
-                        // Step 1: Delete auth user FIRST
-                        // This invalidates the session and triggers listeners on all clients
-                        await user.delete();
-                        console.log('Auth user deleted.');
-
-                        // Step 2: Delete all data
+                        // 2. Delete Firestore Data
                         await deleteCollection(logsColRef);
                         await deleteCollection(dietColRef);
                         await userDocRef.delete();
                         console.log('Firestore data deleted.');
+
+                        // 3. Delete Auth User
+                        await user.delete();
+                        console.log('Auth user deleted.');
                         
-                        // Step 3: Success! Show toast and force reload.
+                        // 4. Success
                         showToast(i18next.t('account.deleted_success'), "success");
-                        forceLogoutAndReload(); // <--- SUCCESS PATH (for Browser A)
+                        forceLogoutAndReload(); 
 
                     } catch (error) {
                         console.error("Error deleting account:", error);
                         
-                        // Step 4: Failure. Show correct toast and force reload.
                         if (error.code === 'auth/requires-recent-login') {
                             showToast(i18next.t('account.deletion_confirm'), "warning");
                         } else {
-                            showToast(i18next.t('auth.errors.generic') + ": " + error.message, "error");
+                            showToast(i18next.t('account.error_generic', { msg: error.message }), "error");
+                            forceLogoutAndReload(); 
                         }
-                        forceLogoutAndReload(); // <--- FAILURE PATH
                     }
                 }
             });
@@ -5726,8 +5735,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Optional: Automatically open the login modal for better UX
                 openAuthModal('login'); 
             } else {
-                // Show the actual error message for better debugging
-                showToast(`AI Error: ${err.message || "Service unavailable"}`, "error");
+                // 3. Handle Network/Availability Errors
+                let msg = i18next.t('ai.errors.service_unavailable'); // Default
+
+                if (!navigator.onLine) {
+                    msg = i18next.t('network.connection_failed');
+                } else if (err.code === 'not-found' || err.message === 'not-found') {
+                    msg = i18next.t('ai.errors.endpoint_not_found');
+                } else if (err.code === 'unavailable') {
+                    msg = i18next.t('ai.errors.temp_unavailable');
+                } else if (err.message) {
+                    // Clean up generic message and use the translated prefix
+                    const cleanMsg = err.message.replace(/^Error:\s*/i, '');
+                    msg = i18next.t('ai.errors.general_prefix', { msg: cleanMsg });
+                }
+                
+                showToast(msg, "error");
             }
             return null;
         }
@@ -5941,18 +5964,18 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', calculatePadding);
 
     // --- Swipe Navigation ---
-    const mainContent = document.getElementById('content');
     let touchStartX = 0;
     let touchEndX = 0;
     let touchStartY = 0;
     let touchEndY = 0;
 
-    mainContent.addEventListener('touchstart', (e) => {
+    // Attach to 'document' to ensure swipes work on short pages (like Profile)
+    document.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
         touchStartY = e.changedTouches[0].screenY;
     }, { passive: true });
 
-    mainContent.addEventListener('touchend', (e) => {
+    document.addEventListener('touchend', (e) => {
         touchEndX = e.changedTouches[0].screenX;
         touchEndY = e.changedTouches[0].screenY;
         handleSwipe();
