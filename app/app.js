@@ -1684,29 +1684,49 @@ document.addEventListener('DOMContentLoaded', () => {
         const user = auth ? auth.currentUser : null;
         if (!user) {
             // User is a guest (or offline). Perform the logic on the *local* appState array.
-            let existingFoods = [...appState.userProfile.personalizationFoods];
             let newFoodsAdded = 0;
             let foodsUpdated = 0;
+            let finalFoodCount = 0;
 
-            newFoodsArray.forEach(scannedFood => {
-                const existingIndex = existingFoods.findIndex(f => f.name.toLowerCase() === scannedFood.name.toLowerCase());
+            if (isMerging) {
+                // --- MERGE LOGIC (Local) ---
+                let existingFoods = [...appState.userProfile.personalizationFoods];
+                
+                newFoodsArray.forEach(scannedFood => {
+                    const existingIndex = existingFoods.findIndex(f => f.name.toLowerCase() === scannedFood.name.toLowerCase());
 
-                if (existingIndex > -1) {
-                    // Food exists: Update it, preserve original ID
-                    const originalId = existingFoods[existingIndex].id;
-                    existingFoods[existingIndex] = { ...scannedFood, id: originalId };
-                    foodsUpdated++;
-                } else {
-                    // Food is new: Add it with a new ID
-                    existingFoods.push({ ...scannedFood, id: foodIdCounter++ });
-                    newFoodsAdded++;
-                }
-            });
+                    if (existingIndex > -1) {
+                        // Food exists: Update it, preserve original ID
+                        const originalId = existingFoods[existingIndex].id;
+                        existingFoods[existingIndex] = { ...scannedFood, id: originalId };
+                        foodsUpdated++;
+                    } else {
+                        // Food is new: Add it with a new ID
+                        existingFoods.push({ ...scannedFood, id: foodIdCounter++ });
+                        newFoodsAdded++;
+                    }
+                });
+                appState.userProfile.personalizationFoods = existingFoods;
+
+            } else {
+                // --- ERASE LOGIC (Local) ---
+                // Replace the entire array with the new scanned items (assigning new IDs)
+                appState.userProfile.personalizationFoods = newFoodsArray.map(f => ({
+                    ...f, 
+                    id: foodIdCounter++ 
+                }));
+                finalFoodCount = appState.userProfile.personalizationFoods.length;
+            }
             
-            appState.userProfile.personalizationFoods = existingFoods;
+            // Save and render
             localStorage.setItem('fodmapUserProfile', JSON.stringify(appState.userProfile));
             renderPersonalizationSummary(); 
-            showToast(i18next.t('modals.actions.autoscan_success', { added: newFoodsAdded, updated: foodsUpdated }), "success");
+            
+            if (isMerging) {
+                showToast(i18next.t('modals.actions.autoscan_success', { added: newFoodsAdded, updated: foodsUpdated }), "success");
+            } else {
+                showToast(i18next.t('modals.actions.autoscan_unique', { count: finalFoodCount }), "success");
+            }
             return; // Exit, no cloud operations
         }
 
