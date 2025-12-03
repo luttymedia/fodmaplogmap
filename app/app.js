@@ -459,24 +459,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const savedProfile = localStorage.getItem('fodmapUserProfile') ? JSON.parse(localStorage.getItem('fodmapUserProfile')) : {};
 
-    // NEW: Load AI History
-    const savedAiHistory = localStorage.getItem('fodmapAiHistory') ? JSON.parse(localStorage.getItem('fodmapAiHistory')) : [];
-
+    // NEW: AI History will be loaded dynamically based on user context
     const appState = {
         logEntries: JSON.parse(localStorage.getItem('fodmapLogEntries')) || [],
         isSyncing: false,
         pendingGoogleUser: null, // Tracks a Google user awaiting GDPR consent
-        logEntries: JSON.parse(localStorage.getItem('fodmapLogEntries')) || [],
         // Merge saved profile over defaults
         userProfile: { 
             ...defaultProfile, 
             ...savedProfile 
         },
-        // personalizationFoods will be populated from userProfile after
         
         currentPageIndex: 0,
         currentlyEditingId: null,
-        aiHistory: savedAiHistory,
+        aiHistory: [], // Default to empty, load later
         stagedImageData: null,
         stagedImageMimeType: null,
         currentLogView: 'date', // 'group' or 'date'
@@ -502,10 +498,33 @@ document.addEventListener('DOMContentLoaded', () => {
         ...(savedProfile.uiSettings || {}) // Override with saved settings
     };
 
-    // --- NEW: AI History Helpers ---
+    // --- NEW: Dynamic AI History Key Helper ---
+    function getAiHistoryKey() {
+        const user = auth ? auth.currentUser : null;
+        const uid = user ? user.uid : 'guest';
+        return `fodmapAiHistory_${uid}`;
+    }
+
+    function loadLocalAiHistory() {
+        const key = getAiHistoryKey();
+        const stored = localStorage.getItem(key);
+        // Fallback: Check for legacy data (non-namespaced) and migrate it to Guest if found
+        if (!stored && key === 'fodmapAiHistory_guest') {
+            const legacy = localStorage.getItem('fodmapAiHistory');
+            if (legacy) {
+                appState.aiHistory = JSON.parse(legacy);
+                saveAiHistory(); // Save to new key
+                localStorage.removeItem('fodmapAiHistory'); // Clean up
+                return;
+            }
+        }
+        appState.aiHistory = stored ? JSON.parse(stored) : [];
+        renderAiHistory();
+    }
 
     function saveAiHistory() {
-        localStorage.setItem('fodmapAiHistory', JSON.stringify(appState.aiHistory));
+        const key = getAiHistoryKey();
+        localStorage.setItem(key, JSON.stringify(appState.aiHistory));
         renderAiHistory();
     }
 
@@ -4170,6 +4189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUiForPhase(appState.userProfile.currentPhase);
         setupProfilePage();
         updatePremiumUI(); // Update badges/banners
+        loadLocalAiHistory(); // Load guest-specific AI history
         
         // Only navigate if no other page is visible (i.e., on first load)
         if (!document.querySelector('.page:not(.hidden)')) {
@@ -4214,6 +4234,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Set up DB Sync
                 setupRealtimeListener(user); 
+                loadLocalAiHistory(); // Load user-specific AI history
 
             } else {
                 // --- USER IS LOGGED OUT ---
@@ -6335,6 +6356,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 2. Wipe Local Data
                     localStorage.removeItem('fodmapLogEntries');
                     localStorage.removeItem('fodmapUserProfile');
+                    // Remove specific history key
+                    localStorage.removeItem(getAiHistoryKey());
+                    // Also clean legacy key just in case
                     localStorage.removeItem('fodmapAiHistory');
 
                     // 3. Reset In-Memory State

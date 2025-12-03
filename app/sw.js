@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fodlog-v0.14.2'; // Bumped version to force update
+const CACHE_NAME = 'fodlog-v0.14.3'; // Bumped version to force update
 const CACHE_WHITELIST = [CACHE_NAME];
 
 // 1. CRITICAL FILES (Strict - App Shell)
