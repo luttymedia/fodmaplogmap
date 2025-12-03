@@ -6303,10 +6303,44 @@ document.addEventListener('DOMContentLoaded', () => {
             title: i18next.t('modals.actions.reset_title'),
             message: i18next.t('modals.actions.reset_msg'),
             altText: i18next.t('modals.btn_alt'), // Use altText for the red button
-            onAltConfirm: () => { 
+            onAltConfirm: async () => { 
                 try {
+                    // 1. If logged in, wipe Cloud Data first
+                    const user = auth.currentUser;
+                    if (user) {
+                        const userDocRef = db.collection('users').doc(user.uid);
+                        
+                        // Delete sub-collections
+                        await deleteCollection(userDocRef.collection('logs'));
+                        await deleteCollection(userDocRef.collection('diet'));
+                        
+                        // CRITICAL CHANGE: We do NOT delete the document (userDocRef.delete()).
+                        // Doing so would trigger the snapshot listener's "Account Deleted" failsafe
+                        // and force a logout.
+                        // Instead, we OVERWRITE it with the default profile.
+                        
+                        // Ensure we keep the user's name/email in the profile if we have it
+                        const freshProfile = { 
+                            ...defaultProfile,
+                            displayName: user.displayName || null,
+                            email: user.email || null,
+                            // Ensure GDPR consent stays true so they don't get stuck in a loop
+                            hasConsentedToGDPR: appState.userProfile.hasConsentedToGDPR 
+                        };
+
+                        await userDocRef.set({ userProfile: freshProfile });
+                        console.log("Cloud data reset to defaults.");
+                    }
+
+                    // 2. Wipe Local Data
                     localStorage.removeItem('fodmapLogEntries');
                     localStorage.removeItem('fodmapUserProfile');
+                    localStorage.removeItem('fodmapAiHistory');
+
+                    // 3. Reset In-Memory State
+                    appState.logEntries = [];
+                    appState.userProfile = { ...defaultProfile };
+                    appState.aiHistory = [];
 
                     showToast(i18next.t('modals.actions.reset_success'), "success");
 
