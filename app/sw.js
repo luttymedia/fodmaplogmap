@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fodlog-v0.14.0'; // Bumped version
+const CACHE_NAME = 'fodlog-v0.14.1'; // Bumped version to force update
 const CACHE_WHITELIST = [CACHE_NAME];
 
 // 1. CRITICAL FILES (Strict - App Shell)
@@ -9,7 +9,7 @@ const CRITICAL_FILES = [
   'manifest.json',
   'app.js',
   'style.css',
-  'images/fodlog_logo_h.png' // Updated logo filename
+  'images/fodlog_logo_h.png' 
 ];
 
 // 2. LOCAL ASSETS (Best Effort - Images)
@@ -58,8 +58,8 @@ self.addEventListener('install', (event) => {
       await Promise.allSettled(LOCAL_ASSETS.map(url => {
         return fetch(url).then(res => {
             if (res.ok) return cache.put(url, res);
-            return Promise.resolve(); // Continue even if fetch fails
-        }).catch(() => Promise.resolve()); // Continue even if network fails
+            return Promise.resolve(); 
+        }).catch(() => Promise.resolve()); 
       }));
 
       // C. OPAQUE (No-Cors)
@@ -85,8 +85,19 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // 2. Ignore Firestore/Auth/Google APIs (allow fonts)
-  if (url.hostname.includes('googleapis.com') && !url.hostname.includes('fonts')) return;
+  // 2. SAFETY FIX: Ignore ALL Google Auth & Firebase domains
+  // This prevents the SW from interfering with the login redirects/popups
+  if (
+    url.hostname.includes('googleapis.com') ||
+    url.hostname.includes('firebaseauth.com') ||
+    url.hostname.includes('accounts.google.com') ||
+    url.hostname.includes('identitytoolkit.googleapis.com')
+  ) {
+    // Exception: We still want to cache fonts from googleapis
+    if (!url.hostname.includes('fonts')) {
+        return; 
+    }
+  }
 
   // 3. Navigation (HTML)
   if (event.request.mode === 'navigate') {
@@ -105,7 +116,9 @@ self.addEventListener('fetch', (event) => {
 
   // 4. Assets
   event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then(cachedRes => {
+    // FIX: Removed { ignoreSearch: true } to respect query parameters
+    // This is safer for Auth flows, though less critical due to the domain exclusion above.
+    caches.match(event.request).then(cachedRes => {
       if (cachedRes) return cachedRes;
 
       return fetch(event.request).then(networkRes => {
