@@ -2025,7 +2025,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const buildDropdown = () => {
             fodmapOptions.innerHTML = '';
             FODMAP_GROUP_DATA.forEach(group => {
-                if (appState.userProfile.currentPhase === 'reintroduction' && (group.value === 'Safe Meal' || group.value === 'Other')) return;
+                // Remove the phase check here so "Safe Meal" and "Other" are always created.
+                // updateLogFormForPhase will handle showing/hiding them.
+                if (group.value === 'Restriction') return; 
                 
                 const option = document.createElement('li');
                 option.className = 'custom-select-option';
