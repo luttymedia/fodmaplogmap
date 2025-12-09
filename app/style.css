@@ -115,6 +115,12 @@ body {
     border-bottom-color: var(--color-primary-text); 
     color: var(--color-primary-text); 
     font-weight: 600;
+    /* REMOVED: background-color: #f1f5f9; */
+}
+
+/* NEW: Disable hover/focus background color on mobile to prevent sticky states */
+.nav-item:hover, .nav-item:focus {
+    background-color: transparent !important; 
 }
 .nav-item {
     border-bottom: 2px solid transparent;

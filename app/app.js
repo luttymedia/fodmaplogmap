@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
             offlineIndicator.classList.add('hidden');
         } else {
             offlineIndicator.classList.remove('hidden');
-            showToast(i18next.t('offlineIndicator.title'), "warning");
+            showToast(i18next.t('offline_indicator.title'), "warning");
         }
     };
     window.addEventListener('online', updateOnlineStatus);
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
      let PHASE_STYLES = {};
      
      // Styles don't need translation, so they can stay const
-     const FODMAP_STYLES = { "Fructose": { color: "bg-yellow-100 text-yellow-800", icon: "🍎" }, "Lactose": { color: "bg-blue-100 text-blue-800", icon: "🥛" }, "Fructans (Grains)": { color: "bg-orange-100 text-orange-800", icon: "🍞" }, "Fructans (Veg & Fruit)": { color: "bg-purple-100 text-purple-800", icon: "🧅" }, "GOS": { color: "bg-teal-100 text-teal-800", icon: "🫘" }, "Polyols (Sorbitol)": { color: "bg-green-100 text-green-800", icon: "🥑" }, "Polyols (Mannitol)": { color: "bg-indigo-100 text-indigo-800", icon: "🍄" }, "Other": { color: "bg-gray-100 text-gray-800", icon: "❔" }, "Safe Meal": { color: "bg-slate-100 text-slate-800", icon: "🍴" } };
+     const FODMAP_STYLES = { "Fructose": { color: "bg-yellow-100 text-yellow-800", icon: "🍎" }, "Lactose": { color: "bg-blue-100 text-blue-800", icon: "🥛" }, "Fructans (Grains)": { color: "bg-orange-100 text-orange-800", icon: "🍞" }, "Fructans (Veg & Fruit)": { color: "bg-purple-100 text-purple-800", icon: "🧅" }, "GOS": { color: "bg-teal-100 text-teal-800", icon: "🥜" }, "Polyols (Sorbitol)": { color: "bg-green-100 text-green-800", icon: "🥑" }, "Polyols (Mannitol)": { color: "bg-indigo-100 text-indigo-800", icon: "🍄" }, "Other": { color: "bg-gray-100 text-gray-800", icon: "❔" }, "Safe Meal": { color: "bg-slate-100 text-slate-800", icon: "🍴" } };
 
      // This function is called ONLY after i18next is fully loaded
      function updateDynamicData() {
@@ -925,6 +925,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function navigateTo(pageId) {
+        if (document.activeElement && document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+
         const targetPage = document.getElementById(pageId);
         if (!targetPage) return;
 
@@ -2440,15 +2444,22 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- HANDLE DELETE ---
             const entryId = parseInt(deleteBtn.dataset.id);
             
-            // 1. Delete from local state
-            appState.logEntries = appState.logEntries.filter(entry => entry.id !== entryId);
-            
-            // 2. Delete from cloud
-            deleteLogFromCloud(entryId); // Async
+            showActionModal({
+                title: i18next.t('log.delete_title'),
+                message: i18next.t('log.delete_confirm'),
+                confirmText: i18next.t('modals.btn_delete'), // Reuse generic "Delete" button
+                onConfirm: () => {
+                    // 1. Delete from local state
+                    appState.logEntries = appState.logEntries.filter(entry => entry.id !== entryId);
+                    
+                    // 2. Delete from cloud
+                    deleteLogFromCloud(entryId); // Async
 
-            // 3. Save local state & re-render
-            saveLogEntries();
-            showToast(i18next.t('log.toast_deleted'), "success");
+                    // 3. Save local state & re-render
+                    saveLogEntries();
+                    showToast(i18next.t('log.toast_deleted'), "success");
+                }
+            });
 
         } else if (header) {
             // --- HANDLE EXPAND ---
@@ -5628,7 +5639,13 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         if (exactMatch) {
-            showToast(i18next.t('food_errors.duplicate', { name: exactMatch.name }), "warning");
+            showActionModal({
+                title: i18next.t('modals.actions.duplicate_exact_title'),
+                message: i18next.t('modals.actions.duplicate_exact_msg', { name: exactMatch.name }),
+                confirmText: i18next.t('modals.btn_got_it'),
+                onConfirm: () => {}, // Just closes the modal
+                cancelText: null // Hides the cancel button
+            });
             return; // Stop the save
         }
 
