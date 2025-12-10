@@ -105,37 +105,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 escapeValue: false
             }
         }, function(err, t) {
+            // 1. Log error but DO NOT STOP. Use fallback English/keys if needed.
             if (err) {
-                console.error('i18n init failed:', err);
-                // Show a manual error screen instead of a black void
-                document.body.innerHTML = `
-                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center; padding:20px; font-family:sans-serif; color:#334155;">
-                        <h2 style="color:#dc2626;">⚠ Unable to Load</h2>
-                        <p>Could not load language data. Please check your connection.</p>
-                        <button onclick="location.reload()" style="background:#2d61a0; color:white; border:none; padding:10px 20px; border-radius:99px; font-weight:bold; margin-top:10px; cursor:pointer;">Retry</button>
-                    </div>
-                `;
-                return;
+                console.error('i18n init failed or timed out:', err);
+                // We proceed anyway so the user isn't stuck on a black screen
+            } else {
+                console.log('i18n initialized. Language:', i18next.language);
+                updateContent();
             }
-            console.log('i18n initialized. Language:', i18next.language);
-            updateContent();
+
+            // 2. Always run these, regardless of i18n success
             updateDynamicData();
             renderAiHistory();
-
-            // --- Populate forms only after translation data is ready ---
             setupLogForm(); 
-            document.getElementById('log-date').valueAsDate = new Date();
+            
+            const dateInput = document.getElementById('log-date');
+            if (dateInput) dateInput.valueAsDate = new Date();
 
-            // --- ADD THIS HERE ---
             checkPremiumRedirect(); 
             
-            // CRITICAL: Start the app only AFTER translations and data are ready
+            // 3. Force the app to start
             startApp();
 
-            // REMOVE LOADER
+            // 4. ALWAYS Remove the loader
             const loader = document.getElementById('static-loader');
             if (loader) loader.style.display = 'none';
         });
+
+        // Safety: Force remove loader if i18next hangs for more than 3 seconds
+    setTimeout(() => {
+        const loader = document.getElementById('static-loader');
+        if (loader && loader.style.display !== 'none') {
+            console.warn('i18n took too long. Forcing app start.');
+            loader.style.display = 'none';
+            // Optionally force startApp() here if you want extra robustness, 
+            // but hiding the loader allows the user to see *something*.
+        }
+    }, 3000);
 
     // Helper to update all static HTML elements AND attributes
     function updateContent() {
