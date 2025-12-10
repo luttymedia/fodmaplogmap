@@ -90,7 +90,34 @@ function showToast(message = i18next.t('log.toast_saved'), status = 'success') {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- START: i18next Initialization ---
+    // --- START: Robust Initialization (Failsafe) ---
+    let appStarted = false;
+
+    // 1. Define a shared startup sequence
+    // This function can be called by i18next success OR by the timeout failsafe
+    function finalizeAppStartup() {
+        if (appStarted) return; 
+        appStarted = true;
+
+        console.log('Finalizing App Startup...');
+        
+        // Populate forms
+        setupLogForm(); 
+        const dateInput = document.getElementById('log-date');
+        if (dateInput) dateInput.valueAsDate = new Date();
+
+        // Check Premium
+        try { checkPremiumRedirect(); } catch (e) { console.warn(e); }
+        
+        // Start Auth/Firebase
+        startApp();
+
+        // CRITICAL: Force remove the white screen loader
+        const loader = document.getElementById('static-loader');
+        if (loader) loader.style.display = 'none';
+    }
+
+    // 2. Initialize i18next
     i18next
         .use(i18nextHttpBackend)
         .use(i18nextBrowserLanguageDetector)
@@ -105,43 +132,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 escapeValue: false
             }
         }, function(err, t) {
-            // 1. Log error but DO NOT STOP. Use fallback English/keys if needed.
+            // Log error but DO NOT stop execution
             if (err) {
-                console.error('i18n init failed or timed out:', err);
-                // We proceed anyway so the user isn't stuck on a black screen
+                console.error('i18n init warning:', err);
             } else {
                 console.log('i18n initialized. Language:', i18next.language);
                 updateContent();
+                updateDynamicData();
+                renderAiHistory();
             }
-
-            // 2. Always run these, regardless of i18n success
-            updateDynamicData();
-            renderAiHistory();
-            setupLogForm(); 
-            
-            const dateInput = document.getElementById('log-date');
-            if (dateInput) dateInput.valueAsDate = new Date();
-
-            checkPremiumRedirect(); 
-            
-            // 3. Force the app to start
-            startApp();
-
-            // 4. ALWAYS Remove the loader
-            const loader = document.getElementById('static-loader');
-            if (loader) loader.style.display = 'none';
+            // Launch the app regardless of translation status
+            finalizeAppStartup();
         });
 
-        // Safety: Force remove loader if i18next hangs for more than 3 seconds
+    // 3. SAFETY TIMER: Force app to open after 1.5 seconds if i18next hangs
+    // This prevents the permanent white screen
     setTimeout(() => {
-        const loader = document.getElementById('static-loader');
-        if (loader && loader.style.display !== 'none') {
-            console.warn('i18n took too long. Forcing app start.');
-            loader.style.display = 'none';
-            // Optionally force startApp() here if you want extra robustness, 
-            // but hiding the loader allows the user to see *something*.
+        if (!appStarted) {
+            console.warn('Initialization timeout. Forcing app start.');
+            finalizeAppStartup();
         }
-    }, 3000);
+    }, 1500);
+    // --- END: Robust Initialization ---
 
     // Helper to update all static HTML elements AND attributes
     function updateContent() {

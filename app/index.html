@@ -1011,7 +1011,7 @@
                     </ul>
             </nav>
             <div class="mt-4 pt-4 border-t border-slate-200 text-center">
-                <span class="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-1 rounded">v0.14.14 (Beta)</span>
+                <span class="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-1 rounded">v0.14.15 (Beta)</span>
             </div>
         </div>
     </div>
@@ -1042,14 +1042,13 @@
                         newWorker.addEventListener('statechange', () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                                 console.log('New version available.');
-                                // Optional: Show a toast here saying "Update Available"
                                 postMessageToSW(newWorker);
                             }
                         });
                     });
                 });
 
-                // Reload page when new SW takes control
+                // Reload page ONLY when new SW takes control
                 let refreshing;
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
                     if (refreshing) return;
