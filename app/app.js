@@ -107,7 +107,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }, function(err, t) {
             if (err) {
                 console.error('i18n init failed:', err);
-                // Even if it fails, we keep the default English data
+                // Show a manual error screen instead of a black void
+                document.body.innerHTML = `
+                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center; padding:20px; font-family:sans-serif; color:#334155;">
+                        <h2 style="color:#dc2626;">⚠ Unable to Load</h2>
+                        <p>Could not load language data. Please check your connection.</p>
+                        <button onclick="location.reload()" style="background:#2d61a0; color:white; border:none; padding:10px 20px; border-radius:99px; font-weight:bold; margin-top:10px; cursor:pointer;">Retry</button>
+                    </div>
+                `;
                 return;
             }
             console.log('i18n initialized. Language:', i18next.language);

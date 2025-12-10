@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fodlog-v0.14.9'; // Bumped version to force update
+const CACHE_NAME = 'fodlog-v0.14.10'; // Bumped version to force update
 const CACHE_WHITELIST = [CACHE_NAME];
 
 // 1. CRITICAL FILES (Strict - App Shell)
@@ -9,7 +9,8 @@ const CRITICAL_FILES = [
   'manifest.json',
   'app.js',
   'style.css',
-  'images/fodlog_logo_h.png' 
+  'images/fodlog_logo_h.png',
+  'locales/en/translation.json' // NEW: Ensure this is cached for offline use
 ];
 
 // 2. LOCAL ASSETS (Best Effort - Images)
