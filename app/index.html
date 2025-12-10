@@ -25,6 +25,60 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#FFFFFF">
     
+    <style>
+        #debug-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 50vh;
+            background: rgba(0,0,0,0.85);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-y: auto;
+            z-index: 99999;
+            padding: 10px;
+            pointer-events: none; /* Let clicks pass through */
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .log-err { color: #ff4444; font-weight: bold; }
+        .log-warn { color: #ffbb33; }
+    </style>
+    <script>
+        // Create overlay immediately
+        (function() {
+            var overlay = document.createElement('div');
+            overlay.id = 'debug-overlay';
+            document.documentElement.appendChild(overlay);
+
+            function logToScreen(msg, type) {
+                var line = document.createElement('div');
+                line.textContent = '>' + msg;
+                if (type) line.className = 'log-' + type;
+                overlay.appendChild(line);
+                console.originalLog && console.originalLog(msg); // Keep console working
+            }
+
+            // Capture Console Logs
+            console.originalLog = console.log;
+            console.log = function(m) { logToScreen(m); };
+            console.error = function(m) { logToScreen(m, 'err'); };
+            console.warn = function(m) { logToScreen(m, 'warn'); };
+
+            // Capture Global Errors (Syntax, Script loading)
+            window.onerror = function(msg, url, line, col, error) {
+                var cleanUrl = url ? url.split('/').pop() : 'inline';
+                logToScreen('ERROR: ' + msg + '\nFile: ' + cleanUrl + ':' + line + ':' + col, 'err');
+                return false; 
+            };
+
+            // Capture Unhandled Promises (Async errors)
+            window.addEventListener('unhandledrejection', function(e) {
+                logToScreen('PROMISE ERROR: ' + (e.reason ? e.reason.message : e.reason), 'err');
+            });
+
+            logToScreen("Debug Logger Active. Waiting for app...");
+        })();
+    </script>
 
 </head>
 <body class="bg-slate-50">
