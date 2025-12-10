@@ -1011,7 +1011,7 @@
                     </ul>
             </nav>
             <div class="mt-4 pt-4 border-t border-slate-200 text-center">
-                <span class="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-1 rounded">v0.14.15 (Beta)</span>
+                <span class="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-1 rounded">v0.14.16 (Beta)</span>
             </div>
         </div>
     </div>
@@ -1023,43 +1023,16 @@
     <script src="app.js"></script>
     
     <script>
+        // --- EMERGENCY FIX: FORCE UNREGISTER SERVICE WORKER ---
+        // This ensures the app loads directly from the network, bypassing the corrupted cache.
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(registration => {
-                    console.log('ServiceWorker registration successful');
-                    
-                    // Check for updates
-                    registration.update();
-
-                    // If a new SW is waiting, activate it
-                    if (registration.waiting) {
-                        postMessageToSW(registration.waiting);
-                    }
-
-                    // Detect future updates
-                    registration.addEventListener('updatefound', () => {
-                        const newWorker = registration.installing;
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                console.log('New version available.');
-                                postMessageToSW(newWorker);
-                            }
-                        });
-                    });
-                });
-
-                // Reload page ONLY when new SW takes control
-                let refreshing;
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (refreshing) return;
-                    refreshing = true;
-                    window.location.reload();
-                });
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    console.log('Unregistering SW to fix white screen:', registration);
+                    registration.unregister();
+                }
             });
-        }
-        
-        function postMessageToSW(sw) {
-            sw.postMessage({ type: 'SKIP_WAITING' });
+            // We DO NOT register a new one here. The app will run online-only.
         }
     </script>
 
