@@ -59,6 +59,7 @@
     "email_verified_thanks": "Email verified! Thanks.",
     "not_verified": "Not verified yet. Check your inbox.",
     "still_unverified": "Still unverified. Try refreshing.",
+    "pw_reset_sent": "Password reset link sent!",
     "created": "Welcome! Account created.",
     "reset_password_title": "Reset Password",
     "reset_password_msg": "This will send a password reset link to {{email}}. Please check your inbox and spam folder.",
@@ -413,6 +414,14 @@
       "limit_msg": "You've reached the limit of 5 free AI requests.\n\nUpgrade to Premium for unlimited access to the AI Assistant tools!",
       "limit_confirm": "Go Premium",
       "limit_cancel": "Not Now"
+    },
+    "guest_merge": {
+      "title": "Save Local Data?",
+      "msg_start": "You have",
+      "msg_end": "saved on this device. Would you like to merge them with your cloud account?",
+      "btn_merge": "Merge & Save",
+      "btn_discard": "Discard Local Data",
+      "btn_logout": "Log Out"
     }
   },
   "fodmap_groups": {

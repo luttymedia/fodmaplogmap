@@ -118,6 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- Populate forms only after translation data is ready ---
             setupLogForm(); 
             document.getElementById('log-date').valueAsDate = new Date();
+
+            // Now safe to run because translations are loaded
+            checkPremiumRedirect();
         });
 
     // Helper to update all static HTML elements AND attributes
@@ -4107,7 +4110,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         // 4. Success
                         showToast(i18next.t('account.deleted_success'), "success");
-                        forceLogoutAndReload(); 
+                        forceLogoutAndReload();
+                        return; // Ensure execution stops here
 
                     } catch (error) {
                         console.error("Error deleting account:", error);
@@ -6475,7 +6479,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Run the check
-    checkPremiumRedirect();
+    // checkPremiumRedirect();
 
     window.appState = appState; // <-- ADD THIS LINE FOR TESTING
 });
