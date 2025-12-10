@@ -109,6 +109,7 @@ body {
     padding-top: var(--header-height); 
     padding-bottom: 80px; /* Fallback for bottom nav */
     overscroll-behavior-x: none; /* Prevent browser back/forward swipe */
+    overscroll-behavior-y: none; /* NEW: Prevent pull-to-refresh */
     color: var(--color-text-base); /* Set base text color */
 }
 .nav-item.active {

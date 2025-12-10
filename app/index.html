@@ -106,7 +106,10 @@
                                 <button id="summarize-journey-btn" class="w-full bg-ai-reintro font-semibold py-2.5 px-4 rounded-full hover:bg-ai-reintro-dark transition-colors duration-300 shadow flex items-center justify-center gap-2 text-sm"> 
                                     <span data-i18n="home.summarize_btn"></span>
                                 </button>
-                                <p class="text-xs text-slate-400 text-center" data-i18n="home.summarize_desc"></p>
+                                <div class="flex justify-center items-center gap-2">
+                                    <p class="text-xs text-slate-400 text-center" data-i18n="home.summarize_desc"></p>
+                                    <button class="ai-history-help-btn w-4 h-4 flex-shrink-0 inline-flex items-center justify-center text-[10px] bg-slate-200 text-slate-600 rounded-full hover:bg-slate-300" title="Info">?</button>
+                                </div>
                                 <div id="history-list-summary" class="mt-2 space-y-2 border-t border-slate-100 pt-2"></div>
                             </div>
                         </div>
@@ -122,7 +125,10 @@
                                 <button id="open-plan-modal-btn" class="w-full bg-ai-reintro font-semibold py-2.5 px-4 rounded-full hover:bg-ai-reintro-dark transition-colors duration-300 shadow flex items-center justify-center gap-2 text-sm"> 
                                     <i class="fas fa-calendar-plus"></i><span data-i18n="log.plan_challenge"></span>
                                 </button>
-                                <p class="text-xs text-slate-400 text-center" data-i18n="home.tools.plan_desc"></p>
+                                <div class="flex justify-center items-center gap-2">
+                                    <p class="text-xs text-slate-400 text-center" data-i18n="home.tools.plan_desc"></p>
+                                    <button class="ai-history-help-btn w-4 h-4 flex-shrink-0 inline-flex items-center justify-center text-[10px] bg-slate-200 text-slate-600 rounded-full hover:bg-slate-300" title="Info">?</button>
+                                </div>
                                 <div id="history-list-plan" class="mt-2 space-y-2 border-t border-slate-100 pt-2"></div>
                             </div>
                         </div>
@@ -254,7 +260,10 @@
             <section id="food-info" class="page hidden max-w-3xl mx-auto">
                 <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md">
                     <h2 class="text-xl sm:text-2xl font-semibold mb-3 text-secondary flex items-center" data-i18n="ai.title"></h2>
-                     <p class="text-subtle mb-3 text-sm" data-i18n="ai.subtitle"></p>
+                    <div class="flex items-start gap-2 mb-3">
+                        <p class="text-subtle text-sm flex-1" data-i18n="ai.subtitle"></p>
+                        <button class="ai-history-help-btn mt-0.5 w-5 h-5 flex-shrink-0 inline-flex items-center justify-center text-xs bg-slate-200 text-slate-600 rounded-full hover:bg-slate-300" title="Info">?</button>
+                    </div>
                     <div id="ai-upgrade-banner" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-lg text-center mb-3 transition-all duration-300">
                         <p id="ai-credits-text" class="text-sm font-semibold text-amber-700" data-i18n="ai.credits_left"></p>
                         <button id="ai-premium-btn" class="mt-2 bg-amber-500 text-white font-bold py-1.5 px-4 rounded-full hover:bg-amber-600 text-sm shadow-sm transition-transform hover:scale-105">
@@ -413,7 +422,13 @@
                             <h3 class="font-semibold text-secondary mb-1.5 mt-4" data-i18n="profile.intolerances"></h3> 
                             <div id="profile-intolerances" class="flex flex-wrap gap-2"> 
                             </div>
-                            <input type="text" id="profile-allergies-other" data-i18n="[placeholder]profile.other_allergies" class="mt-2 w-full p-2 border border-slate-300 rounded-xl mt-4"> 
+                            
+                            <label class="block text-sm font-medium text-secondary mt-4 mb-1.5" data-i18n="profile.other_allergies"></label>
+                            <div class="flex gap-2">
+                                <input type="text" id="profile-allergy-input" data-i18n="[placeholder]profile.other_allergies_placeholder" class="w-full p-2.5 border border-slate-300 rounded-xl">
+                                <button type="button" id="profile-add-allergy-btn" class="bg-adaptive font-semibold py-2 px-4 rounded-full hover:bg-adaptive-dark transition-colors duration-300 shadow" data-i18n="modals.btn_add"></button>
+                            </div>
+                            <div id="profile-allergy-tags-container" class="flex flex-wrap mt-2 gap-1"></div>
                         </div>
                         
                         <div>
@@ -474,6 +489,21 @@
                             </div>
                             <i class="fas fa-check-circle text-orange-500 text-lg"></i>
                         </div>
+
+                        <div id="account-free-wrapper" class="hidden p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white shadow-sm">
+                                    <i class="fas fa-user text-xs"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-blue-900 leading-tight" data-i18n="account.free_badge"></p>
+                                    <p class="text-[10px] text-blue-700" data-i18n="account.free_sub"></p>
+                                </div>
+                            </div>
+                            <button type="button" id="account-go-premium-btn" class="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-full shadow-sm transition-colors" data-i18n="menu.go_premium">
+                            </button>
+                        </div>
+
                         <div>
                             <label for="account-name" class="block mb-1.5 text-sm font-medium text-secondary" data-i18n="account.label_name"></label>
                             <div class="flex gap-2">
@@ -974,7 +1004,7 @@
                     </ul>
             </nav>
             <div class="mt-4 pt-4 border-t border-slate-200 text-center">
-                <span class="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-1 rounded">v0.14.8 (Beta)</span>
+                <span class="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-1 rounded">v0.14.9 (Beta)</span>
             </div>
         </div>
     </div>

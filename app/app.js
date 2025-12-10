@@ -560,6 +560,22 @@ document.addEventListener('DOMContentLoaded', () => {
         renderHomeToolHistory('plan', 'history-list-plan');
     }
 
+    // Listener for the new AI History Help buttons (?)
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('ai-history-help-btn')) {
+            e.preventDefault();
+            e.stopPropagation(); // Prevent accordion toggle
+            
+            showActionModal({
+                title: i18next.t('ai.history_help_title'),
+                message: i18next.t('ai.history_help_msg'),
+                confirmText: i18next.t('modals.btn_got_it'),
+                onConfirm: () => {}, 
+                cancelText: null 
+            });
+        }
+    });
+
     // Render "Recent Searches" on AI Tab
     function renderRecentSearches() {
         const container = document.getElementById('ai-recent-searches-container');
@@ -1005,7 +1021,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 2. Account Settings Status
         const accountPremiumWrapper = document.getElementById('account-premium-wrapper');
-        if (accountPremiumWrapper) accountPremiumWrapper.classList.toggle('hidden', !isPremium);
+        const accountFreeWrapper = document.getElementById('account-free-wrapper');
+        
+        if (accountPremiumWrapper && accountFreeWrapper) {
+            if (isPremium) {
+                accountPremiumWrapper.classList.remove('hidden');
+                accountFreeWrapper.classList.add('hidden');
+            } else {
+                accountPremiumWrapper.classList.add('hidden');
+                accountFreeWrapper.classList.remove('hidden');
+            }
+        }
 
         // 3. Side Menu "Go Premium" Button (Hide if already premium)
         if (menuPremiumLi) menuPremiumLi.classList.toggle('hidden', isPremium);
@@ -1883,7 +1909,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 groupsRendered++;
                 const style = FODMAP_STYLES[groupName] || { icon: '❓' };
                 const groupDiv = document.createElement('div');
-                groupDiv.className = 'accordion-group';
+                groupDiv.className = 'accordion-group expanded'; // Expanded by default
                 groupDiv.style.backgroundColor = '#fff';
 
                 const header = document.createElement('div');
@@ -2717,8 +2743,63 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('profile-diagnoses').innerHTML = PROFILE_OPTIONS.diagnoses.map(i => createCheckbox(`diag-${i}`, i, 'diagnoses', appState.userProfile.diagnoses.includes(i))).join('');
         document.getElementById('profile-intolerances').innerHTML = PROFILE_OPTIONS.intolerances.map(i => createCheckbox(`intol-${i}`, i, 'intolerances', appState.userProfile.intolerances.includes(i))).join('');
         document.getElementById('profile-preferences').innerHTML = PROFILE_OPTIONS.preferences.map(i => createCheckbox(`pref-${i}`, i, 'preferences', appState.userProfile.preferences.includes(i))).join('');
-        document.getElementById('profile-allergies-other').value = appState.userProfile.allergiesOther || '';
+        
+        // --- Populate Allergy Tags ---
+        const allergyContainer = document.getElementById('profile-allergy-tags-container');
+        if (allergyContainer) {
+            allergyContainer.innerHTML = '';
+            let currentAllergies = appState.userProfile.allergiesOther || [];
+            
+            // Migration: Handle legacy string format "A, B, C"
+            if (typeof currentAllergies === 'string') {
+                currentAllergies = currentAllergies.split(',').map(s => s.trim()).filter(Boolean);
+            }
+            
+            // Ensure it's an array before mapping
+            if (Array.isArray(currentAllergies)) {
+                currentAllergies.forEach(allergy => {
+                    const tag = document.createElement('div');
+                    tag.className = 'custom-symptom-tag'; // Reusing existing style
+                    tag.textContent = allergy;
+                    tag.innerHTML += `<button type="button" class="remove-tag-btn">&times;</button>`;
+                    allergyContainer.appendChild(tag);
+                });
+            }
+        }
     };
+    
+    // --- NEW: Profile Allergy Tag Logic ---
+    const profileAllergyInput = document.getElementById('profile-allergy-input');
+    const profileAddAllergyBtn = document.getElementById('profile-add-allergy-btn');
+    const profileAllergyContainer = document.getElementById('profile-allergy-tags-container');
+
+    if (profileAddAllergyBtn && profileAllergyInput && profileAllergyContainer) {
+        const addAllergyTag = () => {
+            const val = toTitleCase(profileAllergyInput.value.trim());
+            if (val) {
+                const tag = document.createElement('div');
+                tag.className = 'custom-symptom-tag';
+                tag.textContent = val;
+                tag.innerHTML += `<button type="button" class="remove-tag-btn">&times;</button>`;
+                profileAllergyContainer.appendChild(tag);
+                profileAllergyInput.value = '';
+            }
+        };
+
+        profileAddAllergyBtn.addEventListener('click', addAllergyTag);
+        profileAllergyInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addAllergyTag();
+            }
+        });
+
+        profileAllergyContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-tag-btn')) {
+                e.target.parentElement.remove();
+            }
+        });
+    }
 
     profileForm.addEventListener('submit', (e) => {
         e.preventDefault(); 
@@ -2726,7 +2807,10 @@ document.addEventListener('DOMContentLoaded', () => {
         appState.userProfile.diagnoses = Array.from(document.querySelectorAll('input[name=diagnoses]:checked')).map(el => el.value); 
         appState.userProfile.intolerances = Array.from(document.querySelectorAll('input[name=intolerances]:checked')).map(el => el.value); 
         appState.userProfile.preferences = Array.from(document.querySelectorAll('input[name=preferences]:checked')).map(el => el.value); 
-        appState.userProfile.allergiesOther = toTitleCase(document.getElementById('profile-allergies-other').value.trim());
+        
+        // Save allergies as an Array
+        const allergyTags = Array.from(document.querySelectorAll('#profile-allergy-tags-container .custom-symptom-tag')).map(tag => tag.firstChild.textContent);
+        appState.userProfile.allergiesOther = allergyTags;
 
         // --- 2. Phase-Specific Settings have been removed from this form ---
         // --- 3. Personalization Map logic REMOVED ---
@@ -2804,6 +2888,15 @@ document.addEventListener('DOMContentLoaded', () => {
         newAiBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            openPremiumInfoModal();
+        });
+    }
+
+    // Listener for "Go Premium" inside Account Settings
+    const accountGoPremiumBtn = document.getElementById('account-go-premium-btn');
+    if (accountGoPremiumBtn) {
+        accountGoPremiumBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             openPremiumInfoModal();
         });
     }
@@ -3013,6 +3106,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (authPasswordInput) authPasswordInput.type = 'password';
         if (authPasswordToggle) authPasswordToggle.innerHTML = '<i class="fas fa-eye"></i>';
 
+        // Helper to update Google button text without losing the icon
+        const googleTextSpan = authGoogleBtn.querySelector('span');
+
         if (mode === 'signup') {
             authModalTitle.textContent = i18next.t('auth.signup_title');
             authNameField.classList.remove('hidden');
@@ -3027,6 +3123,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             authSubmitBtn.textContent = i18next.t('auth.submit_signup');
             authSwitchLink.innerHTML = i18next.t('auth.switch_login');
+            // Update Google Button
+            if (googleTextSpan) googleTextSpan.textContent = i18next.t('auth.google_sign_up');
+
         } else {
             // Default to login
             authModalTitle.textContent = i18next.t('auth.login_title');
@@ -3042,6 +3141,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             authSubmitBtn.textContent = i18next.t('auth.submit_login');
             authSwitchLink.innerHTML = i18next.t('auth.switch_signup');
+            // Update Google Button
+            if (googleTextSpan) googleTextSpan.textContent = i18next.t('auth.google_sign_in');
         }
 
         authModal.classList.remove('hidden');
@@ -4461,7 +4562,7 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function showActionModal({ title, message, type = 'confirm', confirmText = i18next.t('modals.btn_confirm'), onConfirm, cancelText = i18next.t('modals.btn_cancel'), onCancel, altText, onAltConfirm }) {
         actionModalTitle.textContent = title;
-        actionModalMessage.textContent = message;
+        actionModalMessage.innerHTML = message; // Use innerHTML to render bold tags
 
         // Configure Confirm Button
         if (confirmText && onConfirm) {
