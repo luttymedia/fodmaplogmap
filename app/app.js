@@ -126,8 +126,15 @@ document.addEventListener('DOMContentLoaded', () => {
             setupLogForm(); 
             document.getElementById('log-date').valueAsDate = new Date();
 
-            // Now safe to run because translations are loaded
-            checkPremiumRedirect();
+            // --- ADD THIS HERE ---
+            checkPremiumRedirect(); 
+            
+            // CRITICAL: Start the app only AFTER translations and data are ready
+            startApp();
+
+            // REMOVE LOADER
+            const loader = document.getElementById('static-loader');
+            if (loader) loader.style.display = 'none';
         });
 
     // Helper to update all static HTML elements AND attributes
@@ -4366,44 +4373,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    if (isFirebaseAvailable && auth) {
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                // --- USER IS LOGGED IN ---
-                console.log('User is logged in:', user.uid);
+    // --- MAIN APP STARTUP ---
+    function startApp() {
+        if (isFirebaseAvailable && auth) {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    console.log('User is logged in:', user.uid);
+                    if (onboardingModal) onboardingModal.classList.add('hidden');
 
-                if (onboardingModal) onboardingModal.classList.add('hidden');
+                    if (menuLoginLi) menuLoginLi.classList.add('hidden');
+                    if (menuLogoutLi) menuLogoutLi.classList.remove('hidden');
+                    if (menuAccountLi) menuAccountLi.classList.remove('hidden');
 
-                // Render Auth UI
-                if (menuLoginLi) menuLoginLi.classList.add('hidden');
-                if (menuLogoutLi) menuLogoutLi.classList.remove('hidden');
-                if (menuAccountLi) menuAccountLi.classList.remove('hidden');
-
-                updateVerificationUI(user);
-                updateAICounterUI();
-                
-                if (menuAccountEmail) menuAccountEmail.textContent = user.email || i18next.t('account.title');
-                if (accountNameInput) accountNameInput.value = user.displayName || '';
-                if (accountEmailInput) accountEmailInput.value = user.email || '';
-                
-                // Set up DB Sync
-                setupRealtimeListener(user); 
-                loadLocalAiHistory(); // Load user-specific AI history
-
-            } else {
-                // --- USER IS LOGGED OUT ---
-                console.log('User is logged out.');
-                if (unsubscribeFromFirestore) {
-                    unsubscribeFromFirestore();
-                    unsubscribeFromFirestore = null;
+                    updateVerificationUI(user);
+                    updateAICounterUI();
+                    
+                    if (menuAccountEmail) menuAccountEmail.textContent = user.email || i18next.t('account.title');
+                    if (accountNameInput) accountNameInput.value = user.displayName || '';
+                    if (accountEmailInput) accountEmailInput.value = user.email || '';
+                    
+                    setupRealtimeListener(user); 
+                    loadLocalAiHistory(); 
+                } else {
+                    console.log('User is logged out.');
+                    if (unsubscribeFromFirestore) {
+                        unsubscribeFromFirestore();
+                        unsubscribeFromFirestore = null;
+                    }
+                    loadGuestState();
                 }
-                loadGuestState();
-            }
-        });
-    } else {
-        // --- FIREBASE FAILED TO LOAD (OFFLINE START) ---
-        console.warn("Firebase Auth not available. Forcing Guest Mode.");
-        loadGuestState();
+            });
+        } else {
+            console.warn("Firebase Auth not available. Forcing Guest Mode.");
+            loadGuestState();
+        }
     }
 
     const geminiMdl = document.getElementById('gemini-modal'); const geminiTitle = document.getElementById('gemini-modal-title'); const geminiContent = document.getElementById('gemini-modal-content'); const geminiLoader = document.getElementById('gemini-modal-loader'); const geminiError = document.getElementById('gemini-modal-error'); const geminiClose = document.getElementById('gemini-modal-close');
@@ -6555,7 +6558,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Premium Success Logic ---
-    const checkPremiumRedirect = () => {
+    function checkPremiumRedirect() { // Changed to function to fix ReferenceError
         const urlParams = new URLSearchParams(window.location.search);
         
         // 1. Check for success flag from Stripe
