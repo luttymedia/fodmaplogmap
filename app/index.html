@@ -1078,46 +1078,30 @@
     <script src="app.js"></script>
     
     <script>
+        // --- NUCLEAR OPTION: Force Unregister Service Worker ---
+        // Use this temporarily to fix the "Stuck Cache" issue.
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(registration => {
-                    console.log('ServiceWorker registration successful');
-                    
-                    // Check for updates on page load
-                    registration.update();
-
-                    // If a new SW is waiting (installed but not active), trigger it
-                    if (registration.waiting) {
-                        postMessageToSW(registration.waiting);
-                    }
-
-                    // Detect when a new SW installs
-                    registration.addEventListener('updatefound', () => {
-                        const newWorker = registration.installing;
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // FIX: Prevent infinite reload loop. 
-                                // Instead of reloading directly, tell the new SW to skip waiting.
-                                // This triggers 'controllerchange', which handles the reload safely.
-                                console.log('New version available. Activating...');
-                                postMessageToSW(newWorker);
-                            }
-                        });
-                    });
-                });
-
-                // When the new SW takes control, reload the page
-                let refreshing;
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (refreshing) return;
-                    refreshing = true;
-                    window.location.reload();
-                });
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    console.log('Unregistering SW:', registration);
+                    registration.unregister();
+                }
             });
-        }
-        
-        function postMessageToSW(sw) {
-            sw.postMessage({ type: 'SKIP_WAITING' });
+            
+            // Force clear caches
+            caches.keys().then(function(names) {
+                for (let name of names) {
+                    console.log('Deleting Cache:', name);
+                    caches.delete(name);
+                }
+            });
+            
+            console.log("Service Workers & Caches Cleared. Reloading in 3s...");
+            // Optional: Auto-reload once to fetch fresh files
+            if (!sessionStorage.getItem('reloaded')) {
+                sessionStorage.setItem('reloaded', 'true');
+                setTimeout(() => window.location.reload(), 2000);
+            }
         }
     </script>
 
