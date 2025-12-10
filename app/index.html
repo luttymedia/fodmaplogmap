@@ -25,61 +25,6 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#FFFFFF">
     
-    <style>
-        #debug-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 50vh;
-            background: rgba(0,0,0,0.85);
-            color: #0f0;
-            font-family: monospace;
-            font-size: 12px;
-            overflow-y: auto;
-            z-index: 99999;
-            padding: 10px;
-            pointer-events: none; /* Let clicks pass through */
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-        .log-err { color: #ff4444; font-weight: bold; }
-        .log-warn { color: #ffbb33; }
-    </style>
-    <script>
-        // Create overlay immediately
-        (function() {
-            var overlay = document.createElement('div');
-            overlay.id = 'debug-overlay';
-            document.documentElement.appendChild(overlay);
-
-            function logToScreen(msg, type) {
-                var line = document.createElement('div');
-                line.textContent = '>' + msg;
-                if (type) line.className = 'log-' + type;
-                overlay.appendChild(line);
-                console.originalLog && console.originalLog(msg); // Keep console working
-            }
-
-            // Capture Console Logs
-            console.originalLog = console.log;
-            console.log = function(m) { logToScreen(m); };
-            console.error = function(m) { logToScreen(m, 'err'); };
-            console.warn = function(m) { logToScreen(m, 'warn'); };
-
-            // Capture Global Errors (Syntax, Script loading)
-            window.onerror = function(msg, url, line, col, error) {
-                var cleanUrl = url ? url.split('/').pop() : 'inline';
-                logToScreen('ERROR: ' + msg + '\nFile: ' + cleanUrl + ':' + line + ':' + col, 'err');
-                return false; 
-            };
-
-            // Capture Unhandled Promises (Async errors)
-            window.addEventListener('unhandledrejection', function(e) {
-                logToScreen('PROMISE ERROR: ' + (e.reason ? e.reason.message : e.reason), 'err');
-            });
-
-            logToScreen("Debug Logger Active. Waiting for app...");
-        })();
-    </script>
-
 </head>
 <body class="bg-slate-50">
 
@@ -1066,7 +1011,7 @@
                     </ul>
             </nav>
             <div class="mt-4 pt-4 border-t border-slate-200 text-center">
-                <span class="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-1 rounded">v0.14.13 (Beta)</span>
+                <span class="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-1 rounded">v0.14.14 (Beta)</span>
             </div>
         </div>
     </div>
@@ -1078,30 +1023,44 @@
     <script src="app.js"></script>
     
     <script>
-        // --- NUCLEAR OPTION: Force Unregister Service Worker ---
-        // Use this temporarily to fix the "Stuck Cache" issue.
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for(let registration of registrations) {
-                    console.log('Unregistering SW:', registration);
-                    registration.unregister();
-                }
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(registration => {
+                    console.log('ServiceWorker registration successful');
+                    
+                    // Check for updates
+                    registration.update();
+
+                    // If a new SW is waiting, activate it
+                    if (registration.waiting) {
+                        postMessageToSW(registration.waiting);
+                    }
+
+                    // Detect future updates
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                console.log('New version available.');
+                                // Optional: Show a toast here saying "Update Available"
+                                postMessageToSW(newWorker);
+                            }
+                        });
+                    });
+                });
+
+                // Reload page when new SW takes control
+                let refreshing;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (refreshing) return;
+                    refreshing = true;
+                    window.location.reload();
+                });
             });
-            
-            // Force clear caches
-            caches.keys().then(function(names) {
-                for (let name of names) {
-                    console.log('Deleting Cache:', name);
-                    caches.delete(name);
-                }
-            });
-            
-            console.log("Service Workers & Caches Cleared. Reloading in 3s...");
-            // Optional: Auto-reload once to fetch fresh files
-            if (!sessionStorage.getItem('reloaded')) {
-                sessionStorage.setItem('reloaded', 'true');
-                setTimeout(() => window.location.reload(), 2000);
-            }
+        }
+        
+        function postMessageToSW(sw) {
+            sw.postMessage({ type: 'SKIP_WAITING' });
         }
     </script>
 
