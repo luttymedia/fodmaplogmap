@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fodlog-v0.14.11'; // Bumped version to force update
+const CACHE_NAME = 'fodlog-v0.14.12'; // Bumped version to force update
 const CACHE_WHITELIST = [CACHE_NAME];
 
 // 1. CRITICAL FILES (Strict - App Shell)
@@ -31,7 +31,11 @@ const OPAQUE_ASSETS = [
   'https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js',
   'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js',
-  'https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js'
+  'https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js',
+  // NEW: Cache i18next libraries so the app doesn't crash offline
+  'https://unpkg.com/i18next@23.2.3/dist/umd/i18next.min.js',
+  'https://unpkg.com/i18next-http-backend@2.2.1/i18nextHttpBackend.min.js',
+  'https://unpkg.com/i18next-browser-languagedetector@7.1.0/i18nextBrowserLanguageDetector.min.js'
 ];
 
 // 4. FONT ASSETS (Cors - Icons/Fonts)
